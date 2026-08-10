@@ -1,10 +1,30 @@
 @import "tailwindcss";
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* ── Hide scrollbar ── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Custom Sidebar Scrollbar ── */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #2E2E2E transparent;
 }
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #2E2E2E;
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #FF5722;
 }

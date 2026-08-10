@@ -20,7 +20,7 @@ export default function MainLayout() {
     <div className="min-h-screen bg-[#0F0F0F] text-white">
       <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <Sidebar isOpen={isSidebarOpen} />
-      <main className={`pt-10 transition-all duration-300 ${isSidebarOpen ? 'pl-50' : 'pl-0'}`}>
+      <main className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'pl-56' : 'pl-0'}`}>
         {/* The Outlet renders the matched child route */}
         <div className="p-4">
           <Outlet />

@@ -33,6 +33,16 @@ export default function ChannelProfile() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Đọc settings bật/tắt button từ localStorage
+  const [channelBtnSettings, setChannelBtnSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('userSettings');
+      return saved ? JSON.parse(saved) : { showJoinButton: true, showCommunityButton: true };
+    } catch {
+      return { showJoinButton: true, showCommunityButton: true };
+    }
+  });
+
   const isOwner = channel && localStorage.getItem('handle') === channel.handle;
 
     const fetchChannelData = async (targetHandle) => {
@@ -234,12 +244,16 @@ export default function ChannelProfile() {
               
               {!isOwner && (
                 <>
-                  <button className="px-3 py-1.5 rounded-full font-medium text-xs text-white border border-white/20 hover:bg-[#2A2A2A] transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent">
-                    <Star className="w-3.5 h-3.5" /> Tham gia
-                  </button>
-                  <button className="px-3 py-1.5 rounded-full font-medium text-xs text-white border border-white/20 hover:bg-[#2A2A2A] transition-colors cursor-pointer flex items-center gap-1.5 bg-[#2A2A2A] border-none">
-                    <Users className="w-3.5 h-3.5" /> Cộng đồng
-                  </button>
+                  {channelBtnSettings.showJoinButton && (
+                    <button className="px-3 py-1.5 rounded-full font-medium text-xs text-white border border-white/20 hover:bg-[#2A2A2A] transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent">
+                      <Star className="w-3.5 h-3.5" /> Tham gia
+                    </button>
+                  )}
+                  {channelBtnSettings.showCommunityButton && (
+                    <button className="px-3 py-1.5 rounded-full font-medium text-xs text-white border border-white/20 hover:bg-[#2A2A2A] transition-colors cursor-pointer flex items-center gap-1.5 bg-[#2A2A2A] border-none">
+                      <Users className="w-3.5 h-3.5" /> Cộng đồng
+                    </button>
+                  )}
                 </>
               )}
             </div>

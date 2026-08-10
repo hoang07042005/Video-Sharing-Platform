@@ -22,6 +22,28 @@ namespace Video_Platform_Backend.Controllers
             _context = context;
         }
 
+        // GET: api/channels — Danh sách tất cả kênh (kênh nổi bật cho trang chủ)
+        [HttpGet]
+        public async Task<IActionResult> GetAllChannels([FromQuery] int limit = 10)
+        {
+            var channels = await _context.Channels
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .Select(c => new ChannelCardDTO
+                {
+                    Id = c.Id,
+                    ChannelName = c.ChannelName,
+                    Handle = c.Handle,
+                    AvatarUrl = c.User.Profile != null ? (c.User.Profile.AvatarUrl ?? "") : "",
+                    SubscriberCount = _context.Followers.Count(f => f.ChannelId == c.Id)
+                })
+                .OrderByDescending(c => c.SubscriberCount)
+                .Take(limit)
+                .ToListAsync();
+
+            return Ok(channels);
+        }
+
         // GET: api/channels/{handle}
         [HttpGet("{handle}")]
         public async Task<IActionResult> GetChannelProfile(string handle)

@@ -9,6 +9,7 @@ import SavedVideos from './pages/client/video/SavedVideos';
 import Subscriptions from './pages/client/video/Subscriptions';
 import Downloads from './pages/client/video/Downloads';
 import Trending from './pages/client/video/Trending';
+import Settings from './pages/client/settings/Settings';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/download" element={<Downloads />} />
           <Route path="/trending" element={<Trending />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>

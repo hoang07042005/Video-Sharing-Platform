@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Q4Rw3k2fnjM=",
+  "dgSpecHash": "m4uxfQyIYlU=",
   "success": true,
-  "projectFilePath": "D:\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
+  "projectFilePath": "D:\\Video-Sharing-Platform\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Do Hoang PC\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\Do Hoang PC\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",
@@ -61,9 +61,9 @@
       "code": "NU1903",
       "level": "Warning",
       "message": "Package 'Microsoft.OpenApi' 2.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
-      "projectPath": "D:\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
+      "projectPath": "D:\\Video-Sharing-Platform\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
       "warningLevel": 1,
-      "filePath": "D:\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
+      "filePath": "D:\\Video-Sharing-Platform\\Video-Sharing Platform\\Video-Platform-Backend\\Video-Platform-Backend\\Video-Platform-Backend.csproj",
       "libraryId": "Microsoft.OpenApi",
       "targetGraphs": [
         "net10.0"
