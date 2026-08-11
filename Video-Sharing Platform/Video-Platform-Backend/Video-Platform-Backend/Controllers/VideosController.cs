@@ -73,6 +73,60 @@ namespace Video_Platform_Backend.Controllers
             return Ok(videos);
         }
 
+        // GET: api/videos/explore?category=&q=&sort=
+        [HttpGet("explore")]
+        public async Task<IActionResult> ExploreVideos(
+            [FromQuery] string? category = null,
+            [FromQuery] string? q = null,
+            [FromQuery] string sort = "views")
+        {
+            var query = _context.Videos
+                .Include(v => v.Channel)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Profile)
+                .Include(v => v.Category)
+                .Where(v => v.Visibility == "Public" && (v.IsShort == false || v.IsShort == null));
+
+            if (!string.IsNullOrWhiteSpace(q))
+                query = query.Where(v => v.Title.Contains(q) || (v.Description != null && v.Description.Contains(q)));
+
+            if (!string.IsNullOrWhiteSpace(category) && category != "all")
+                query = query.Where(v => v.Category != null && v.Category.Name == category);
+
+            IOrderedQueryable<Video> sortedQuery = sort switch
+            {
+                "newest" => query.OrderByDescending(v => v.CreatedAt),
+                "oldest" => query.OrderBy(v => v.CreatedAt),
+                _ => query.OrderByDescending(v => v.ViewsCount)
+            };
+
+            var videos = await sortedQuery
+                .Take(60)
+                .Select(v => new VideoResponseDTO
+                {
+                    Id = v.Id,
+                    Title = v.Title,
+                    Description = v.Description ?? "",
+                    ThumbnailUrl = _context.VideoThumbnails
+                        .Where(t => t.VideoId == v.Id)
+                        .Select(t => t.ThumbnailUrl)
+                        .FirstOrDefault() ?? "",
+                    Duration = v.Duration ?? 0,
+                    ViewsCount = v.ViewsCount ?? 0,
+                    CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                    IsShort = v.IsShort ?? false,
+                    ChannelId = v.ChannelId,
+                    ChannelName = v.Channel.ChannelName,
+                    ChannelHandle = v.Channel.Handle,
+                    ChannelAvatarUrl = v.Channel.User.Profile != null
+                        ? (v.Channel.User.Profile.AvatarUrl ?? "")
+                        : ""
+                })
+                .ToListAsync();
+
+            return Ok(videos);
+        }
+
         // GET: api/videos/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetVideo(Guid id)
@@ -134,13 +188,19 @@ namespace Video_Platform_Backend.Controllers
             var dislikesCount = await _context.Likes.CountAsync(l => l.VideoId == video.Id && !l.IsLike);
             var actualViewsCount = video.ViewsCount ?? 0;
 
+            var fileUrl = video.VideoFiles.FirstOrDefault()?.FileUrl;
+            if (string.IsNullOrEmpty(fileUrl) || fileUrl.Contains("example.com"))
+            {
+                fileUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+            }
+
             var dto = new VideoDetailDTO
             {
                 Id = video.Id,
                 Title = video.Title,
                 Description = video.Description ?? "",
                 ThumbnailUrl = video.VideoThumbnails.FirstOrDefault()?.ThumbnailUrl ?? "",
-                VideoUrl = video.VideoFiles.FirstOrDefault()?.FileUrl ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                VideoUrl = fileUrl,
                 Duration = video.Duration ?? 0,
                 ViewsCount = actualViewsCount,
                 LikesCount = likesCount,
@@ -180,6 +240,54 @@ namespace Video_Platform_Backend.Controllers
             }
 
             return Ok(dto);
+        }
+
+        // POST: api/videos/{id}/record-view
+        [HttpPost("{id}/record-view")]
+        public async Task<IActionResult> RecordView(Guid id)
+        {
+            var video = await _context.Videos.FindAsync(id);
+            if (video == null) return NotFound();
+
+            // Increase view count
+            video.ViewsCount = (video.ViewsCount ?? 0) + 1;
+            
+            // Add view record
+            var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                                   ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            Guid? currentUserId = Guid.TryParse(currentUserIdStr, out var cid) ? cid : null;
+            
+            _context.Views.Add(new View {
+                Id = Guid.NewGuid(),
+                VideoId = id,
+                UserId = currentUserId,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                ViewedAt = DateTime.UtcNow
+            });
+            
+            if (currentUserId.HasValue)
+            {
+                var watchHistory = await _context.WatchHistories
+                    .FirstOrDefaultAsync(w => w.UserId == currentUserId.Value && w.VideoId == id);
+                if (watchHistory == null)
+                {
+                    _context.WatchHistories.Add(new WatchHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = currentUserId.Value,
+                        VideoId = id,
+                        LastWatchedAt = DateTime.UtcNow,
+                        WatchedDuration = 0
+                    });
+                }
+                else
+                {
+                    watchHistory.LastWatchedAt = DateTime.UtcNow;
+                }
+            }
+            
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // POST: api/videos/{id}/like
@@ -464,7 +572,8 @@ namespace Video_Platform_Backend.Controllers
                     ChannelHandle = h.Video.Channel.Handle,
                     ChannelAvatarUrl = h.Video.Channel.User.Profile != null 
                         ? (h.Video.Channel.User.Profile.AvatarUrl ?? "") 
-                        : ""
+                        : "",
+                    IsShort = h.Video.IsShort ?? false
                 })
                 .ToListAsync();
 
@@ -639,6 +748,137 @@ namespace Video_Platform_Backend.Controllers
             }).ToList();
 
             return Ok(result);
+        }
+
+        // GET: api/videos/my — Get videos belonging to the authenticated user's channel
+        [HttpGet("my")]
+        [Authorize]
+        public async Task<IActionResult> GetMyVideos()
+        {
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+            var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (channel == null) return NotFound(new { message = "Kênh không tồn tại." });
+
+            var videos = await _context.Videos
+                .Include(v => v.VideoThumbnails)
+                .Where(v => v.ChannelId == channel.Id)
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new VideoManageDTO
+                {
+                    Id = v.Id,
+                    Title = v.Title,
+                    Description = v.Description ?? "",
+                    ThumbnailUrl = _context.VideoThumbnails
+                        .Where(t => t.VideoId == v.Id)
+                        .Select(t => t.ThumbnailUrl)
+                        .FirstOrDefault() ?? "",
+                    Duration = v.Duration ?? 0,
+                    ViewsCount = v.ViewsCount ?? 0,
+                    LikesCount = v.LikesCount ?? 0,
+                    CommentsCount = v.CommentsCount ?? 0,
+                    Visibility = v.Visibility ?? "Public",
+                    IsShort = v.IsShort ?? false,
+                    CreatedAt = v.CreatedAt ?? DateTime.UtcNow
+                })
+                .ToListAsync();
+
+            return Ok(videos);
+        }
+
+        [HttpGet("admin/all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminAllVideos()
+        {
+            var videos = await _context.Videos
+                .Include(v => v.VideoThumbnails)
+                .Include(v => v.Channel)
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new VideoManageDTO
+                {
+                    Id = v.Id,
+                    Title = v.Title,
+                    Description = v.Description ?? "",
+                    ThumbnailUrl = _context.VideoThumbnails
+                        .Where(t => t.VideoId == v.Id)
+                        .Select(t => t.ThumbnailUrl)
+                        .FirstOrDefault() ?? "",
+                    Duration = v.Duration ?? 0,
+                    ViewsCount = v.ViewsCount ?? 0,
+                    LikesCount = v.LikesCount ?? 0,
+                    CommentsCount = v.CommentsCount ?? 0,
+                    Visibility = v.Visibility ?? "Public",
+                    IsShort = v.IsShort ?? false,
+                    CreatedAt = v.CreatedAt ?? DateTime.UtcNow
+                })
+                .ToListAsync();
+
+            return Ok(videos);
+        }
+
+        // PUT: api/videos/{id} — Update video title/description/visibility
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateVideo(Guid id, [FromBody] VideoUpdateDTO dto)
+        {
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+            var video = await _context.Videos
+                .Include(v => v.Channel)
+                .Include(v => v.VideoThumbnails)
+                .Include(v => v.VideoFiles)
+                .FirstOrDefaultAsync(v => v.Id == id);
+            if (video == null) return NotFound(new { message = "Video không tồn tại." });
+            var isAdmin = User.IsInRole("Admin");
+            if (video.Channel.UserId != userId && !isAdmin) return Forbid();
+
+            video.Title = dto.Title;
+            video.Description = dto.Description;
+            video.Visibility = dto.Visibility;
+            video.UpdatedAt = DateTime.UtcNow;
+
+            // Update thumbnail if provided
+            if (!string.IsNullOrWhiteSpace(dto.ThumbnailUrl))
+            {
+                var thumb = video.VideoThumbnails.FirstOrDefault();
+                if (thumb != null)
+                    thumb.ThumbnailUrl = dto.ThumbnailUrl;
+                else
+                    _context.VideoThumbnails.Add(new VideoThumbnail { Id = Guid.NewGuid(), VideoId = id, ThumbnailUrl = dto.ThumbnailUrl });
+            }
+
+            // Update video file if provided
+            if (!string.IsNullOrWhiteSpace(dto.VideoUrl))
+            {
+                var file = video.VideoFiles.FirstOrDefault();
+                if (file != null)
+                    file.FileUrl = dto.VideoUrl;
+                else
+                    _context.VideoFiles.Add(new VideoFile { Id = Guid.NewGuid(), VideoId = id, FileUrl = dto.VideoUrl });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật video thành công." });
+        }
+
+        // DELETE: api/videos/{id}
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteVideo(Guid id)
+        {
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+            var video = await _context.Videos.Include(v => v.Channel).FirstOrDefaultAsync(v => v.Id == id);
+            if (video == null) return NotFound(new { message = "Video không tồn tại." });
+            var isAdmin = User.IsInRole("Admin");
+            if (video.Channel.UserId != userId && !isAdmin) return Forbid();
+
+            _context.Videos.Remove(video);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã xóa video." });
         }
     }
 }

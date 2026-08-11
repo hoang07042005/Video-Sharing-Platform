@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 
@@ -10,6 +10,7 @@ export default function VideoDetail() {
   const navigate = useNavigate();
   const [video, setVideo] = useState(null);
   const [recommendedVideos, setRecommendedVideos] = useState([]);
+  const [sameChannelVideos, setSameChannelVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -22,6 +23,7 @@ export default function VideoDetail() {
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const [expandedReplies, setExpandedReplies] = useState({});
   
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
@@ -61,8 +63,12 @@ export default function VideoDetail() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         
         const res = await axios.get(`/api/videos/${id}`, { headers });
-        setVideo(res.data);
-        setIsSubscribed(res.data.isSubscribed || false);
+        let data = res.data;
+        if (!data.videoUrl || data.videoUrl.includes('example.com') || data.videoUrl.includes('commondatastorage')) {
+          data.videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+        }
+        setVideo(data);
+        setIsSubscribed(data.isSubscribed || false);
         setSubscriberCount(res.data.subscriberCount || 0);
         setIsLiked(res.data.isLiked || false);
         setIsDisliked(res.data.isDisliked || false);
@@ -73,9 +79,22 @@ export default function VideoDetail() {
         const commentsRes = await axios.get(`/api/videos/${id}/comments`);
         setComments(commentsRes.data);
         
-        // Fetch recommended videos (for now just all videos)
+        // Fetch recommended videos (all except current)
         const recRes = await axios.get('/api/videos');
-        setRecommendedVideos(recRes.data.filter(v => v.id !== id).slice(0, 10));
+        const allOthers = recRes.data.filter(v => v.id !== id);
+        setRecommendedVideos(allOthers);
+
+        // Fetch same-channel videos for "Up Next" top 5
+        const channelId = res.data.channelId;
+        if (channelId) {
+          try {
+            const chRes = await axios.get(`/api/channels/${channelId}/videos`);
+            const chVideos = (chRes.data || []).filter(v => v.id !== id && !v.isShort);
+            setSameChannelVideos(chVideos.slice(0, 5));
+          } catch {
+            setSameChannelVideos([]);
+          }
+        }
       } catch (err) {
         console.error("Lỗi chi tiết:", err);
         setError(`Lỗi: ${err.message} ${err.response ? `(Mã lỗi: ${err.response.status})` : ''}`);
@@ -235,6 +254,13 @@ export default function VideoDetail() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const toggleReplies = (commentId) => {
+    setExpandedReplies(prev => ({
+      ...prev,
+      [commentId]: !prev[commentId]
+    }));
+  };
+
   if (loading) {
     return (
       <div className="flex-1 bg-[#0F0F0F] flex items-center justify-center">
@@ -285,11 +311,113 @@ export default function VideoDetail() {
     );
   };
 
+  const buildReplyTree = (replies) => {
+    if (!replies) return [];
+    const nodes = replies.map(r => ({ ...r, children: [] }));
+    const tree = [];
+    
+    nodes.forEach(node => {
+      let parentFound = false;
+      const match = node.content.match(/^@(.+?)\s/);
+      if (match) {
+        const parentName = match[1];
+        const currentIndex = nodes.indexOf(node);
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          if (nodes[i].fullName === parentName) {
+            nodes[i].children.push(node);
+            parentFound = true;
+            break;
+          }
+        }
+      }
+      if (!parentFound) {
+        tree.push(node);
+      }
+    });
+    
+    return tree;
+  };
+
+  const renderReplyTree = (replies, commentId, level = 1) => {
+    if (!replies || replies.length === 0) return null;
+    
+    const containerMargin = level === 1 ? "ml-[44px]" : "ml-[40px]";
+    
+    return (
+      <div className={`relative mt-3 ${containerMargin} z-0`}>
+        <div className="flex flex-col gap-3">
+          {replies.map((reply, index) => {
+            const isLast = index === replies.length - 1;
+
+            return (
+              <div key={reply.id} className="flex flex-col relative z-10">
+                
+                {/* 1. NÉT NỐI LÊN TRÊN (Chỉ dành cho bình luận đầu tiên để nối vào dây tổng) */}
+                {index === 0 && (
+                  <div className="absolute top-[-16px] left-[-24px] w-[1px] h-[16px] bg-[#FF5722] z-0"></div>
+                )}
+
+                {/* 2. DÂY CONG RẼ NHÁNH (Vẽ từ đỉnh thẻ xuống đúng tâm avatar rồi bẻ ngang) */}
+                <div className="absolute top-0 left-[-24px] w-[24px] h-[16px] border-l-[1.5px] border-b-[1.5px] border-[#FF5722] rounded-bl-[16px] z-0"></div>
+                
+                {/* 3. DÂY DỌC XUYÊN SUỐT (Chỉ vẽ khi không phải comment cuối) */}
+                {/* Sử dụng calc(100% - 4px) để đâm thủng chính xác qua khoảng gap 12px mà không phụ thuộc vào bottom */}
+                {!isLast && (
+                  <div className="absolute top-[16px] left-[-24px] w-[1.5px] h-[calc(100%-4px)] bg-[#FF5722] z-0"></div>
+                )}
+                
+                {/* 4. Chấm tròn điểm nhấn */}
+                <div className="absolute top-[13.5px] left-[-2.5px] w-[5px] h-[5px] rounded-full bg-[#FF5722] z-0"></div>
+
+                {/* Reply Content (Giữ nguyên của bạn) */}
+                <div className="flex gap-3 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0">
+                    <img src={reply.avatarUrl || "https://ui-avatars.com/api/?name=" + reply.fullName} alt={reply.fullName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-[13px]">{reply.fullName}</span>
+                      {isOwner && reply.userId === video.ownerUserId && (
+                        <span className="text-[10px] text-[#FF5722] border border-[#FF5722] rounded px-1.5 py-0.5 font-medium">Tác giả</span>
+                      )}
+                      <span className="text-gray-400 text-xs">{formatDate(reply.createdAt)}</span>
+                    </div>
+                    <p className="text-white text-sm mt-1">{reply.content}</p>
+                    
+                    {/* Buttons Action... */}
+                    <div className="flex items-center gap-4 mt-2">
+                      <button onClick={() => handleReplyLike(commentId, reply.id, true)} className="flex items-center gap-1.5 text-gray-400 hover:text-white cursor-pointer">
+                        <ThumbsUp className="w-4 h-4" />
+                        <span className="text-xs">{reply.likesCount > 0 ? reply.likesCount.toLocaleString('vi-VN') : ''}</span>
+                      </button>
+                      <button onClick={() => handleReplyLike(commentId, reply.id, false)} className="text-gray-400 hover:text-white cursor-pointer">
+                        <ThumbsDown className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => { setReplyingTo(replyingTo === reply.id ? null : reply.id); setReplyText(`@${reply.fullName} `); }} className="text-gray-400 hover:text-white text-xs font-medium cursor-pointer ml-2">
+                        Trả lời
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Reply Input */}
+                {renderReplyInput(reply.id, commentId)}
+                
+                {/* Recursive Children */}
+                {renderReplyTree(reply.children, commentId, level + 1)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 bg-[#0F0F0F] overflow-y-auto custom-scrollbar flex justify-center">
       <div className="flex flex-col lg:flex-row px-4 md:px-8 py-6 gap-3 xl:gap-8 w-full max-w-[1800px]">
-      {/* Left Column - Main Video Content */}
-      <div className="flex-1 max-w-[1280px] lg:w-[70%] xl:w-[75%]">
+        {/* Left Column - Main Video Content */}
+        <div className="flex-1 max-w-[1280px] lg:w-[70%] xl:w-[75%]">
         {/* Video Player */}
         <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl relative group">
           <video 
@@ -335,14 +463,19 @@ export default function VideoDetail() {
                   Tùy chỉnh
                 </Link>
               ) : (
-                <button 
-                  onClick={handleSubscribe}
-                  className={`ml-2 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
-                    isSubscribed ? 'bg-[#2A2A2A] text-white hover:bg-[#333333]' : 'bg-white text-black hover:bg-gray-200'
-                  }`}
-                >
-                  {isSubscribed ? 'Đã đăng ký' : 'Đăng ký'}
-                </button>
+                <div className="flex items-center gap-2 ml-2">
+                  <button 
+                    onClick={handleSubscribe}
+                    className={`px-4 py-2 rounded-full font-bold text-[13px] transition-colors ${
+                      isSubscribed ? 'bg-[#2A2A2A] text-white hover:bg-[#333333]' : 'bg-[#FF5722] text-white hover:brightness-110 shadow-lg shadow-[#FF5722]/20'
+                    }`}
+                  >
+                    {isSubscribed ? 'Đã đăng ký' : 'Đăng ký'}
+                  </button>
+                  <button className="w-9 h-9 rounded-full bg-[#272727] hover:bg-[#3F3F3F] flex items-center justify-center transition-colors cursor-pointer">
+                    <Bell className="w-4 h-4 text-white" />
+                  </button>
+                </div>
               )}
             </div>
 
@@ -442,7 +575,9 @@ export default function VideoDetail() {
         {/* Comments Section */}
         <div className="mt-8">
           <div className="flex items-center gap-6 mb-6 relative">
-            <h3 className="text-lg font-bold text-white">{comments.length} bình luận</h3>
+            <h3 className="text-lg font-bold text-white">
+              {comments.reduce((total, comment) => total + 1 + (comment.replies?.length || 0), 0)} bình luận
+            </h3>
             <div className="relative">
               <button 
                 onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -500,94 +635,59 @@ export default function VideoDetail() {
                 
                 {/* Parent Comment */}
                 <div className="flex gap-4 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0">
-                  <img src={comment.avatarUrl || `https://ui-avatars.com/api/?name=${comment.fullName}`} alt={comment.fullName} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-white text-[13px]">{comment.fullName}</span>
-                    <span className="text-gray-400 text-xs">{formatDate(comment.createdAt)}</span>
+                  <div className="w-10 h-10 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0 z-10">
+                    <img src={comment.avatarUrl || `https://ui-avatars.com/api/?name=${comment.fullName}`} alt={comment.fullName} className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-white text-sm mt-1">{comment.content}</p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <button onClick={() => handleCommentLike(comment.id, true)} className="flex items-center gap-1.5 text-gray-400 hover:text-white cursor-pointer">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span className="text-xs">{comment.likesCount > 0 ? comment.likesCount.toLocaleString('vi-VN') : ''}</span>
-                    </button>
-                    <button onClick={() => handleCommentLike(comment.id, false)} className="text-gray-400 hover:text-white cursor-pointer">
-                      <ThumbsDown className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                      className="text-gray-400 hover:text-white text-xs font-medium cursor-pointer ml-2"
-                    >
-                      Phản hồi
-                    </button>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-[13px]">{comment.fullName}</span>
+                      {isOwner && comment.userId === video.ownerUserId && (
+                        <span className="text-[10px] text-[#FF5722] border border-[#FF5722] rounded px-1.5 py-0.5 font-medium">Tác giả</span>
+                      )}
+                      <span className="text-gray-400 text-xs">{formatDate(comment.createdAt)}</span>
+                    </div>
+                    <p className="text-white text-sm mt-1">{comment.content}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <button onClick={() => handleCommentLike(comment.id, true)} className="flex items-center gap-1.5 text-gray-400 hover:text-white cursor-pointer">
+                        <ThumbsUp className="w-4 h-4" />
+                        <span className="text-xs">{comment.likesCount > 0 ? comment.likesCount.toLocaleString('vi-VN') : ''}</span>
+                      </button>
+                      <button onClick={() => handleCommentLike(comment.id, false)} className="text-gray-400 hover:text-white cursor-pointer">
+                        <ThumbsDown className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="text-gray-400 hover:text-white text-xs font-medium cursor-pointer ml-2"
+                      >
+                        Trả lời
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Reply Input for Parent Comment */}
-              {renderReplyInput(comment.id, comment.id)}
+                
+                {/* Reply Input for Parent Comment */}
+                {renderReplyInput(comment.id, comment.id)}
 
                 {/* Replies List */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="flex mt-2 relative z-0">
-                    {/* thread-hitbox (Vertical Line Container) */}
-                    <div className="w-10 shrink-0 flex justify-center relative cursor-pointer group">
-                      {/* The visible line */}
-                      <div className="w-[2px] bg-[#3F3F3F] group-hover:bg-[#717171] transition-colors absolute top-[-10px] bottom-[20px]"></div>
-                    </div>
+                {expandedReplies[comment.id] && renderReplyTree(buildReplyTree(comment.replies), comment.id)}
 
-                    {/* Replies Content */}
-                    <div className="flex-1 flex flex-col gap-4 ml-4">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex flex-col relative z-10">
-                          <div className="flex gap-3 relative">
-                            {/* Horizontal branch */}
-                            <div className="absolute top-[14px] left-[-36px] w-[36px] h-[2px] bg-[#3F3F3F] rounded-r-full z-0"></div>
-                            
-                            <div className="w-7 h-7 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0 relative z-10">
-                            <img src={reply.avatarUrl || "https://ui-avatars.com/api/?name=" + reply.fullName} alt={reply.fullName} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-baseline gap-2">
-                              <span className="font-bold text-white text-[13px]">{reply.fullName}</span>
-                              <span className="text-gray-400 text-xs">{formatDate(reply.createdAt)}</span>
-                            </div>
-                            <p className="text-white text-sm mt-0.5">{reply.content}</p>
-                            <div className="flex items-center gap-4 mt-1">
-                              <button onClick={() => handleReplyLike(comment.id, reply.id, true)} className="flex items-center gap-1.5 text-gray-400 hover:text-white cursor-pointer">
-                                <ThumbsUp className="w-4 h-4" />
-                                <span className="text-xs">{reply.likesCount > 0 ? reply.likesCount.toLocaleString('vi-VN') : ''}</span>
-                              </button>
-                              <button onClick={() => handleReplyLike(comment.id, reply.id, false)} className="text-gray-400 hover:text-white cursor-pointer">
-                                <ThumbsDown className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  setReplyingTo(replyingTo === reply.id ? null : reply.id);
-                                  setReplyText(`@${reply.fullName} `);
-                                }}
-                                className="text-gray-400 hover:text-white text-xs font-medium cursor-pointer ml-2"
-                              >
-                                Phản hồi
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Reply Input for this specific Reply */}
-                        {renderReplyInput(reply.id, comment.id)}
-                      </div>
-                      ))}
-                    </div>
+                {/* Replies Toggle Button */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="mt-2 ml-[44px]">
+                    <button 
+                      onClick={() => toggleReplies(comment.id)}
+                      className="flex items-center gap-2 text-[#3ea6ff] hover:bg-[#3ea6ff]/10 px-3 py-1.5 rounded-full text-sm font-medium transition-colors w-fit cursor-pointer"
+                    >
+                      {expandedReplies[comment.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      {expandedReplies[comment.id] ? 'Ẩn phản hồi' : `${comment.replies.length} phản hồi`}
+                    </button>
                   </div>
                 )}
               </div>
             ))}
           </div>
         </div>
-      </div>
+        </div>{/* closes left column */}
 
       {/* Right Column - Up Next Sidebar */}
       <div className="lg:w-[30%] xl:w-[25%]">
@@ -597,35 +697,100 @@ export default function VideoDetail() {
             <span className="text-sm font-medium text-white">Tự động phát</span>
             <button 
               onClick={() => setAutoplay(!autoplay)}
-              className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${autoplay ? 'bg-[#3EA6FF]' : 'bg-gray-600'}`}
+              className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${autoplay ? 'bg-[#FF5722]' : 'bg-gray-600'}`}
             >
-              <div className={`absolute top-0.5 w-4 h-4 bg-[#0F0F0F] rounded-full transition-all ${autoplay ? 'left-[22px]' : 'left-0.5'}`}></div>
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${autoplay ? 'left-[22px]' : 'left-0.5'}`}></div>
             </button>
           </div>
         </div>
+        <div className="border-t border-white/10 pt-5">
+          {/* Same Channel - Top 5 */}
+          {sameChannelVideos.length > 0 && (
+            <div className="flex flex-col gap-3 mb-6">
+              {sameChannelVideos.map((recVideo) => (
+                <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
+                  <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
+                    <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
+                      {Math.floor(recVideo.duration / 60)}:{(recVideo.duration % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                  <div className="flex flex-col flex-1 py-0.5">
+                    <h5 className="text-white text-[13px] font-semibold line-clamp-2 leading-tight group-hover:text-[#FF5722] transition-colors">{recVideo.title}</h5>
+                    <span className="text-gray-400 text-xs mt-1">{recVideo.channelName}</span>
+                    <div className="text-gray-400 text-xs flex items-center gap-1 mt-0.5 flex-wrap">
+                      <span>{formatViews(recVideo.viewsCount)} lượt xem</span>
+                      <span>•</span>
+                      <span>{formatDate(recVideo.createdAt)}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        {recommendedVideos.filter(v => v.isShort).length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Shorts</h3>
+              <button className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer">
+                Xem tất cả
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3">
+              {recommendedVideos.filter(v => v.isShort).slice(0, 3).map((short) => (
+                <div key={short.id} onClick={() => navigate(`/shorts?id=${short.id}`)} className="cursor-pointer group flex flex-col gap-2">
+                  <div className="relative w-full aspect-[4/6] rounded-xl overflow-hidden bg-[#1A1A1A]">
+                    <img src={short.thumbnailUrl} alt={short.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    
+                    {/* Top left Zap icon */}
+                    <div className="absolute top-2 left-2 drop-shadow-md">
+                      <Zap className="w-4 h-4 text-white fill-white" />
+                    </div>
 
+                    {/* Time badge */}
+                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
+                      {Math.floor(short.duration / 60)}:{(short.duration % 60).toString().padStart(2, '0')}
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col px-1 mt-1">
+                    <h5 className="text-white text-[13px] font-medium line-clamp-2 leading-tight group-hover:text-[#FF5722] transition-colors">
+                      {short.title}
+                    </h5>
+                    <span className="text-gray-400 text-xs mt-0.5">{formatViews(short.viewsCount)} lượt xem</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended Long Videos */}
         <div className="flex flex-col gap-3">
-          {recommendedVideos.map((recVideo) => (
+          {recommendedVideos.filter(v => !v.isShort).map((recVideo) => (
             <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
-              <div className="w-45 h-[105px] rounded-md overflow-hidden shrink-0 relative bg-[#2A2A2A]">
+              <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                 <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
                   {Math.floor(recVideo.duration / 60)}:{(recVideo.duration % 60).toString().padStart(2, '0')}
                 </span>
               </div>
               <div className="flex flex-col flex-1 py-0.5">
-                <h5 className="text-white text-[13px] font-medium line-clamp-2 leading-tight group-hover:text-[#FF8A65] transition-colors">{recVideo.title}</h5>
+                <h5 className="text-white text-[13px] font-semibold line-clamp-2 leading-tight group-hover:text-[#FF5722] transition-colors">{recVideo.title}</h5>
                 <span className="text-gray-400 text-xs mt-1">{recVideo.channelName}</span>
-                <div className="text-gray-400 text-xs flex items-center gap-1 mt-0.5">
-                  <span>{formatViews(recVideo.viewsCount)} lượt xem</span>                  <span>•</span>
+                <div className="text-gray-400 text-xs flex items-center gap-1 mt-0.5 flex-wrap">
+                  <span>{formatViews(recVideo.viewsCount)} lượt xem</span>
+                  <span>•</span>
                   <span>{formatDate(recVideo.createdAt)}</span>
                 </div>
               </div>
             </Link>
           ))}
         </div>
-      </div>
-      </div>
+        </div>{/* closes border-t wrapper */}
+      </div>{/* closes right column */}
+      </div>{/* closes flex container */}
     </div>
   );
 }

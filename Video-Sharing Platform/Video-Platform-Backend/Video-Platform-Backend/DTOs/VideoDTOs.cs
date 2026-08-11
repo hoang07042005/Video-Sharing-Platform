@@ -89,4 +89,28 @@ namespace Video_Platform_Backend.DTOs
         public string FullName { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
     }
+    public class VideoManageDTO
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string ThumbnailUrl { get; set; } = string.Empty;
+        public int Duration { get; set; }
+        public long ViewsCount { get; set; }
+        public int LikesCount { get; set; }
+        public int CommentsCount { get; set; }
+        public string Visibility { get; set; } = string.Empty;
+        public bool IsShort { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string ChannelName { get; set; } = string.Empty;
+    }
+
+    public class VideoUpdateDTO
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Visibility { get; set; } = string.Empty;
+        public string? ThumbnailUrl { get; set; }
+        public string? VideoUrl { get; set; }
+    }
 }

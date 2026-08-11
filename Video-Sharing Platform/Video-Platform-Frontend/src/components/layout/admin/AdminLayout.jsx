@@ -26,7 +26,7 @@ export default function AdminLayout() {
             <Users className="w-5 h-5" />
             <span className="font-medium">Người dùng</span>
           </Link>
-          <Link to="/admin" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+          <Link to="/admin/videos" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
             <Video className="w-5 h-5" />
             <span className="font-medium">Quản lý Video</span>
           </Link>

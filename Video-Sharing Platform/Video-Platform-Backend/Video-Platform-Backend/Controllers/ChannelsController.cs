@@ -77,6 +77,7 @@ namespace Video_Platform_Backend.Controllers
                 TotalViews = actualTotalViews,
                 ContactEmail = channel.ContactEmail,
                 Country = channel.Country,
+                SocialLinks = channel.SocialLinks,
                 CreatedAt = channel.CreatedAt ?? DateTime.UtcNow
             };
 
@@ -145,6 +146,7 @@ namespace Video_Platform_Backend.Controllers
             channel.BannerUrl = dto.BannerUrl;
             channel.ContactEmail = dto.ContactEmail;
             channel.Country = dto.Country;
+            channel.SocialLinks = dto.SocialLinks;
 
             // Update Profile fields
             if (channel.User.Profile != null)

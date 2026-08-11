@@ -49,7 +49,6 @@ export default function Sidebar({ isOpen }) {
       label: 'Thư viện',
       items: [
         { name: 'Video đã xem', icon: Clock, path: '/history' },
-        { name: 'Video của bạn', icon: User, path: '/my-videos' },
         { name: 'Video đã thích', icon: ThumbsUp, path: '/liked' },
         { name: 'Xem sau', icon: Library, path: '/saved' },
       ],

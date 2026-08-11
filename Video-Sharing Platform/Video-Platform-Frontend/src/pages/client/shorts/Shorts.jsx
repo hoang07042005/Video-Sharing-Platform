@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Heart, MessageCircle, Share2, Bookmark,
   Volume2, VolumeX, Play, Pause, Music2, ChevronDown, ChevronUp,
-  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical
+  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical, User, Send
 } from 'lucide-react';
 
 
@@ -24,10 +24,12 @@ const formatTime = (secs) => {
 };
 
 // ─── Short Item ───────────────────────────────────────────────────────────────
-function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onToggleComments, onCloseComments }) {
+function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onToggleComments, onCloseComments, onRequestLogin }) {
   const videoRef = useRef(null);
   const progressBarRef = useRef(null);
   const flashTimer = useRef(null);
+  const viewRecorded = useRef(false);
+  const navigate = useNavigate();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -60,6 +62,15 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
     if (!video) return;
     if (isActive) {
       video.play().then(() => setIsPlaying(true)).catch(() => {});
+      
+      // Record view history once when it becomes active
+      if (!viewRecorded.current) {
+        viewRecorded.current = true;
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        axios.post(`/api/videos/${short.id}/record-view`, {}, { headers })
+          .catch(console.error);
+      }
     } else {
       video.pause();
       video.currentTime = 0;
@@ -104,7 +115,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const handleLike = async (e) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
-    if (!token) return alert('Vui lòng đăng nhập!');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để thích video này');
     const newLikedState = !liked;
     setLiked(newLikedState);
     setLikeCount((c) => newLikedState ? c + 1 : c - 1);
@@ -118,7 +129,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const handleSave = async (e) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
-    if (!token) return alert('Vui lòng đăng nhập để lưu!');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để lưu video này');
     const newSavedState = !saved;
     setSaved(newSavedState);
     try {
@@ -131,7 +142,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const handleFollow = async (e) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
-    if (!token) return alert('Vui lòng đăng nhập!');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để đăng ký kênh này');
     const newFollowedState = !followed;
     setFollowed(newFollowedState);
     try {
@@ -144,7 +155,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const handlePostComment = async () => {
     if (!newComment.trim()) return;
     const token = localStorage.getItem('token');
-    if (!token) return alert('Vui lòng đăng nhập để bình luận!');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để bình luận');
     try {
       const res = await axios.post(`/api/videos/${short.id}/comments`, { content: newComment }, { headers: { Authorization: `Bearer ${token}` } });
       setComments([res.data, ...comments]);
@@ -194,7 +205,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
               </button>
             )}
           </div>
-          <h3 className="text-white text-sm font-bold leading-snug line-clamp-3">
+          <h3 className="text-white text-sm font-bold leading-snug line-clamp-2">
             {short.title}
           </h3>
           {short.description && (
@@ -322,7 +333,15 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
             </button>
 
             {/* Share */}
-            <button className="flex flex-col items-center gap-1 cursor-pointer group w-11">
+            <button 
+              className="flex flex-col items-center gap-1 cursor-pointer group w-11"
+              onClick={(e) => {
+                e.stopPropagation();
+                const token = localStorage.getItem('token');
+                if (!token) return onRequestLogin('Vui lòng đăng nhập để chia sẻ video này');
+                // share logic here if any
+              }}
+            >
               <div className="w-11 h-11 rounded-full bg-white/[0.07] group-hover:bg-white/15 flex items-center justify-center transition-all duration-200">
                 <Share2 className="w-5 h-5 text-white" />
               </div>
@@ -404,9 +423,17 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
 
         {/* Input area */}
         <div className="p-4 border-t border-white/10 flex gap-3 items-center bg-[#212121]">
-          <div className="w-8 h-8 rounded-full shrink-0 bg-green-700 flex items-center justify-center font-bold text-white text-sm">
-            You
-          </div>
+          {localStorage.getItem('token') ? (
+            <img 
+              src={localStorage.getItem('avatar') || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150"} 
+              alt="Avatar" 
+              className="w-8 h-8 rounded-full shrink-0 object-cover" 
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full shrink-0 bg-gray-700 flex items-center justify-center text-white">
+              <User className="w-5 h-5" />
+            </div>
+          )}
           <div className="flex-1 border-b border-white/20 pb-1.5 flex items-center gap-2 group focus-within:border-white transition-colors">
             <input 
               type="text" 
@@ -416,6 +443,11 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
               onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
               className="w-full bg-transparent text-white text-sm outline-none placeholder:text-white/50" 
             />
+            {newComment.trim() && (
+              <button onClick={handlePostComment} className="text-[#3ea6ff] hover:text-[#5eb7ff] transition-colors p-1">
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -430,8 +462,12 @@ export default function Shorts() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [globalShowComments, setGlobalShowComments] = useState(false);
+  const [loginModal, setLoginModal] = useState({ isOpen: false, message: '' });
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get('id');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchShorts = async () => {
@@ -439,7 +475,13 @@ export default function Shorts() {
         const token = localStorage.getItem('token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axios.get('/api/videos/shorts', { headers });
-        setShorts(res.data);
+        let data = res.data.map(short => {
+          if (!short.videoUrl || short.videoUrl.includes('example.com') || short.videoUrl.includes('commondatastorage')) {
+            short.videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+          }
+          return short;
+        });
+        setShorts(data);
       } catch (err) {
         console.error("Error fetching shorts", err);
       } finally {
@@ -449,10 +491,21 @@ export default function Shorts() {
     fetchShorts();
   }, []);
 
+  // Deep-link: scroll to specific short when ?id= is provided
+  useEffect(() => {
+    if (!targetId || shorts.length === 0) return;
+    const idx = shorts.findIndex(s => s.id === targetId);
+    if (idx !== -1) {
+      setTimeout(() => {
+        itemRefs.current[idx]?.scrollIntoView({ behavior: 'instant' });
+      }, 100);
+    }
+  }, [targetId, shorts]);
+
   // Detect active video via IntersectionObserver
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || shorts.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -464,9 +517,12 @@ export default function Shorts() {
       },
       { root: container, threshold: 0.6 }
     );
+    
+    // Clear and re-observe
     itemRefs.current.forEach((el) => el && observer.observe(el));
+    
     return () => observer.disconnect();
-  }, []);
+  }, [shorts]);
 
   const goNext = useCallback(() => {
     if (activeIndex < shorts.length - 1)
@@ -523,6 +579,7 @@ export default function Shorts() {
               showComments={globalShowComments}
               onToggleComments={() => setGlobalShowComments(prev => !prev)}
               onCloseComments={() => setGlobalShowComments(false)}
+              onRequestLogin={(msg) => setLoginModal({ isOpen: true, message: msg })}
             />
           </div>
         ))}
@@ -553,6 +610,30 @@ export default function Shorts() {
           <ChevronDown className="w-5 h-5" />
         </button>
       </div>
+      
+      {/* Login Modal */}
+      {loginModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#212121] rounded-2xl p-6 w-[90%] max-w-sm border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-white mb-2">Đăng nhập</h3>
+            <p className="text-white/70 text-sm mb-6">{loginModal.message}</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setLoginModal({ isOpen: false, message: '' })}
+                className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm font-medium bg-[#3ea6ff] hover:bg-[#5eb7ff] text-[#0f0f0f] rounded-full transition-colors cursor-pointer"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

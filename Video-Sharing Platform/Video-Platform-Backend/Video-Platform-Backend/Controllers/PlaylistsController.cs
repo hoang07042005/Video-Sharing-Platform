@@ -204,5 +204,95 @@ namespace Video_Platform_Backend.Controllers
 
             return Ok(new { message = "Đã xóa khỏi danh sách Xem sau." });
         }
+
+        // GET: api/playlists/my  – all playlists of current user
+        [HttpGet("my")]
+        [Authorize]
+        public async Task<IActionResult> GetMyPlaylists()
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return Ok(new List<PlaylistResponseDTO>());
+
+            var playlists = await _context.Playlists
+                .Include(p => p.PlaylistVideos)
+                    .ThenInclude(pv => pv.Video)
+                        .ThenInclude(v => v.VideoThumbnails)
+                .Where(p => p.ChannelId == userChannel.Id)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            var result = playlists.Select(p => new PlaylistResponseDTO
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description ?? "",
+                VideoCount = p.PlaylistVideos.Count,
+                ThumbnailUrl = p.PlaylistVideos
+                    .OrderBy(pv => pv.AddedAt)
+                    .Select(pv => pv.Video.VideoThumbnails.FirstOrDefault()!.ThumbnailUrl)
+                    .FirstOrDefault() ?? "",
+                CreatedAt = p.CreatedAt ?? DateTime.UtcNow
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        // GET: api/playlists/{id}/videos  – videos inside a playlist
+        [HttpGet("{id}/videos")]
+        [Authorize]
+        public async Task<IActionResult> GetPlaylistVideos(Guid id)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var playlist = await _context.Playlists
+                .Include(p => p.Channel)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (playlist == null) return NotFound(new { message = "Không tìm thấy playlist." });
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            bool isOwner = userChannel != null && playlist.ChannelId == userChannel.Id;
+            if (!isOwner && playlist.Visibility != "Public")
+                return Forbid();
+
+            var items = await _context.PlaylistVideos
+                .Include(pv => pv.Video)
+                    .ThenInclude(v => v.Channel)
+                        .ThenInclude(c => c.User)
+                            .ThenInclude(u => u.Profile)
+                .Include(pv => pv.Video)
+                    .ThenInclude(v => v.VideoThumbnails)
+                .Where(pv => pv.PlaylistId == id && pv.Video.Visibility == "Public")
+                .OrderBy(pv => pv.SortOrder)
+                .ToListAsync();
+
+            var result = items.Select(pv => new VideoResponseDTO
+            {
+                Id = pv.Video.Id,
+                Title = pv.Video.Title,
+                Description = pv.Video.Description ?? "",
+                ThumbnailUrl = pv.Video.VideoThumbnails.FirstOrDefault()?.ThumbnailUrl ?? "",
+                Duration = pv.Video.Duration ?? 0,
+                ViewsCount = pv.Video.ViewsCount ?? 0,
+                CreatedAt = pv.Video.CreatedAt ?? DateTime.UtcNow,
+                IsShort = pv.Video.IsShort ?? false,
+                ChannelId = pv.Video.ChannelId,
+                ChannelName = pv.Video.Channel.ChannelName,
+                ChannelHandle = pv.Video.Channel.Handle,
+                ChannelAvatarUrl = pv.Video.Channel.User?.Profile?.AvatarUrl ?? ""
+            }).ToList();
+
+            return Ok(new {
+                playlistId = playlist.Id,
+                title = playlist.Title,
+                description = playlist.Description ?? "",
+                videoCount = result.Count,
+                videos = result
+            });
+        }
     }
 }

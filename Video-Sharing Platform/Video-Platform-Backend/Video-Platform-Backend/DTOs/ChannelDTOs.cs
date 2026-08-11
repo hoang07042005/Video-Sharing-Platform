@@ -15,6 +15,7 @@ namespace Video_Platform_Backend.DTOs
         public long TotalViews { get; set; }
         public string? ContactEmail { get; set; }
         public string? Country { get; set; }
+        public string? SocialLinks { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
@@ -27,6 +28,7 @@ namespace Video_Platform_Backend.DTOs
         public string AvatarUrl { get; set; } = string.Empty;
         public string? ContactEmail { get; set; }
         public string? Country { get; set; }
+        public string? SocialLinks { get; set; }
     }
 
     public class ChannelCardDTO

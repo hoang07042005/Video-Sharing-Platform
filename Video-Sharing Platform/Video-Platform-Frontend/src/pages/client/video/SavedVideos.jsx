@@ -113,8 +113,8 @@ const SavedVideos = () => {
             <Clock className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-[26px] font-extrabold text-white mb-0.5 tracking-tight">Xem sau</h1>
-            <p className="text-gray-400 text-[13px]">Những video bạn muốn xem sau</p>
+            <h1 className="text-[26px] font-extrabold text-white mb-0.5 tracking-tight">Danh sách Xem sau</h1>
+            <p className="text-gray-400 text-[13px]">Lưu lại những nội dung yêu thích để thưởng thức bất cứ khi nào bạn có thời gian rảnh. Hoàn toàn riêng tư và tiện lợi.</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 ml-[68px] text-gray-500 text-[11px]">

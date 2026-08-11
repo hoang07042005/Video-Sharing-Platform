@@ -212,22 +212,44 @@ const LikedVideos = () => {
 
                     {/* Thumbnail */}
                     <Link
-                      to={isShort ? `/shorts` : `/watch/${video.id}`}
-                      className={`relative shrink-0 ${
-                        isShort ? 'w-[70px] md:w-[90px] aspect-[9/16]' : 'w-[130px] md:w-[170px] aspect-video'
-                      } rounded-xl overflow-hidden bg-[#212121]`}
+                      to={isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}
+                      className="relative shrink-0 w-[130px] md:w-[170px] aspect-video rounded-xl overflow-hidden bg-[#0a0a0a]"
                     >
-                      <img
-                        src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&auto=format&fit=crop&q=60'}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
-                        {isShort
-                          ? <span className="uppercase font-bold text-[#FF4E00]">Shorts</span>
-                          : formatDuration(video.duration)
-                        }
-                      </div>
+                      {isShort ? (
+                        <>
+                          {/* Blurred background layer */}
+                          <img
+                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop'}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* Centered portrait image */}
+                          <img
+                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop'}
+                            alt={video.title}
+                            className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* ⚡ SHORTS badge - bottom left */}
+                          <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/80 text-[#FF4E00] text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
+                            <Zap className="w-2.5 h-2.5 fill-[#FF4E00]" /> SHORTS
+                          </div>
+                          {/* Duration - bottom right */}
+                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
+                            {formatDuration(video.duration)}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <img
+                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&auto=format&fit=crop&q=60'}
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
+                            {formatDuration(video.duration)}
+                          </div>
+                        </>
+                      )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                         <Play className="w-7 h-7 text-white fill-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
@@ -235,7 +257,7 @@ const LikedVideos = () => {
 
                     {/* Info */}
                     <div className="flex-1 py-1 min-w-0">
-                      <Link to={isShort ? `/shorts` : `/watch/${video.id}`}>
+                      <Link to={isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}>
                         <h3 className="text-white font-medium text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[#FF4E00] transition-colors leading-snug">
                           {video.title}
                         </h3>

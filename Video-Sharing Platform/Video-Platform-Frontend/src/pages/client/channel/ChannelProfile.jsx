@@ -57,11 +57,14 @@ export default function ChannelProfile() {
       const profileRes = await axios.get(`/api/channels/${targetHandle}`);
       const channelData = profileRes.data;
       if (channelData && channelData.id) {
-        const savedLinks = localStorage.getItem(`channel_links_${channelData.id}`);
-        if (!channelData.links && savedLinks) {
+        if (channelData.socialLinks) {
           try {
-            channelData.links = JSON.parse(savedLinks);
-          } catch(e) {}
+            channelData.links = JSON.parse(channelData.socialLinks);
+          } catch(e) {
+            channelData.links = [];
+          }
+        } else {
+          channelData.links = [];
         }
       }
       setChannel(channelData);
@@ -145,14 +148,13 @@ export default function ChannelProfile() {
         contactEmail: field === 'contactEmail' ? value : channel.contactEmail,
         country: field === 'country' ? value : channel.country,
         bannerUrl: channel.bannerUrl,
-        avatarUrl: channel.avatarUrl
+        avatarUrl: channel.avatarUrl,
+        socialLinks: field === 'links' ? JSON.stringify(value) : (channel.socialLinks || null)
       };
-      if (field === 'links') {
-        localStorage.setItem(`channel_links_${channel.id}`, JSON.stringify(value));
-      } else {
-        await axios.put(`/api/channels/${channel.id}`, updatedData);
-      }
-      setChannel({ ...channel, [field]: value });
+
+      await axios.put(`/api/channels/${channel.id}`, updatedData);
+      
+      setChannel({ ...channel, [field]: value, socialLinks: updatedData.socialLinks });
       setIsEditing(false);
 
       if (field === 'handle' && value !== handle) {
@@ -289,8 +291,8 @@ export default function ChannelProfile() {
                         </button>
                       )}
                       {channelBtnSettings.showCommunityButton && (
-                        <button className="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors text-white">
-                          <Bell className="w-4 h-4" />
+                        <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
+                          Cộng đồng
                         </button>
                       )}
                     </>
@@ -310,11 +312,11 @@ export default function ChannelProfile() {
                 <span className="text-gray-400 text-xs text-center mt-1">Người đăng ký</span>
               </div>
               <div className="flex flex-col items-center min-w-[60px] md:min-w-[75px]">
-                <span className="text-white font-bold text-xl md:text-2xl">{formatViews(channel.totalViews)}</span>
+                <span className="text-white font-bold text-xl md:text-2xl">{formatViews(videos.reduce((sum, v) => sum + (v.viewsCount || 0), 0))}</span>
                 <span className="text-gray-400 text-xs mt-1">Lượt xem</span>
               </div>
               <div className="flex flex-col items-center min-w-[60px] md:min-w-[75px]">
-                <span className="text-white font-bold text-xl md:text-2xl">8</span>
+                <span className="text-white font-bold text-xl md:text-2xl">{playlists.length}</span>
                 <span className="text-gray-400 text-xs text-center mt-1">Danh sách phát</span>
               </div>
             </div>
@@ -556,13 +558,18 @@ export default function ChannelProfile() {
                     </div>
                     <div className="grid grid-cols-3 gap-3 relative flex-1">
                       {shortVideos.slice(0, 3).map(short => (
-                        <Link to={`/shorts`} key={short.id} className="relative aspect-[9/16] rounded-xl overflow-hidden group cursor-pointer shadow-md block">
-                          <img src={short.thumbnailUrl || 'https://via.placeholder.com/300x500'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <Link to={`/shorts?id=${short.id}`} key={short.id} className="relative aspect-[9/16] rounded-xl overflow-hidden group cursor-pointer shadow-md block bg-[#0a0a0a]">
+                          {/* Blurred background */}
+                          <img src={short.thumbnailUrl || 'https://via.placeholder.com/300x500'} alt=""
+                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 group-hover:scale-105 transition-transform duration-500" />
+                          {/* Centered portrait image */}
+                          <img src={short.thumbnailUrl || 'https://via.placeholder.com/300x500'} alt={short.title}
+                            className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                           <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                             <h4 className="text-white text-[11px] font-medium line-clamp-2 leading-snug">{short.title}</h4>
                           </div>
-                          <div className="absolute top-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white rounded">
-                            {formatDuration(short.duration)}
+                          <div className="absolute bottom-[2.5rem] right-1.5 bg-[#FF4E00] text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            Shorts
                           </div>
                         </Link>
                       ))}

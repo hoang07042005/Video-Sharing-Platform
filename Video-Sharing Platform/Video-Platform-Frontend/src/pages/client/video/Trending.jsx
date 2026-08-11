@@ -230,6 +230,9 @@ export default function Trending() {
                             <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[#FF5722] transition-colors leading-snug">
                               {video.title}
                             </h3>
+                            <h4 className="flex items-center gap-2 text-gray-500 text-xs md:text-sm">
+                             {video.description}
+                            </h4>
                             <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs md:text-sm">
                               <Link
                                 to={`/c/${video.channelHandle}`}

@@ -12,6 +12,10 @@ import Trending from './pages/client/video/Trending';
 import Settings from './pages/client/settings/Settings';
 import Shorts from './pages/client/shorts/Shorts';
 import LikedVideos from './pages/client/video/LikedVideos';
+import Explore from './pages/client/video/Explore';
+import Latest from './pages/client/video/Latest';
+import Playlists from './pages/client/video/Playlists';
+import VideoManagement from './pages/admin/video/VideoManagement';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -37,11 +41,15 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/liked" element={<LikedVideos />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/latest" element={<Latest />} />
+          <Route path="/playlists" element={<Playlists />} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="videos" element={<VideoManagement />} />
           </Route>
         </Route>
       </Routes>
