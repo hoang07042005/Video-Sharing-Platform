@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, TrendingUp, Flame, Eye, Clock } from 'lucide-react';
+import { Loader2, TrendingUp, Flame, Eye, Clock, MoreVertical, ChevronDown, LayoutList, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const formatDuration = (seconds) => {
@@ -13,8 +13,8 @@ const formatDuration = (seconds) => {
 
 const formatViews = (views) => {
   if (!views) return '0';
-  if (views >= 1000000) return `${(views / 1000000).toFixed(1)} Tr`;
-  if (views >= 1000) return `${(views / 1000).toFixed(1)} N`;
+  if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.', ',')} Tr`;
+  if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.', ',')} N`;
   return String(views);
 };
 
@@ -30,18 +30,21 @@ const getTimeAgo = (dateString) => {
 };
 
 const FILTERS = [
-  { key: 'all', label: 'Tất cả', icon: Flame },
-  { key: 'music', label: 'Âm nhạc', icon: null },
-  { key: 'gaming', label: 'Game', icon: null },
-  { key: 'film', label: 'Phim & TV', icon: null },
+  { key: 'all', label: 'Tất cả' },
+  { key: 'music', label: 'Âm nhạc' },
+  { key: 'gaming', label: 'Game' },
+  { key: 'film', label: 'Phim & TV' },
+  { key: 'tech', label: 'Công nghệ' },
+  { key: 'edu', label: 'Giáo dục' },
+  { key: 'life', label: 'Đời sống' },
 ];
 
 // Rank badge colors
 const getRankStyle = (rank) => {
-  if (rank === 1) return { bg: 'bg-yellow-500', text: 'text-black', label: '#1' };
-  if (rank === 2) return { bg: 'bg-gray-300', text: 'text-black', label: '#2' };
-  if (rank === 3) return { bg: 'bg-amber-600', text: 'text-white', label: '#3' };
-  return { bg: 'bg-[#2A2A2A]', text: 'text-gray-400', label: `#${rank}` };
+  if (rank === 1) return { bg: 'bg-[#FFC107]', text: 'text-white' };
+  if (rank === 2) return { bg: 'bg-white', text: 'text-[#1A1A1A]' };
+  if (rank === 3) return { bg: 'bg-[#FF9800]', text: 'text-white' };
+  return { bg: 'bg-transparent', text: 'text-gray-400' };
 };
 
 export default function Trending() {
@@ -94,13 +97,12 @@ export default function Trending() {
             <button
               key={f.key}
               onClick={() => setActiveFilter(f.key)}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
                 activeFilter === f.key
-                  ? 'bg-white text-black'
+                  ? 'bg-[#FF4E00] text-white'
                   : 'bg-[#272727] text-gray-300 hover:bg-[#3F3F3F]'
               }`}
             >
-              {f.icon && <f.icon className="w-3.5 h-3.5" />}
               {f.label}
             </button>
           ))}
@@ -114,9 +116,14 @@ export default function Trending() {
           <>
             {/* Top 3 Featured */}
             <div className="mb-10">
-              <div className="flex items-center gap-2 mb-5">
-                <TrendingUp className="w-5 h-5 text-[#FF5722]" />
-                <h2 className="text-lg font-bold text-white">Top thịnh hành</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-[#FF5722]" />
+                  <h2 className="text-lg font-bold text-white">Top thịnh hành</h2>
+                </div>
+                <button className="px-4 py-1.5 rounded-full bg-[#272727] hover:bg-[#3F3F3F] text-sm text-gray-300 font-medium transition-colors">
+                  Xem tất cả
+                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {videos.slice(0, 3).map((video, idx) => {
@@ -125,10 +132,10 @@ export default function Trending() {
                     <div
                       key={video.id}
                       onClick={() => navigate(`/watch/${video.id}`)}
-                      className="group cursor-pointer relative rounded-2xl overflow-hidden bg-[#161616] border border-white/5 hover:border-[#FF5722]/40 transition-all duration-300 hover:shadow-lg hover:shadow-orange-900/20"
+                      className="group cursor-pointer relative rounded-2xl overflow-hidden bg-[#1A1A1A] border border-white/5 hover:border-white/10 transition-all duration-300 flex flex-col"
                     >
                       {/* Thumbnail */}
-                      <div className="relative aspect-video overflow-hidden">
+                      <div className="relative aspect-video overflow-hidden shrink-0">
                         <img
                           src={video.thumbnailUrl || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
                           alt={video.title}
@@ -138,19 +145,23 @@ export default function Trending() {
                           {formatDuration(video.duration || 0)}
                         </div>
                         {/* Rank badge */}
-                        <div className={`absolute top-3 left-3 w-8 h-8 rounded-full ${rank.bg} ${rank.text} flex items-center justify-center text-xs font-extrabold shadow-md`}>
+                        <div className={`absolute top-3 left-3 w-7 h-7 rounded-full ${rank.bg} ${rank.text} flex items-center justify-center text-xs font-bold shadow-md`}>
                           {idx + 1}
                         </div>
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       </div>
 
                       {/* Info */}
-                      <div className="p-4">
-                        <h3 className="text-white font-semibold line-clamp-2 mb-2 group-hover:text-[#FF5722] transition-colors">
-                          {video.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-gray-400 text-xs">
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                        <div className="flex gap-2 justify-between items-start">
+                          <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 group-hover:text-[#FF5722] transition-colors leading-snug">
+                            {video.title}
+                          </h3>
+                          <button onClick={(e) => { e.stopPropagation(); }} className="text-gray-400 hover:text-white p-0.5 rounded-full hover:bg-white/10 shrink-0">
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs mt-2.5">
                           <Link
                             to={`/c/${video.channelHandle}`}
                             onClick={(e) => e.stopPropagation()}
@@ -158,10 +169,10 @@ export default function Trending() {
                           >
                             {video.channelName}
                           </Link>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" /> {formatViews(video.viewsCount)} lượt xem
-                          </span>
+                          <span className="text-[10px]">•</span>
+                          <span>{formatViews(video.viewsCount)} lượt xem</span>
+                          <span className="text-[10px]">•</span>
+                          <span>{getTimeAgo(video.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -173,60 +184,105 @@ export default function Trending() {
             {/* Rest of trending list */}
             {videos.length > 3 && (
               <div>
-                <div className="flex items-center gap-2 mb-5">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <h2 className="text-lg font-bold text-white">Đang thịnh hành</h2>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-[#FF5722]" />
+                    <h2 className="text-lg font-bold text-white">Đang thịnh hành</h2>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[#272727] hover:bg-[#3F3F3F] text-sm text-gray-300 font-medium transition-colors">
+                      Hôm nay <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <button className="p-1.5 hover:text-white transition-colors"><LayoutList className="w-5 h-5" /></button>
+                      <button className="p-1.5 hover:text-white transition-colors"><LayoutGrid className="w-5 h-5" /></button>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1 border-t border-white/5 pt-4">
                   {videos.slice(3).map((video, idx) => {
-                    const rank = getRankStyle(idx + 4);
                     return (
                       <div
                         key={video.id}
                         onClick={() => navigate(`/watch/${video.id}`)}
-                        className="group flex gap-4 items-center p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+                        className="group flex gap-4 md:gap-6 items-center p-3 rounded-2xl hover:bg-[#1A1A1A] border border-transparent hover:border-white/5 transition-all cursor-pointer"
                       >
                         {/* Rank number */}
-                        <div className={`w-8 text-center font-bold text-sm shrink-0 ${rank.text}`}>
+                        <div className="w-6 md:w-10 text-center text-gray-400 font-medium md:text-lg shrink-0">
                           {idx + 4}
                         </div>
 
                         {/* Thumbnail */}
-                        <div className="relative shrink-0 w-[120px] md:w-[180px] aspect-video rounded-xl overflow-hidden bg-[#212121]">
+                        <div className="relative shrink-0 w-[140px] md:w-[220px] aspect-video rounded-xl overflow-hidden bg-[#212121]">
                           <img
                             src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
                             alt={video.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                          <div className="absolute bottom-1 right-1 bg-black/80 px-1 py-0.5 rounded text-xs text-white">
+                          <div className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[10px] md:text-xs text-white font-medium">
                             {formatDuration(video.duration || 0)}
                           </div>
                         </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-medium text-sm md:text-base line-clamp-2 mb-1 group-hover:text-[#FF5722] transition-colors">
-                            {video.title}
-                          </h3>
-                          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-gray-400 text-xs md:text-sm">
-                            <Link
-                              to={`/c/${video.channelHandle}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="hover:text-white transition-colors"
-                            >
-                              {video.channelName}
-                            </Link>
-                            <span className="hidden md:inline">•</span>
-                            <span className="flex items-center gap-1">
-                              <Eye className="w-3.5 h-3.5" /> {formatViews(video.viewsCount)} lượt xem
-                            </span>
-                            <span className="hidden md:inline">•</span>
-                            <span>{getTimeAgo(video.createdAt)}</span>
+                        {/* Info Section */}
+                        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between min-w-0 py-1 gap-2 md:gap-4">
+                          <div className="flex flex-col min-w-0 pr-4">
+                            <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[#FF5722] transition-colors leading-snug">
+                              {video.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs md:text-sm">
+                              <Link
+                                to={`/c/${video.channelHandle}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="hover:text-white transition-colors"
+                              >
+                                {video.channelName}
+                              </Link>
+                              <span className="text-[10px]">•</span>
+                              <span>{formatViews(video.viewsCount)} lượt xem</span>
+                              <span className="text-[10px]">•</span>
+                              <span>{getTimeAgo(video.createdAt)}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Right Side Info (Desktop) */}
+                          <div className="hidden md:flex items-center gap-6 shrink-0 text-gray-400 group-hover:text-gray-300">
+                            <div className="flex items-center gap-1.5 text-sm">
+                              <Eye className="w-4 h-4" /> {formatViews(video.viewsCount)} lượt xem
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); }} className="hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors">
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
                           </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-center gap-2 mt-12 mb-8">
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FF4E00] text-white font-medium shadow-lg shadow-orange-900/20 cursor-pointer">
+                    1
+                  </button>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium transition-colors cursor-pointer">
+                    2
+                  </button>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium transition-colors cursor-pointer">
+                    3
+                  </button>
+                  <div className="w-8 h-8 flex items-center justify-center text-gray-500">
+                    ...
+                  </div>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium transition-colors cursor-pointer">
+                    10
+                  </button>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )}

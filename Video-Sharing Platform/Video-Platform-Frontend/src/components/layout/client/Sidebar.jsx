@@ -158,7 +158,8 @@ export default function Sidebar({ isOpen }) {
       </nav>
 
       {/* Footer: social + copyright */}
-      <div className="px-4 py-3 border-t border-white/8 shrink-0">
+      <div className="flex flex-col items-center px-4 py-3 border-t border-white/8 shrink-0">
+        {/* Các icon */}
         <div className="flex items-center gap-3 mb-2">
           {socialLinks.map(({ icon: Icon, href, label }) => (
             <a
@@ -171,7 +172,8 @@ export default function Sidebar({ isOpen }) {
             </a>
           ))}
         </div>
-        <p className="text-[10px] text-gray-600 leading-relaxed">
+        {/* Chữ bản quyền thêm text-center */}
+        <p className="text-center text-[10px] text-gray-600 leading-relaxed">
           © 2024 VideoSharing.<br />
           Mọi quyền được bảo lưu.
         </p>

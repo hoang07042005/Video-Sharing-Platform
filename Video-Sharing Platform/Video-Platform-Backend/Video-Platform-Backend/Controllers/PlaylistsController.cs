@@ -23,6 +23,40 @@ namespace Video_Platform_Backend.Controllers
             _context = context;
         }
 
+        public class PlaylistResponseDTO
+        {
+            public Guid Id { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public int VideoCount { get; set; }
+            public string ThumbnailUrl { get; set; } = string.Empty;
+            public DateTime CreatedAt { get; set; }
+        }
+
+        [HttpGet("channel/{channelId}")]
+        public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
+        {
+            var playlists = await _context.Playlists
+                .Where(p => p.ChannelId == channelId && p.Visibility == "Public")
+                .Select(p => new PlaylistResponseDTO
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Description = p.Description ?? "",
+                    VideoCount = p.PlaylistVideos.Count,
+                    ThumbnailUrl = p.PlaylistVideos
+                        .OrderBy(pv => pv.AddedAt)
+                        .Select(pv => pv.Video.VideoThumbnails.FirstOrDefault().ThumbnailUrl)
+                        .FirstOrDefault() ?? "https://via.placeholder.com/600x400?text=No+Thumbnail",
+                    CreatedAt = p.CreatedAt ?? DateTime.UtcNow
+                })
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return Ok(playlists);
+        }
+
+
         public class SaveVideoRequest
         {
             public Guid VideoId { get; set; }
@@ -121,30 +155,54 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(v => v.Channel)
                         .ThenInclude(c => c.User)
                             .ThenInclude(u => u.Profile)
+                .Include(pv => pv.Video)
+                    .ThenInclude(v => v.VideoThumbnails)
                 .Where(pv => pv.PlaylistId == watchLaterPlaylist.Id && pv.Video.Visibility == "Public")
                 .OrderByDescending(pv => pv.AddedAt)
-                .Select(pv => new VideoResponseDTO
-                {
-                    Id = pv.Video.Id,
-                    Title = pv.Video.Title,
-                    Description = pv.Video.Description ?? "",
-                    ThumbnailUrl = _context.VideoThumbnails
-                        .Where(t => t.VideoId == pv.Video.Id)
-                        .Select(t => t.ThumbnailUrl)
-                        .FirstOrDefault() ?? "",
-                    Duration = pv.Video.Duration ?? 0,
-                    ViewsCount = pv.Video.ViewsCount ?? 0,
-                    CreatedAt = pv.AddedAt ?? DateTime.UtcNow,
-                    ChannelId = pv.Video.ChannelId,
-                    ChannelName = pv.Video.Channel.ChannelName,
-                    ChannelHandle = pv.Video.Channel.Handle,
-                    ChannelAvatarUrl = pv.Video.Channel.User.Profile != null 
-                        ? (pv.Video.Channel.User.Profile.AvatarUrl ?? "") 
-                        : ""
-                })
                 .ToListAsync();
 
-            return Ok(savedVideos);
+            var result = savedVideos.Select(pv => new VideoResponseDTO
+            {
+                Id = pv.Video.Id,
+                Title = pv.Video.Title,
+                Description = pv.Video.Description ?? "",
+                ThumbnailUrl = pv.Video.VideoThumbnails.FirstOrDefault()?.ThumbnailUrl ?? "",
+                Duration = pv.Video.Duration ?? 0,
+                ViewsCount = pv.Video.ViewsCount ?? 0,
+                CreatedAt = pv.Video.CreatedAt ?? DateTime.UtcNow,
+                IsShort = pv.Video.IsShort ?? false,
+                ChannelId = pv.Video.ChannelId,
+                ChannelName = pv.Video.Channel.ChannelName,
+                ChannelHandle = pv.Video.Channel.Handle,
+                ChannelAvatarUrl = pv.Video.Channel.User.Profile?.AvatarUrl ?? ""
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        // DELETE: api/playlists/saved/{videoId}
+        [HttpDelete("saved/{videoId}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveSavedVideo(Guid videoId)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return NotFound();
+
+            var watchLaterPlaylist = await _context.Playlists
+                .FirstOrDefaultAsync(p => p.ChannelId == userChannel.Id && p.Title == "Xem sau");
+            if (watchLaterPlaylist == null) return NotFound();
+
+            var item = await _context.PlaylistVideos
+                .FirstOrDefaultAsync(pv => pv.PlaylistId == watchLaterPlaylist.Id && pv.VideoId == videoId);
+            if (item == null) return NotFound();
+
+            _context.PlaylistVideos.Remove(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã xóa khỏi danh sách Xem sau." });
         }
     }
 }

@@ -7,8 +7,9 @@ export default function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
 
+  const isShorts = location.pathname.startsWith('/shorts');
+
   useEffect(() => {
-    // Tự động đóng sidebar nếu đang ở trang xem video, mở lại nếu ở trang khác
     if (location.pathname.startsWith('/watch')) {
       setIsSidebarOpen(false);
     } else {
@@ -21,10 +22,14 @@ export default function MainLayout() {
       <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <Sidebar isOpen={isSidebarOpen} />
       <main className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'pl-56' : 'pl-0'}`}>
-        {/* The Outlet renders the matched child route */}
-        <div className="p-4">
+        {/* Shorts dùng layout riêng, không cần p-4 wrapper */}
+        {isShorts ? (
           <Outlet />
-        </div>
+        ) : (
+          <div className="p-4">
+            <Outlet />
+          </div>
+        )}
       </main>
     </div>
   );

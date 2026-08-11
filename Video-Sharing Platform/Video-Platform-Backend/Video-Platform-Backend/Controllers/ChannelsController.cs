@@ -22,7 +22,7 @@ namespace Video_Platform_Backend.Controllers
             _context = context;
         }
 
-        // GET: api/channels — Danh sách tất cả kênh (kênh nổi bật cho trang chủ)
+        // GET: api/channels â€” Danh sÃ¡ch táº¥t cáº£ kÃªnh (kÃªnh ná»•i báº­t cho trang chá»§)
         [HttpGet]
         public async Task<IActionResult> GetAllChannels([FromQuery] int limit = 10)
         {
@@ -55,12 +55,14 @@ namespace Video_Platform_Backend.Controllers
 
             if (channel == null)
             {
-                return NotFound(new { message = "Không tìm thấy kênh này" });
+                return NotFound(new { message = "KhÃ´ng tÃ¬m tháº¥y kÃªnh nÃ y" });
             }
 
             var followersCount = await _context.Followers.CountAsync(f => f.ChannelId == channel.Id);
             var followingCount = await _context.Followers.CountAsync(f => f.FollowerId == channel.UserId);
-            var actualTotalViews = await _context.Views.CountAsync(v => v.Video.ChannelId == channel.Id);
+            var actualTotalViews = await _context.Videos
+                .Where(v => v.ChannelId == channel.Id)
+                .SumAsync(v => v.ViewsCount ?? 0);
 
             var profileDto = new ChannelProfileDTO
             {
@@ -100,8 +102,9 @@ namespace Video_Platform_Backend.Controllers
                         .Select(t => t.ThumbnailUrl)
                         .FirstOrDefault() ?? "",
                     Duration = v.Duration ?? 0,
-                    ViewsCount = _context.Views.Count(view => view.VideoId == v.Id),
+                    ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                    IsShort = v.IsShort ?? false,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -126,13 +129,13 @@ namespace Video_Platform_Backend.Controllers
 
             if (channel == null)
             {
-                return NotFound(new { message = "Kênh không tồn tại" });
+                return NotFound(new { message = "KÃªnh khÃ´ng tá»“n táº¡i" });
             }
 
             // Check if handle is taken by another channel
             if (channel.Handle != dto.Handle && await _context.Channels.AnyAsync(c => c.Handle == dto.Handle))
             {
-                return BadRequest(new { message = "Tên định danh (Handle) đã tồn tại." });
+                return BadRequest(new { message = "TÃªn Ä‘á»‹nh danh (Handle) Ä‘Ã£ tá»“n táº¡i." });
             }
 
             // Update Channel fields
@@ -151,7 +154,7 @@ namespace Video_Platform_Backend.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Cập nhật thành công!" });
+            return Ok(new { message = "Cáº­p nháº­t thÃ nh cÃ´ng!" });
         }
 
         // POST: api/channels/{channelId}/follow
@@ -163,7 +166,7 @@ namespace Video_Platform_Backend.Controllers
             if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
 
             var channel = await _context.Channels.FindAsync(channelId);
-            if (channel == null) return NotFound(new { message = "Kênh không tồn tại." });
+            if (channel == null) return NotFound(new { message = "KÃªnh khÃ´ng tá»“n táº¡i." });
 
             var existingFollow = await _context.Followers.FirstOrDefaultAsync(f => f.FollowerId == userId && f.ChannelId == channelId);
             bool isSubscribed = false;
@@ -188,7 +191,7 @@ namespace Video_Platform_Backend.Controllers
             return Ok(new { 
                 isSubscribed = isSubscribed,
                 subscriberCount = currentFollowersCount,
-                message = isSubscribed ? "Đã đăng ký kênh." : "Đã hủy đăng ký."
+                message = isSubscribed ? "ÄÃ£ Ä‘Äƒng kÃ½ kÃªnh." : "ÄÃ£ há»§y Ä‘Äƒng kÃ½."
             });
         }
 

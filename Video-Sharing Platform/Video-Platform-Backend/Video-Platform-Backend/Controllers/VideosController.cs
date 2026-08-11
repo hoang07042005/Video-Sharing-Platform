@@ -57,8 +57,9 @@ namespace Video_Platform_Backend.Controllers
                         .Select(t => t.ThumbnailUrl)
                         .FirstOrDefault() ?? "",
                     Duration = v.Duration ?? 0,
-                    ViewsCount = _context.Views.Count(view => view.VideoId == v.Id),
+                    ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                    IsShort = v.IsShort ?? false,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -131,7 +132,7 @@ namespace Video_Platform_Backend.Controllers
             var subscriberCount = await _context.Followers.CountAsync(f => f.ChannelId == video.ChannelId);
             var likesCount = await _context.Likes.CountAsync(l => l.VideoId == video.Id && l.IsLike);
             var dislikesCount = await _context.Likes.CountAsync(l => l.VideoId == video.Id && !l.IsLike);
-            var actualViewsCount = await _context.Views.CountAsync(v => v.VideoId == video.Id);
+            var actualViewsCount = video.ViewsCount ?? 0;
 
             var dto = new VideoDetailDTO
             {
@@ -503,8 +504,9 @@ namespace Video_Platform_Backend.Controllers
                         .Select(t => t.ThumbnailUrl)
                         .FirstOrDefault() ?? "",
                     Duration = v.Duration ?? 0,
-                    ViewsCount = _context.Views.Count(view => view.VideoId == v.Id),
+                    ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                    IsShort = v.IsShort ?? false,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -515,6 +517,128 @@ namespace Video_Platform_Backend.Controllers
                 .ToListAsync();
 
             return Ok(videos);
+        }
+
+        // GET: api/videos/shorts
+        [HttpGet("shorts")]
+        public async Task<IActionResult> GetShorts()
+        {
+            var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                   ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            Guid? currentUserId = Guid.TryParse(currentUserIdStr, out var cid) ? cid : null;
+
+            var shorts = await _context.Videos
+                .Include(v => v.Channel)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Profile)
+                .Include(v => v.VideoFiles)
+                .Include(v => v.VideoThumbnails)
+                .Include(v => v.Likes)
+                .Where(v => v.Visibility == "Public" && v.IsShort == true)
+                .OrderByDescending(v => v.CreatedAt)
+                .Take(20)
+                .ToListAsync();
+
+            var response = new List<VideoDetailDTO>();
+
+            foreach (var video in shorts)
+            {
+                var subscriberCount = await _context.Followers.CountAsync(f => f.ChannelId == video.ChannelId);
+                var likesCount = video.Likes.Count(l => l.IsLike);
+                var dislikesCount = video.Likes.Count(l => !l.IsLike);
+
+                var isLiked = currentUserId.HasValue && video.Likes.Any(l => l.UserId == currentUserId.Value && l.IsLike);
+                var isDisliked = currentUserId.HasValue && video.Likes.Any(l => l.UserId == currentUserId.Value && !l.IsLike);
+                var isSubscribed = currentUserId.HasValue && await _context.Followers.AnyAsync(f => f.ChannelId == video.ChannelId && f.FollowerId == currentUserId.Value);
+                var isSaved = false;
+                if (currentUserId.HasValue)
+                {
+                    var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == currentUserId.Value);
+                    if (userChannel != null)
+                    {
+                        var watchLater = await _context.Playlists.FirstOrDefaultAsync(p => p.ChannelId == userChannel.Id && p.Title == "Xem sau");
+                        if (watchLater != null)
+                            isSaved = await _context.PlaylistVideos.AnyAsync(pv => pv.PlaylistId == watchLater.Id && pv.VideoId == video.Id);
+                    }
+                }
+
+                response.Add(new VideoDetailDTO
+                {
+                    Id = video.Id,
+                    Title = video.Title,
+                    Description = video.Description ?? "",
+                    ThumbnailUrl = video.VideoThumbnails.FirstOrDefault()?.ThumbnailUrl ?? "",
+                    VideoUrl = video.VideoFiles.FirstOrDefault()?.FileUrl ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                    Duration = video.Duration ?? 0,
+                    ViewsCount = video.ViewsCount ?? 0,
+                    LikesCount = likesCount,
+                    DislikesCount = dislikesCount,
+                    CommentsCount = video.CommentsCount ?? 0,
+                    CreatedAt = video.CreatedAt ?? DateTime.UtcNow,
+                    ChannelId = video.ChannelId,
+                    ChannelName = video.Channel.ChannelName,
+                    ChannelHandle = video.Channel.Handle,
+                    ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
+                    SubscriberCount = subscriberCount,
+                    OwnerUserId = video.Channel.UserId,
+                    IsLiked = isLiked,
+                    IsDisliked = isDisliked,
+                    IsSubscribed = isSubscribed,
+                    IsSaved = isSaved
+                });
+            }
+
+            var random = new Random();
+            response = response.OrderBy(x => random.Next()).ToList();
+            return Ok(response);
+        }
+
+        // GET: api/videos/liked
+        [HttpGet("liked")]
+        [Authorize]
+        public async Task<IActionResult> GetLikedVideos()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+                return Unauthorized();
+
+            var likedVideoIds = await _context.Likes
+                .Where(l => l.UserId == userId && l.IsLike)
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => l.VideoId)
+                .ToListAsync();
+
+            var videos = await _context.Videos
+                .Include(v => v.Channel)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Profile)
+                .Include(v => v.VideoThumbnails)
+                .Where(v => likedVideoIds.Contains(v.Id) && v.Visibility == "Public")
+                .ToListAsync();
+
+            var ordered = likedVideoIds
+                .Select(id => videos.FirstOrDefault(v => v.Id == id))
+                .Where(v => v != null)
+                .ToList();
+
+            var result = ordered.Select(v => new VideoResponseDTO
+            {
+                Id = v!.Id,
+                Title = v.Title,
+                Description = v.Description ?? "",
+                ThumbnailUrl = v.VideoThumbnails.FirstOrDefault()?.ThumbnailUrl ?? "",
+                Duration = v.Duration ?? 0,
+                ViewsCount = v.ViewsCount ?? 0,
+                CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                IsShort = v.IsShort ?? false,
+                ChannelId = v.ChannelId,
+                ChannelName = v.Channel.ChannelName,
+                ChannelHandle = v.Channel.Handle,
+                ChannelAvatarUrl = v.Channel.User?.Profile?.AvatarUrl ?? ""
+            }).ToList();
+
+            return Ok(result);
         }
     }
 }

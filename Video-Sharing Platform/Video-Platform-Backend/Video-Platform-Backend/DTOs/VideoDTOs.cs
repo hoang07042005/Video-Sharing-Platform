@@ -18,6 +18,8 @@ namespace Video_Platform_Backend.DTOs
         public int Duration { get; set; } // in seconds
         public long ViewsCount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsShort { get; set; }
+
         
         // Channel Info
         public Guid ChannelId { get; set; }
