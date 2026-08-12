@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Flame, Loader2, Crown, TrendingUp, Play, ChevronRight, Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, Bell, Star } from 'lucide-react';
+import { Flame, Loader2, Crown, TrendingUp, Play, ChevronRight, Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, Bell, Star, MoreVertical, Smartphone } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import CategoryFilter from '../../../components/home/CategoryFilter';
 import FeaturedHero from '../../../components/home/FeaturedHero';
@@ -38,13 +38,28 @@ function SmallVideoCard({ video }) {
       onClick={() => navigate(`/watch/${video.id}`)}
       className="group cursor-pointer flex flex-col gap-2"
     >
-      <div className="relative w-58 h-38 aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
-        <img
-          src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#1A1A1A]">
+        {video.isShort ? (
+          <>
+            <img
+              src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+              alt={video.title}
+              className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
+            />
+            <img
+              src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+              alt={video.title}
+              className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+            />
+          </>
+        ) : (
+          <img
+            src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+            alt={video.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        )}
+        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium z-20">
           {formatDuration(video.duration)}
         </span>
       </div>
@@ -82,20 +97,35 @@ function HorizontalVideoCard({ video }) {
   return (
     <div
       onClick={() => navigate(`/watch/${video.id}`)}
-      className="group cursor-pointer flex gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors"
+      className="group cursor-pointer flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
     >
-      <div className="relative w-66 h-40 aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] shrink-0">
-        <img
-          src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
+      <div className="relative w-50 h-30 aspect-video rounded-lg overflow-hidden bg-[#1A1A1A] shrink-0">
+        {video.isShort ? (
+          <>
+            <img
+              src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+              alt={video.title}
+              className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
+            />
+            <img
+              src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+              alt={video.title}
+              className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+            />
+          </>
+        ) : (
+          <img
+            src={video.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
+            alt={video.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        )}
+        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium z-20">
           {formatDuration(video.duration)}
         </span>
       </div>
       <div className="flex-1 min-w-0 py-1">
-        <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
+        <h3 className="text-white text-xs font-medium line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
           {video.title}
         </h3>
         <Link
@@ -113,6 +143,36 @@ function HorizontalVideoCard({ video }) {
             {video.description}
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Short Video Card (dùng trong Video ngắn) ────────────────────
+function ShortVideoCard({ short }) {
+  const navigate = useNavigate();
+  return (
+    <div
+      onClick={() => navigate(`/shorts?id=${short.id}`)}
+      className="group cursor-pointer flex flex-col gap-2"
+    >
+      <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-[#1A1A1A]">
+        <img
+          src={short.thumbnailUrl || 'https://via.placeholder.com/320x568?text=Short'}
+          alt={short.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+      <div className="flex gap-2 justify-between px-1">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-white text-sm font-semibold line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
+            {short.title}
+          </h3>
+          <p className="text-gray-400 text-xs mt-1">
+            {formatViews(short.viewsCount)} lượt xem
+          </p>
+        </div>
+        <button className="text-white/60 hover:text-white h-fit mt-1 cursor-pointer"><MoreVertical className="w-4 h-4" /></button>
       </div>
     </div>
   );
@@ -186,16 +246,23 @@ function SectionHeader({ icon: Icon, title, linkTo }) {
 }
 
 // ─── Right Sidebar ──────────────────────────────────────────────
-const quickCategories = [
-  { label: 'Âm nhạc', icon: Music, color: 'text-pink-400' },
-  { label: 'Công nghệ', icon: Monitor, color: 'text-blue-400' },
-  { label: 'Giải trí', icon: Tv, color: 'text-yellow-400' },
-  { label: 'Trò chơi', icon: Gamepad2, color: 'text-green-400' },
-  { label: 'Giáo dục', icon: BookOpen, color: 'text-purple-400' },
-  { label: 'Thể thao', icon: Dumbbell, color: 'text-orange-400' },
-];
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
 
 function RightSidebar() {
+  const [quickCategories, setQuickCategories] = useState([]);
+
+  useEffect(() => {
+    axios.get('/api/videos/categories')
+      .then(res => {
+        const mapped = res.data.slice(0, 6).map(cat => {
+          const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
+          return { label: cat.name, icon: config.icon, color: config.iconColor, bg: config.bg };
+        });
+        setQuickCategories(mapped);
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <aside className="w-72 shrink-0 flex flex-col gap-4">
       {/* Premium Card */}
@@ -279,17 +346,20 @@ function RightSidebar() {
 export default function Home() {
   const [videos, setVideos] = useState([]);
   const [channels, setChannels] = useState([]);
+  const [shorts, setShorts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [videosRes, channelsRes] = await Promise.allSettled([
+        const [videosRes, channelsRes, shortsRes] = await Promise.allSettled([
           axios.get('/api/videos'),
           axios.get('/api/channels'),
+          axios.get('/api/videos/shorts'),
         ]);
         if (videosRes.status === 'fulfilled') setVideos(videosRes.value.data);
         if (channelsRes.status === 'fulfilled') setChannels(channelsRes.value.data);
+        if (shortsRes.status === 'fulfilled') setShorts(shortsRes.value.data);
       } catch (err) {
         console.error('Failed to fetch home data:', err);
       } finally {
@@ -308,9 +378,9 @@ export default function Home() {
   }
 
   const featuredVideo = videos[0] ?? null;
-  const trending = videos.slice(0, 5);
-  const suggested = videos.slice(0, 5);
-  const latest = videos.slice(0, 6);
+  const trending = videos.slice(0, 10);
+  const suggested = videos.slice(0, 12);
+  const latest = videos.slice(0, 9);
 
   // Fallback channels nếu API chưa có
   const mockChannels = [
@@ -361,8 +431,22 @@ export default function Home() {
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
               <div className="grid grid-cols-5 gap-4">
-                {trending.map(v => (
+                {trending.slice(0, 10).map(v => (
                   <SmallVideoCard key={v.id} video={v} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Video ngắn */}
+          <section>
+            <SectionHeader icon={Smartphone} title="Video ngắn" linkTo="/shorts" />
+            {shorts.length === 0 ? (
+              <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
+            ) : (
+              <div className="grid grid-cols-6 gap-4">
+                {shorts.slice(0, 6).map(s => (
+                  <ShortVideoCard key={`short-${s.id}`} short={s} />
                 ))}
               </div>
             )}
@@ -374,7 +458,7 @@ export default function Home() {
             {suggested.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-6 gap-4">
                 {suggested.map(v => (
                   <SmallVideoCard key={`sug-${v.id}`} video={v} />
                 ))}
@@ -388,7 +472,7 @@ export default function Home() {
             {latest.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {latest.map(v => (
                   <HorizontalVideoCard key={`new-${v.id}`} video={v} />
                 ))}

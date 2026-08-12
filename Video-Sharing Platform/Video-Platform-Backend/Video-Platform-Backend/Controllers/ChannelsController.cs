@@ -106,6 +106,7 @@ namespace Video_Platform_Backend.Controllers
                     ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                     IsShort = v.IsShort ?? false,
+                    CategoryId = v.CategoryId,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,

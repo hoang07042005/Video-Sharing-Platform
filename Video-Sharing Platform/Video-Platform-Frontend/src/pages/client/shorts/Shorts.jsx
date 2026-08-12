@@ -44,6 +44,10 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [commentCount, setCommentCount] = useState(short.commentsCount || 0);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [expandedReplies, setExpandedReplies] = useState({});
 
   // Fetch comments when panel opens
   useEffect(() => {
@@ -166,6 +170,183 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
     }
   };
 
+  const getCurrentUserId = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || payload.nameid;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const isoString = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = Math.max(0, now - date);
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    if (diffMinutes < 1) return 'Vừa xong';
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleReply = async (commentId) => {
+    if (!replyText.trim()) return;
+    const token = localStorage.getItem('token');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để phản hồi!');
+    try {
+      const res = await axios.post(`/api/videos/comments/${commentId}/replies`, { content: replyText }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComments(comments.map(c => {
+        if (c.id === commentId) {
+          return { ...c, replies: [...(c.replies || []), res.data] };
+        }
+        return c;
+      }));
+      setReplyText('');
+      setReplyingTo(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCommentLike = async (commentId, isLike) => {
+    const token = localStorage.getItem('token');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để thích bình luận!');
+    try {
+      const res = await axios.post(`/api/videos/comments/${commentId}/like`, { isLike }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComments(comments.map(c => 
+        c.id === commentId ? { ...c, likesCount: res.data.likesCount } : c
+      ));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReplyLike = async (commentId, replyId, isLike) => {
+    const token = localStorage.getItem('token');
+    if (!token) return onRequestLogin('Vui lòng đăng nhập để thích phản hồi!');
+    try {
+      const res = await axios.post(`/api/videos/comments/replies/${replyId}/like`, { isLike }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComments(comments.map(c => {
+        if (c.id === commentId && c.replies) {
+          return { ...c, replies: c.replies.map(r => r.id === replyId ? { ...r, likesCount: res.data.likesCount } : r) };
+        }
+        return c;
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleReplies = (commentId) => {
+    setExpandedReplies(prev => ({ ...prev, [commentId]: !prev[commentId] }));
+  };
+
+  const renderReplyInput = (targetId, parentId) => {
+    if (replyingTo !== targetId) return null;
+    return (
+      <div className={`flex gap-3 mt-3 w-full ${targetId === parentId ? 'ml-11' : ''}`}>
+        <div className="w-8 h-8 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0 z-10">
+          <img src={localStorage.getItem('avatar') || "https://ui-avatars.com/api/?name=User"} alt="You" className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 flex flex-col gap-2 relative z-10">
+          <input 
+            type="text" 
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Viết phản hồi..." 
+            className="bg-transparent border-b border-gray-600 focus:border-white text-white text-sm outline-none pb-1 transition-colors"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { setReplyingTo(null); setReplyText(''); }} className="px-3 py-1 hover:bg-[#3F3F3F] rounded-full text-white text-[13px] font-medium transition-colors cursor-pointer">Hủy</button>
+            <button onClick={() => handleReply(parentId)} className={`px-3 py-1 rounded-full text-[#0F0F0F] text-[13px] font-medium transition-colors ${replyText.trim() ? 'bg-[#3EA6FF] hover:bg-[#65B8FF] cursor-pointer' : 'bg-[#272727] text-gray-500'}`}>Phản hồi</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const buildReplyTree = (replies) => {
+    if (!replies) return [];
+    const nodes = replies.map(r => ({ ...r, children: [] }));
+    const tree = [];
+    nodes.forEach(node => {
+      let parentFound = false;
+      const currentIndex = nodes.indexOf(node);
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (node.content.startsWith(`@${nodes[i].fullName} `)) {
+          nodes[i].children.push(node);
+          parentFound = true;
+          break;
+        }
+      }
+      if (!parentFound) tree.push(node);
+    });
+    return tree;
+  };
+
+  const renderReplyTree = (replies, commentId, level = 1) => {
+    if (!replies || replies.length === 0) return null;
+    const containerMargin = level === 1 ? "ml-[36px]" : "ml-[36px]";
+    return (
+      <div className={`relative mt-3 ${containerMargin} z-0`}>
+        <div className="flex flex-col gap-3">
+          {replies.map((reply, index) => {
+            const isLast = index === replies.length - 1;
+            return (
+              <div key={reply.id} className="flex flex-col relative z-10">
+                {index === 0 && <div className="absolute top-[-16px] left-[-20px] w-[1px] h-[16px] bg-[#FF5722] z-0"></div>}
+                <div className="absolute top-0 left-[-20px] w-[20px] h-[16px] border-l-[1.5px] border-b-[1.5px] border-[#FF5722] rounded-bl-[12px] z-0"></div>
+                {!isLast && <div className="absolute top-[16px] bottom-[-12px] left-[-20px] w-[1.5px] bg-[#FF5722] z-0"></div>}
+                <div className="absolute top-[13.5px] left-[-2.5px] w-[5px] h-[5px] rounded-full bg-[#FF5722] z-0"></div>
+                <div className="flex gap-2 relative z-10">
+                  <div className="w-7 h-7 rounded-full bg-[#2A2A2A] overflow-hidden shrink-0">
+                    <img src={reply.avatarUrl || "https://ui-avatars.com/api/?name=" + reply.fullName} alt={reply.fullName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-white/90 text-[12px]">{reply.fullName}</span>
+                      <span className="text-white/50 text-[11px]">{formatDate(reply.createdAt)}</span>
+                    </div>
+                    <p className="text-white text-[13px] mt-0.5">{reply.content}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <button onClick={() => handleReplyLike(commentId, reply.id, true)} className="flex items-center gap-1 group">
+                        <ThumbsUp className="w-[14px] h-[14px] text-white/70 group-hover:text-white transition-colors" />
+                        <span className="text-white/60 text-[11px]">{reply.likesCount > 0 ? reply.likesCount : ''}</span>
+                      </button>
+                      <button onClick={() => handleReplyLike(commentId, reply.id, false)} className="text-white/70 hover:text-white cursor-pointer">
+                        <ThumbsDown className="w-[14px] h-[14px]" />
+                      </button>
+                      <button onClick={() => { setReplyingTo(replyingTo === reply.id ? null : reply.id); setReplyText(`@${reply.fullName} `); }} className="text-white/70 hover:text-white text-[11px] font-medium cursor-pointer ml-1">
+                        Phản hồi
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {renderReplyInput(reply.id, commentId)}
+                {renderReplyTree(reply.children, commentId, level + 1)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const handleSeek = (e) => {
     e.stopPropagation();
     const bar = progressBarRef.current;
@@ -175,6 +356,10 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     video.currentTime = ratio * video.duration;
   };
+
+  const displayCommentCount = comments.length > 0 
+    ? comments.reduce((total, c) => total + 1 + (c.replies?.length || 0), 0) 
+    : commentCount;
 
   return (
     <div className={`w-full h-full flex items-center justify-center select-none relative overflow-hidden transition-all duration-300 ease-in-out ${showComments ? 'pr-[340px]' : 'pr-0'}`}>
@@ -209,9 +394,29 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
             {short.title}
           </h3>
           {short.description && (
-            <p className="text-white/55 text-xs leading-relaxed line-clamp-2">
-              {short.description}
-            </p>
+            <div className="relative">
+              <div 
+                id={`desc-${short.id}`}
+                className={`text-white/70 text-[10px] leading-relaxed whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : 'max-h-[220px] overflow-y-auto scrollbar-hide'}`}
+              >
+                {short.description}
+              </div>
+              {(short.description.length > 40 || short.description.includes('\n')) && (
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (isExpanded) {
+                      const descEl = document.getElementById(`desc-${short.id}`);
+                      if (descEl) descEl.scrollTop = 0;
+                    }
+                    setIsExpanded(!isExpanded); 
+                  }}
+                  className="block w-fit text-white/90 hover:text-white font-medium text-[12px] mt-1 hover:underline cursor-pointer relative z-10"
+                >
+                  {isExpanded ? 'Ẩn bớt' : 'Xem thêm'}
+                </button>
+              )}
+            </div>
           )}
           {/* Music */}
           <div className="flex items-center gap-1.5">
@@ -329,7 +534,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
                 ${showComments ? 'bg-white/20' : 'bg-white/[0.07] group-hover:bg-white/15'}`}>
                 <MessageCircle className={`w-5 h-5 transition-all duration-200 ${showComments ? 'text-white fill-white' : 'text-white'}`} />
               </div>
-              <span className="text-white/80 text-[11px] font-semibold">{formatCount(commentCount)}</span>
+              <span className="text-white/80 text-[11px] font-semibold">{formatCount(displayCommentCount)}</span>
             </button>
 
             {/* Share */}
@@ -373,7 +578,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
         {/* Header */}
         <div className="flex items-center justify-between p-4 pb-3">
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
-            Bình luận <span className="text-white/50 text-sm font-normal">{formatCount(commentCount)}</span>
+            Bình luận <span className="text-white/50 text-sm font-normal">{formatCount(displayCommentCount)}</span>
           </h3>
           <div className="flex items-center gap-3">
             <button className="text-white hover:text-white/70 transition-colors p-1"><ListFilter className="w-5 h-5" /></button>
@@ -386,37 +591,45 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
           {loadingComments ? (
             <div className="flex justify-center mt-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
           ) : comments.map((c) => (
-            <div key={c.id} className="flex gap-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                <img src={c.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.userId}`} className="w-full h-full object-cover bg-white/10" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white/90 text-[13px] font-semibold">{c.fullName || "User"}</span>
-                  <span className="text-white/50 text-[12px]">{formatTime(Math.floor((Date.now() - new Date(c.createdAt))/1000))}</span>
+            <div key={c.id} className="flex flex-col gap-2">
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                  <img src={c.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.userId}`} className="w-full h-full object-cover bg-white/10" />
                 </div>
-                <p className="text-white text-[14px] leading-relaxed mb-2 pr-4">{c.content}</p>
-                
-                <div className="flex items-center gap-4">
-                  <button className="flex items-center gap-1.5 group">
-                    <ThumbsUp className="w-[15px] h-[15px] text-white/70 group-hover:text-white transition-colors" />
-                    <span className="text-white/60 text-[12px]">{c.likesCount > 0 ? c.likesCount : ''}</span>
-                  </button>
-                  <button className="flex items-center gap-1 group">
-                    <ThumbsDown className="w-[15px] h-[15px] text-white/70 group-hover:text-white transition-colors" />
-                  </button>
-                  <button className="text-white/80 text-[12px] font-semibold hover:text-white ml-2 transition-colors">
-                    Phản hồi
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white/90 text-[13px] font-semibold">{c.fullName || "User"}</span>
+                    <span className="text-white/50 text-[12px]">{formatDate(c.createdAt)}</span>
+                  </div>
+                  <p className="text-white text-[14px] leading-relaxed mb-2 pr-4">{c.content}</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => handleCommentLike(c.id, true)} className="flex items-center gap-1.5 group">
+                      <ThumbsUp className="w-[15px] h-[15px] text-white/70 group-hover:text-white transition-colors" />
+                      <span className="text-white/60 text-[12px]">{c.likesCount > 0 ? c.likesCount : ''}</span>
+                    </button>
+                    <button onClick={() => handleCommentLike(c.id, false)} className="flex items-center gap-1 group">
+                      <ThumbsDown className="w-[15px] h-[15px] text-white/70 group-hover:text-white transition-colors" />
+                    </button>
+                    <button onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(''); }} className="text-white/80 text-[12px] font-semibold hover:text-white ml-2 transition-colors">
+                      Phản hồi
+                    </button>
+                  </div>
+                </div>
+                <button className="text-white/60 hover:text-white h-fit mt-1"><MoreVertical className="w-[18px] h-[18px]" /></button>
+              </div>
+              
+              {renderReplyInput(c.id, c.id)}
+              {expandedReplies[c.id] && renderReplyTree(buildReplyTree(c.replies), c.id)}
+
+              {c.replies?.length > 0 && (
+                <div className="mt-1 ml-[36px]">
+                  <button onClick={() => toggleReplies(c.id)} className="flex items-center gap-2 text-[#3ea6ff] hover:bg-[#3ea6ff]/10 px-3 py-1.5 rounded-full text-xs font-medium transition-colors w-fit cursor-pointer">
+                    {expandedReplies[c.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {expandedReplies[c.id] ? 'Ẩn phản hồi' : `${c.replies.length} phản hồi`}
                   </button>
                 </div>
-                {c.replies?.length > 0 && (
-                   <button className="flex items-center gap-2 mt-3 text-[#3ea6ff] hover:bg-[#3ea6ff]/10 px-3 py-1.5 rounded-full text-sm font-medium transition-colors w-fit -ml-3">
-                     <ChevronDown className="w-4 h-4" />
-                     {c.replies.length} phản hồi
-                   </button>
-                )}
-              </div>
-              <button className="text-white/60 hover:text-white h-fit mt-1"><MoreVertical className="w-[18px] h-[18px]" /></button>
+              )}
             </div>
           ))}
         </div>
@@ -586,7 +799,7 @@ export default function Shorts() {
       </div>
 
       {/* Navigation arrows — fixed, right side */}
-      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 pointer-events-none">
+      <div className={`fixed top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 pointer-events-none transition-all duration-300 ease-in-out ${globalShowComments ? 'right-[364px]' : 'right-6'}`}>
         <button
           onClick={goPrev}
           disabled={activeIndex === 0}

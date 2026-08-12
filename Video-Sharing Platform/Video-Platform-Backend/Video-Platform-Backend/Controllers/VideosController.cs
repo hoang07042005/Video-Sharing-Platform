@@ -816,6 +816,50 @@ namespace Video_Platform_Backend.Controllers
 
             return Ok(videos);
         }
+        // POST: api/videos
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> CreateVideo([FromBody] VideoCreateDTO dto)
+        {
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+            var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (channel == null) return BadRequest(new { message = "Bạn chưa có kênh." });
+
+            var videoId = Guid.NewGuid();
+            var video = new Video
+            {
+                Id = videoId,
+                ChannelId = channel.Id,
+                Title = dto.Title,
+                Description = dto.Description,
+                Visibility = dto.Visibility,
+                Duration = dto.Duration,
+                CategoryId = dto.CategoryId,
+                CreatedAt = DateTime.UtcNow,
+                ViewsCount = 0,
+                LikesCount = 0,
+                DislikesCount = 0,
+                CommentsCount = 0,
+                IsShort = dto.IsShort
+            };
+            _context.Videos.Add(video);
+
+            if (!string.IsNullOrWhiteSpace(dto.ThumbnailUrl))
+            {
+                _context.VideoThumbnails.Add(new VideoThumbnail { Id = Guid.NewGuid(), VideoId = videoId, ThumbnailUrl = dto.ThumbnailUrl });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(dto.VideoUrl))
+            {
+                _context.VideoFiles.Add(new VideoFile { Id = Guid.NewGuid(), VideoId = videoId, FileUrl = dto.VideoUrl, Resolution = "1080p" });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã tải video lên thành công.", videoId = videoId });
+        }
 
         // PUT: api/videos/{id} — Update video title/description/visibility
         [HttpPut("{id}")]
@@ -837,6 +881,9 @@ namespace Video_Platform_Backend.Controllers
             video.Title = dto.Title;
             video.Description = dto.Description;
             video.Visibility = dto.Visibility;
+            if (dto.Duration.HasValue) video.Duration = dto.Duration.Value;
+            if (dto.CategoryId.HasValue) video.CategoryId = dto.CategoryId.Value;
+            if (dto.IsShort.HasValue) video.IsShort = dto.IsShort.Value;
             video.UpdatedAt = DateTime.UtcNow;
 
             // Update thumbnail if provided

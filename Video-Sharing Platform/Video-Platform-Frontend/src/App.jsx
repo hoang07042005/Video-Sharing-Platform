@@ -15,6 +15,7 @@ import LikedVideos from './pages/client/video/LikedVideos';
 import Explore from './pages/client/video/Explore';
 import Latest from './pages/client/video/Latest';
 import Playlists from './pages/client/video/Playlists';
+import StudioUpload from './pages/client/studio/StudioUpload';
 import VideoManagement from './pages/admin/video/VideoManagement';
 
 import MainLayout from './components/layout/client/MainLayout';
@@ -44,6 +45,8 @@ function App() {
           <Route path="/explore" element={<Explore />} />
           <Route path="/latest" element={<Latest />} />
           <Route path="/playlists" element={<Playlists />} />
+          <Route path="/studio/upload" element={<StudioUpload />} />
+          <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>

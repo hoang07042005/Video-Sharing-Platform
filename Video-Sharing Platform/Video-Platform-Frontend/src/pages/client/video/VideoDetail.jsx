@@ -245,13 +245,19 @@ export default function VideoDetail() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    if (!dateString) return '';
+    const isoString = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+    const date = new Date(isoString);
     const now = new Date();
-    const diffHours = Math.floor((now - date) / (1000 * 60 * 60));
-    if (diffHours < 24) return `${diffHours} hours ago`;
+    const diffMs = Math.max(0, now - date);
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    if (diffMinutes < 1) return 'Vừa xong';
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (diffDays < 30) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const toggleReplies = (commentId) => {
@@ -318,16 +324,12 @@ export default function VideoDetail() {
     
     nodes.forEach(node => {
       let parentFound = false;
-      const match = node.content.match(/^@(.+?)\s/);
-      if (match) {
-        const parentName = match[1];
-        const currentIndex = nodes.indexOf(node);
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          if (nodes[i].fullName === parentName) {
-            nodes[i].children.push(node);
-            parentFound = true;
-            break;
-          }
+      const currentIndex = nodes.indexOf(node);
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (node.content.startsWith(`@${nodes[i].fullName} `)) {
+          nodes[i].children.push(node);
+          parentFound = true;
+          break;
         }
       }
       if (!parentFound) {

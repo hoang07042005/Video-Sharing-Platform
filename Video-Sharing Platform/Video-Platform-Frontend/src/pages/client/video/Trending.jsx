@@ -38,7 +38,6 @@ const FILTERS = [
   { key: 'edu', label: 'Giáo dục' },
   { key: 'life', label: 'Đời sống' },
 ];
-
 // Rank badge colors
 const getRankStyle = (rank) => {
   if (rank === 1) return { bg: 'bg-[#FFC107]', text: 'text-white' };
@@ -49,6 +48,7 @@ const getRankStyle = (rank) => {
 
 export default function Trending() {
   const [videos, setVideos] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
@@ -57,11 +57,15 @@ export default function Trending() {
     const fetchTrending = async () => {
       setLoading(true);
       try {
-        const res = await axios.get('/api/videos');
+        const [videosRes, catsRes] = await Promise.all([
+          axios.get('/api/videos'),
+          axios.get('/api/videos/categories')
+        ]);
         // Already sorted by viewsCount desc from backend
-        setVideos(res.data);
+        setVideos(videosRes.data);
+        setDbCategories(catsRes.data);
       } catch (err) {
-        console.error('Lỗi khi lấy video thịnh hành:', err);
+        console.error('Lỗi khi lấy dữ liệu:', err);
       } finally {
         setLoading(false);
       }
@@ -76,6 +80,12 @@ export default function Trending() {
       </div>
     );
   }
+
+  const FILTERS = [{ key: 'all', label: 'Tất cả' }, ...dbCategories.map(cat => ({ key: cat.name, label: cat.name }))];
+  const displayedVideos = activeFilter === 'all' ? videos : videos.filter(v => {
+    const cat = dbCategories.find(c => c.id === v.categoryId);
+    return cat?.name === activeFilter;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
@@ -110,7 +120,7 @@ export default function Trending() {
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8">
-        {videos.length === 0 ? (
+        {displayedVideos.length === 0 ? (
           <div className="text-center py-20 text-gray-400">Chưa có video nào.</div>
         ) : (
           <>
@@ -126,7 +136,7 @@ export default function Trending() {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {videos.slice(0, 3).map((video, idx) => {
+                {displayedVideos.slice(0, 3).map((video, idx) => {
                   const rank = getRankStyle(idx + 1);
                   return (
                     <div
@@ -182,7 +192,7 @@ export default function Trending() {
             </div>
 
             {/* Rest of trending list */}
-            {videos.length > 3 && (
+            {displayedVideos.length > 3 && (
               <div>
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2">
@@ -200,7 +210,7 @@ export default function Trending() {
                   </div>
                 </div>
                 <div className="space-y-1 border-t border-white/5 pt-4">
-                  {videos.slice(3).map((video, idx) => {
+                  {displayedVideos.slice(3).map((video, idx) => {
                     return (
                       <div
                         key={video.id}

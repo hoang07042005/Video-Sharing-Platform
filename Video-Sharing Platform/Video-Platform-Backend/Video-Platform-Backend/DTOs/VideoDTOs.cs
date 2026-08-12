@@ -19,8 +19,7 @@ namespace Video_Platform_Backend.DTOs
         public long ViewsCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsShort { get; set; }
-
-        
+        public int? CategoryId { get; set; }
         // Channel Info
         public Guid ChannelId { get; set; }
         public string ChannelName { get; set; } = string.Empty;
@@ -112,5 +111,20 @@ namespace Video_Platform_Backend.DTOs
         public string Visibility { get; set; } = string.Empty;
         public string? ThumbnailUrl { get; set; }
         public string? VideoUrl { get; set; }
+        public int? Duration { get; set; }
+        public int? CategoryId { get; set; }
+        public bool? IsShort { get; set; }
+    }
+
+    public class VideoCreateDTO
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Visibility { get; set; } = "Public";
+        public string? ThumbnailUrl { get; set; }
+        public string? VideoUrl { get; set; }
+        public int Duration { get; set; } = 0;
+        public int? CategoryId { get; set; }
+        public bool IsShort { get; set; }
     }
 }

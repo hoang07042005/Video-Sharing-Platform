@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, LayoutGrid, Flame, ChevronRight } from 'lucide-react';
+import { Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, LayoutGrid, Flame, ChevronRight, Clapperboard, Coffee } from 'lucide-react';
 
 // Map danh mục → icon + màu nền icon box
-const CATEGORY_ICONS = {
+export const CATEGORY_ICONS = {
   'Tất cả':    { icon: Flame,      iconColor: 'text-white'     },
   'Âm nhạc':   { icon: Music,      iconColor: 'text-pink-300'     },
   'Công nghệ': { icon: Monitor,    iconColor: 'text-blue-300'     },
@@ -11,9 +11,12 @@ const CATEGORY_ICONS = {
   'Trò chơi':  { icon: Gamepad2,   iconColor: 'text-green-300'     },
   'Giáo dục':  { icon: BookOpen,   iconColor: 'text-purple-300'     },
   'Thể thao':  { icon: Dumbbell,   iconColor: 'text-orange-300'     },
+  'Game':      { icon: Gamepad2,   iconColor: 'text-green-300'     },
+  'Phim & TV': { icon: Clapperboard, iconColor: 'text-yellow-300'     },
+  'Đời sống':  { icon: Coffee,     iconColor: 'text-orange-300'     },
 };
 
-const DEFAULT = { icon: LayoutGrid, iconColor: 'text-gray-400', bg: 'bg-white/10' };
+export const DEFAULT_CATEGORY_ICON = { icon: LayoutGrid, iconColor: 'text-gray-400', bg: 'bg-white/10' };
 
 export default function CategoryFilter({ onSelect }) {
   const [categories, setCategories] = useState([]);
@@ -56,7 +59,7 @@ export default function CategoryFilter({ onSelect }) {
         >
           {categories.map((category) => {
             const isActive = activeCategory === category.id;
-            const { icon: Icon, iconColor, bg } = CATEGORY_ICONS[category.name] ?? DEFAULT;
+            const { icon: Icon, iconColor, bg } = CATEGORY_ICONS[category.name] ?? DEFAULT_CATEGORY_ICON;
 
             return (
               <button

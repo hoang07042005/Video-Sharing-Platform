@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Compass, Zap, Music, Gamepad2, Film, BookOpen,
@@ -147,6 +148,7 @@ export default function Explore() {
   const [latest, setLatest] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [featuredChannels, setFeaturedChannels] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   
   const activeCategory = searchParams.get('category') || 'all';
@@ -155,7 +157,7 @@ export default function Explore() {
   
   const catScrollRef = useRef(null);
 
-  // Fetch trending + latest on mount
+  // Fetch trending + latest + categories on mount
   useEffect(() => {
     axios.get('/api/videos/explore?sort=views&limit=8')
       .then(res => setTrending(res.data.slice(0, 4)))
@@ -165,6 +167,9 @@ export default function Explore() {
       .catch(console.error);
     axios.get('/api/channels?limit=5')
       .then(res => setFeaturedChannels(res.data))
+      .catch(console.error);
+    axios.get('/api/videos/categories')
+      .then(res => setDbCategories(res.data))
       .catch(console.error);
   }, []);
 
@@ -288,7 +293,10 @@ export default function Explore() {
                 className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {CATEGORIES.map(cat => (
+                {[{ key: 'all', label: 'Tất cả', icon: Flame, color: 'text-white' }, ...dbCategories.map(cat => {
+                  const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
+                  return { key: cat.name, label: cat.name, icon: config.icon, color: config.iconColor };
+                })].map(cat => (
                   <CatIcon 
                     key={cat.key} 
                     cat={cat} 
@@ -471,8 +479,11 @@ export default function Explore() {
           <h2 className="text-[17px] font-bold text-white tracking-wide">Khám phá theo cảm hứng</h2>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {INSPIRATIONS.map((item, idx) => (
-            <div key={idx} className={`shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br ${item.bg} border border-white/5 flex items-center gap-4 hover:border-white/20 hover:-translate-y-1 transition-all cursor-pointer group shadow-lg`}>
+          {dbCategories.slice(0, 6).map((cat, idx) => {
+            const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
+            const item = { label: cat.name, sub: cat.description || 'Khám phá video mới', icon: config.icon, bg: config.bg?.replace('bg-', 'from-').replace('/10', '/40') || 'from-gray-900/40', color: config.iconColor };
+            return (
+            <div key={idx} onClick={() => { setSearchParams({ category: cat.name }); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br ${item.bg} to-[#0A0A0A] border border-white/5 flex items-center gap-4 hover:border-white/20 hover:-translate-y-1 transition-all cursor-pointer group shadow-lg`}>
               <div className={`w-12 h-12 shrink-0 rounded-full bg-white/5 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
                 <item.icon className="w-6 h-6" />
               </div>
@@ -481,7 +492,8 @@ export default function Explore() {
                 <p className="text-[11px] text-gray-400 line-clamp-1">{item.sub}</p>
               </div>
             </div>
-          ))}
+            );
+          })}
           <div className="shrink-0 w-12 flex items-center justify-center">
             <button className="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center hover:bg-[#2A2A2A] text-gray-400 transition-colors border border-white/10 shadow-lg">
               <ChevronRight className="w-5 h-5" />
