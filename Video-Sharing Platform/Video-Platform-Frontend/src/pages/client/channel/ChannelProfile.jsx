@@ -1344,8 +1344,36 @@ export default function ChannelProfile() {
 
           if (activeTab === 'playlists') {
             return (
-              <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
-                Kênh này chưa có danh sách phát nào.
+              <div className="w-full">
+                {playlists.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-6">
+                    {playlists.map(playlist => (
+                      <Link to={`/playlist?list=${playlist.id}`} key={playlist.id} className="group block">
+                        <div className="relative aspect-video rounded-xl overflow-hidden mb-3 shadow-lg">
+                          <img 
+                            src={playlist.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=640&h=360'} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                            alt={playlist.title}
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white font-medium text-sm bg-black/60 px-3 py-1.5 rounded-full flex items-center gap-2">
+                              <PlaySquare className="w-4 h-4" /> Phát tất cả
+                            </span>
+                          </div>
+                          <div className="absolute right-0 bottom-0 bg-black/80 px-2 py-1 text-xs text-white rounded-tl-lg font-medium">
+                            {playlist.videoCount} video
+                          </div>
+                        </div>
+                        <h4 className="text-white font-semibold text-sm line-clamp-2 leading-snug group-hover:text-[#FF4E00] transition-colors">{playlist.title}</h4>
+                        <p className="text-gray-400 text-xs mt-1.5 group-hover:text-gray-300 transition-colors">Xem toàn bộ danh sách phát</p>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
+                    Kênh này chưa có danh sách phát nào.
+                  </div>
+                )}
               </div>
             );
           }

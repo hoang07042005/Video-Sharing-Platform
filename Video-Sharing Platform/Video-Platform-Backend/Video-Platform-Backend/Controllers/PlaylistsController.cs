@@ -12,6 +12,35 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Video_Platform_Backend.Controllers
 {
+    // DTOs
+    public class PlaylistResponseDTO
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int VideoCount { get; set; }
+        public string ThumbnailUrl { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public bool ContainsVideo { get; set; }
+        public string? Visibility { get; set; }
+    }
+
+    public class SaveVideoRequest
+    {
+        public Guid VideoId { get; set; }
+    }
+
+    public class CreatePlaylistRequest
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Visibility { get; set; } = "Public";
+    }
+
+    public class ToggleVideoRequest
+    {
+        public Guid VideoId { get; set; }
+    }
+
     [Route("api/[controller]")]
     [ApiController]
     public class PlaylistsController : ControllerBase
@@ -21,16 +50,6 @@ namespace Video_Platform_Backend.Controllers
         public PlaylistsController(ApplicationDbContext context)
         {
             _context = context;
-        }
-
-        public class PlaylistResponseDTO
-        {
-            public Guid Id { get; set; }
-            public string Title { get; set; } = string.Empty;
-            public string Description { get; set; } = string.Empty;
-            public int VideoCount { get; set; }
-            public string ThumbnailUrl { get; set; } = string.Empty;
-            public DateTime CreatedAt { get; set; }
         }
 
         [HttpGet("channel/{channelId}")]
@@ -56,11 +75,6 @@ namespace Video_Platform_Backend.Controllers
             return Ok(playlists);
         }
 
-
-        public class SaveVideoRequest
-        {
-            public Guid VideoId { get; set; }
-        }
 
         // POST: api/playlists/save
         [HttpPost("save")]
@@ -208,13 +222,30 @@ namespace Video_Platform_Backend.Controllers
         // GET: api/playlists/my  – all playlists of current user
         [HttpGet("my")]
         [Authorize]
-        public async Task<IActionResult> GetMyPlaylists()
+        public async Task<IActionResult> GetMyPlaylists([FromQuery] Guid? videoId)
         {
             var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
 
             var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
             if (userChannel == null) return Ok(new List<PlaylistResponseDTO>());
+
+            // Ensure "Xem sau" playlist exists for this channel
+            var watchLaterPlaylist = await _context.Playlists.FirstOrDefaultAsync(p => p.ChannelId == userChannel.Id && p.Title == "Xem sau");
+            if (watchLaterPlaylist == null)
+            {
+                watchLaterPlaylist = new Playlist
+                {
+                    Id = Guid.NewGuid(),
+                    ChannelId = userChannel.Id,
+                    Title = "Xem sau",
+                    Description = "Danh sách Xem sau của bạn",
+                    Visibility = "Private",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Playlists.Add(watchLaterPlaylist);
+                await _context.SaveChangesAsync();
+            }
 
             var playlists = await _context.Playlists
                 .Include(p => p.PlaylistVideos)
@@ -234,10 +265,107 @@ namespace Video_Platform_Backend.Controllers
                     .OrderBy(pv => pv.AddedAt)
                     .Select(pv => pv.Video.VideoThumbnails.FirstOrDefault()!.ThumbnailUrl)
                     .FirstOrDefault() ?? "",
-                CreatedAt = p.CreatedAt ?? DateTime.UtcNow
+                CreatedAt = p.CreatedAt ?? DateTime.UtcNow,
+                ContainsVideo = videoId.HasValue ? p.PlaylistVideos.Any(pv => pv.VideoId == videoId.Value) : false
             }).ToList();
 
+            // Bring "Xem sau" to the top
+            var watchLaterItem = result.FirstOrDefault(r => r.Title == "Xem sau");
+            if (watchLaterItem != null)
+            {
+                result.Remove(watchLaterItem);
+                result.Insert(0, watchLaterItem);
+            }
+
             return Ok(result);
+        }
+
+        // POST: api/playlists/create
+        [HttpPost("create")]
+        [Authorize]
+        public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistRequest request)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return BadRequest(new { message = "User does not have a channel." });
+
+            if (string.IsNullOrWhiteSpace(request.Title)) return BadRequest(new { message = "Title is required." });
+
+            var playlist = new Playlist
+            {
+                Id = Guid.NewGuid(),
+                ChannelId = userChannel.Id,
+                Title = request.Title,
+                Visibility = request.Visibility,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Playlists.Add(playlist);
+            await _context.SaveChangesAsync();
+
+            return Ok(new PlaylistResponseDTO
+            {
+                Id = playlist.Id,
+                Title = playlist.Title,
+                Description = playlist.Description ?? "",
+                VideoCount = 0,
+                ThumbnailUrl = "",
+                CreatedAt = playlist.CreatedAt ?? DateTime.UtcNow,
+                ContainsVideo = false
+            });
+        }
+
+        // POST: api/playlists/{playlistId}/toggle-video
+        [HttpPost("{playlistId}/toggle-video")]
+        [Authorize]
+        public async Task<IActionResult> ToggleVideoInPlaylist(Guid playlistId, [FromBody] ToggleVideoRequest request)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return BadRequest(new { message = "User does not have a channel." });
+
+            var playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == playlistId && p.ChannelId == userChannel.Id);
+            if (playlist == null) return NotFound(new { message = "Playlist not found or you don't have access." });
+
+            var video = await _context.Videos.FindAsync(request.VideoId);
+            if (video == null) return NotFound(new { message = "Video not found." });
+
+            var item = await _context.PlaylistVideos
+                .FirstOrDefaultAsync(pv => pv.PlaylistId == playlistId && pv.VideoId == request.VideoId);
+
+            bool isAdded = false;
+            if (item != null)
+            {
+                _context.PlaylistVideos.Remove(item);
+            }
+            else
+            {
+                // Calculate nextOrder client-side to avoid EF Core translation issue
+                var existingOrders = await _context.PlaylistVideos
+                    .Where(pv => pv.PlaylistId == playlistId)
+                    .Select(pv => pv.SortOrder)
+                    .ToListAsync();
+
+                int nextOrder = existingOrders.Count > 0 ? (existingOrders.Max(x => x ?? 0) + 1) : 1;
+
+                var newItem = new PlaylistVideo
+                {
+                    PlaylistId = playlistId,
+                    VideoId = request.VideoId,
+                    AddedAt = DateTime.UtcNow,
+                    SortOrder = nextOrder
+                };
+                _context.PlaylistVideos.Add(newItem);
+                isAdded = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { isSaved = isAdded });
         }
 
         // GET: api/playlists/{id}/videos  – videos inside a playlist

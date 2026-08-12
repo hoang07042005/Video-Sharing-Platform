@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
+import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
 
 export default function VideoDetail() {
   const { id } = useParams();
@@ -28,6 +29,7 @@ export default function VideoDetail() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [showMoreActions, setShowMoreActions] = useState(false);
 
@@ -498,10 +500,24 @@ export default function VideoDetail() {
                 <span className="text-sm font-medium">Chia sẻ</span>
               </button>
 
-              <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-[#272727] hover:bg-[#3F3F3F] transition-colors rounded-full text-white cursor-pointer">
-                <ListPlus className={`w-5 h-5 ${isSaved ? 'text-blue-500' : ''}`} />
-                <span className={`text-sm font-medium ${isSaved ? 'text-blue-500' : ''}`}>{isSaved ? 'Đã lưu' : 'Lưu'}</span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (!requireAuth('Vui lòng đăng nhập để lưu video!')) return;
+                    setShowSaveDropdown(prev => !prev);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 bg-[#272727] hover:bg-[#3F3F3F] transition-colors rounded-full text-white cursor-pointer ${showSaveDropdown ? 'ring-2 ring-[#FF4E00]/50' : ''}`}
+                >
+                  <ListPlus className="w-5 h-5" />
+                  <span className="text-sm font-medium">Lưu</span>
+                </button>
+                {showSaveDropdown && (
+                  <SaveToPlaylistDropdown
+                    videoId={id}
+                    onClose={() => setShowSaveDropdown(false)}
+                  />
+                )}
+              </div>
               <div className="relative">
                 <button 
                   onClick={() => setShowMoreActions(!showMoreActions)}
