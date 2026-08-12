@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Loader2, Video, Zap, Eye, ThumbsUp, MessageSquare,
   Pencil, Trash2, Globe, Lock, Clock, Check, X,
-  MoreVertical, Search, Filter, ChevronDown, Image, Link2
+  MoreVertical, Search, Filter, ChevronDown, Image, Link2,
+  Plus, PlaySquare, FileVideo, Clock as ClockIcon, Ban, Calendar, LayoutGrid, List
 } from 'lucide-react';
 
 const VideoManagement = () => {
@@ -15,7 +16,14 @@ const VideoManagement = () => {
   const [activeTab, setActiveTab] = useState('videos');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('all');
-  const [showFilter, setShowFilter] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, filterVisibility]);
 
   const [editingVideo, setEditingVideo] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -139,8 +147,7 @@ const VideoManagement = () => {
 
   const formatViews = (n) => {
     if (!n) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + ' Tr';
-    if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + ' N';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'K';
     return n.toString();
   };
 
@@ -151,19 +158,34 @@ const VideoManagement = () => {
     return `${m}:${sec.toString().padStart(2,'0')}`;
   };
 
-  const formatDate = (d) => new Date(d).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const formatDateString = (d) => {
+    const date = new Date(d);
+    return `${date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })}\n${date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' })}`;
+  };
 
   const normalVideos = videos.filter(v => !v.isShort);
   const shortVideos = videos.filter(v => v.isShort);
   const displayed = (activeTab === 'videos' ? normalVideos : shortVideos).filter(v => {
-    const matchSearch = v.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchFilter = filterVisibility === 'all' || v.visibility === filterVisibility;
-    return matchSearch && matchFilter;
+    const matchesSearch = v.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesVis = filterVisibility === 'all' || v.visibility === filterVisibility;
+    return matchesSearch && matchesVis;
   });
+
+  const totalItems = displayed.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedVideos = displayed.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // KPI Calculations
+  const totalVideos = videos.length;
+  const publicVideos = videos.filter(v => v.visibility === 'Public').length;
+  const pendingVideos = videos.filter(v => v.visibility === 'Private').length;
+  const rejectedVideos = videos.filter(v => v.visibility === 'Scheduled').length; // using Scheduled as proxy for Rejected to match colors
+  const totalViews = videos.reduce((acc, v) => acc + (v.viewsCount || 0), 0);
+  const publicPercent = totalVideos > 0 ? ((publicVideos / totalVideos) * 100).toFixed(1) : 0;
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+      <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
     </div>
   );
 
@@ -174,182 +196,424 @@ const VideoManagement = () => {
   );
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-1">Quản lý Video</h1>
-        <p className="text-gray-400 text-sm">{normalVideos.length} video · {shortVideos.length} shorts</p>
-      </div>
-
-      {/* Tabs + controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-1 bg-gray-800 rounded-xl p-1">
-          <button
-            id="tab-videos"
-            onClick={() => setActiveTab('videos')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'videos' ? 'bg-red-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
-          >
-            <Video className="w-4 h-4" /> Video ({normalVideos.length})
-          </button>
-          <button
-            id="tab-shorts"
-            onClick={() => setActiveTab('shorts')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'shorts' ? 'bg-red-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
-          >
-            <Zap className="w-4 h-4" /> Shorts ({shortVideos.length})
-          </button>
+    <div className="pb-20 max-w-[1600px] mx-auto text-white">
+      
+      {/* ─── Header & Top Actions ─── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Quản lý Video</h1>
+          <p className="text-gray-400 text-sm">Quản lý, kiểm duyệt và theo dõi hiệu suất video trên nền tảng.</p>
         </div>
-
-        <div className="flex items-center gap-3">
+        
+        <div className="flex items-center gap-4">
           <div className="relative">
-            <Search className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder="Tìm kiếm video, tiêu đề, kênh..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-gray-800 text-white text-sm rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none w-52"
+              className="pl-10 pr-10 py-2.5 bg-[#15171f] text-gray-300 text-sm rounded-xl border border-white/10 focus:border-purple-500 focus:outline-none w-72 transition-colors"
             />
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowFilter(!showFilter)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-300 text-sm rounded-lg border border-gray-700 hover:border-gray-500 transition-colors"
-            >
-              <Filter className="w-4 h-4" />
-              {filterVisibility === 'all' ? 'Tất cả' : filterVisibility === 'Public' ? 'Công khai' : 'Riêng tư'}
-              <ChevronDown className="w-3 h-3" />
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-white/5 rounded">
+              <span className="text-[10px] text-gray-400 font-mono">⌘K</span>
             </button>
-            {showFilter && (
-              <div className="absolute right-0 top-11 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-30 w-40">
-                {[['all','Tất cả'],['Public','Công khai'],['Private','Riêng tư']].map(([val, label]) => (
-                  <button key={val} onClick={() => { setFilterVisibility(val); setShowFilter(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${filterVisibility === val ? 'text-red-400 bg-white/5' : 'text-gray-300 hover:bg-white/5'}`}>
-                    {filterVisibility === val ? <Check className="w-3.5 h-3.5" /> : <span className="w-3.5" />}
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
+          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 transition-colors">
+            <Filter className="w-4 h-4" /> Bộ lọc
+          </button>
         </div>
       </div>
 
-      {/* Table */}
-      {displayed.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 text-gray-600">
-          {activeTab === 'videos' ? <Video className="w-14 h-14" /> : <Zap className="w-14 h-14" />}
-          <p className="text-gray-500">{searchQuery ? 'Không tìm thấy video nào' : `Chưa có ${activeTab === 'videos' ? 'video' : 'shorts'}`}</p>
+      {/* ─── Tabs & KPIs ─── */}
+      <div className="mb-6 flex items-center gap-2 border-b border-white/5 pb-6">
+        <div className="flex bg-[#15171f] rounded-xl p-1 border border-white/5">
+          <button
+            onClick={() => setActiveTab('videos')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'videos' ? 'bg-[#1e2029] text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <PlaySquare className="w-4 h-4" /> Video
+          </button>
+          <button
+            onClick={() => setActiveTab('shorts')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'shorts' ? 'bg-[#1e2029] text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <Zap className="w-4 h-4" /> Video ngắn (Shorts)
+          </button>
         </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-700">
-          <table className="w-full text-sm">
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5 mb-8">
+        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center"><FileVideo className="w-5 h-5 text-purple-400" /></div>
+            <span className="text-gray-300 text-sm font-medium">Tổng video</span>
+          </div>
+          <p className="text-2xl font-bold text-white mb-1.5">{totalVideos.toLocaleString()}</p>
+          <p className="text-[11px] text-green-400 font-medium">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
+        </div>
+        
+        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center"><Check className="w-5 h-5 text-green-400" /></div>
+            <span className="text-gray-300 text-sm font-medium">Video công khai</span>
+          </div>
+          <p className="text-2xl font-bold text-white mb-1.5">{publicVideos.toLocaleString()}</p>
+          <p className="text-[11px] text-green-400 font-medium">↑ {publicPercent}% <span className="text-gray-500 font-normal">tổng số video</span></p>
+        </div>
+
+        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center"><ClockIcon className="w-5 h-5 text-yellow-400" /></div>
+            <span className="text-gray-300 text-sm font-medium">Chờ duyệt</span>
+          </div>
+          <p className="text-2xl font-bold text-white mb-1.5">{pendingVideos.toLocaleString()}</p>
+          <p className="text-[11px] text-yellow-400 font-medium">↑ 3 <span className="text-gray-500 font-normal">video mới</span></p>
+        </div>
+
+        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><Ban className="w-5 h-5 text-red-400" /></div>
+            <span className="text-gray-300 text-sm font-medium">Bị từ chối</span>
+          </div>
+          <p className="text-2xl font-bold text-white mb-1.5">{rejectedVideos.toLocaleString()}</p>
+          <p className="text-[11px] text-red-400 font-medium">↓ 2 <span className="text-gray-500 font-normal">video</span></p>
+        </div>
+
+        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"><Eye className="w-5 h-5 text-blue-400" /></div>
+            <span className="text-gray-300 text-sm font-medium">Tổng lượt xem</span>
+          </div>
+          <p className="text-2xl font-bold text-white mb-1.5">{formatViews(totalViews)}</p>
+          <p className="text-[11px] text-green-400 font-medium">↑ 15.3% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
+        </div>
+      </div>
+
+      {/* ─── Filters Bar ─── */}
+      <div className="flex flex-col xl:flex-row items-center justify-between gap-4 mb-6 p-1">
+        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] text-gray-500 font-medium ml-1">Danh mục</label>
+            <div className="relative">
+              <select className="appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44">
+                <option>Tất cả danh mục</option>
+                <option>Âm nhạc</option>
+                <option>Giáo dục</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] text-gray-500 font-medium ml-1">Trạng thái</label>
+            <div className="relative">
+              <select 
+                value={filterVisibility}
+                onChange={(e) => setFilterVisibility(e.target.value)}
+                className="appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="Public">Công khai</option>
+                <option value="Private">Chờ duyệt</option>
+                <option value="Scheduled">Bị từ chối</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-1.5 mt-5">
+             <button className="px-5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-transparent">
+              Xóa lọc
+             </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 mt-5">
+           <div className="flex items-center gap-1 bg-[#15171f] border border-white/10 p-1 rounded-lg">
+             <button onClick={() => setViewMode('list')} className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}><List className="w-4 h-4" /></button>
+             <button onClick={() => setViewMode('grid')} className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}><LayoutGrid className="w-4 h-4" /></button>
+           </div>
+        </div>
+      </div>
+
+      {/* ─── Table / Grid ─── */}
+      {viewMode === 'list' ? (
+      <div className="bg-[#15171f] rounded-2xl border border-white/5 overflow-hidden">
+        <div className="overflow-x-auto min-h-[400px]">
+          <table className="w-full text-left text-sm whitespace-nowrap">
             <thead>
-              <tr className="bg-gray-800/80 text-gray-400 text-xs uppercase tracking-wider">
-                <th className="px-5 py-3 text-left font-semibold">Video</th>
-                <th className="px-4 py-3 text-center font-semibold">Hiển thị</th>
-                <th className="px-4 py-3 text-center font-semibold">Ngày tạo</th>
-                <th className="px-4 py-3 text-center font-semibold"><span className="flex items-center justify-center gap-1"><Eye className="w-3.5 h-3.5" />Xem</span></th>
-                <th className="px-4 py-3 text-center font-semibold"><span className="flex items-center justify-center gap-1"><ThumbsUp className="w-3.5 h-3.5" />Thích</span></th>
-                <th className="px-4 py-3 text-center font-semibold"><span className="flex items-center justify-center gap-1"><MessageSquare className="w-3.5 h-3.5" />Bình luận</span></th>
-                <th className="px-4 py-3 text-center font-semibold">Thao tác</th>
+              <tr className="bg-black/20 text-[10px] uppercase tracking-wider text-gray-400 border-b border-white/5">
+                <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded bg-black/50 border-gray-600 text-purple-500 focus:ring-purple-500/50 cursor-pointer" /></th>
+                <th className="px-2 py-4 font-semibold">Video</th>
+                <th className="px-6 py-4 font-semibold">Danh mục</th>
+                <th className="px-6 py-4 font-semibold">Trạng thái</th>
+                <th className="px-6 py-4 font-semibold">Ngày đăng</th>
+                <th className="px-6 py-4 font-semibold">Lượt xem</th>
+                <th className="px-6 py-4 font-semibold">Thích</th>
+                <th className="px-6 py-4 font-semibold">Bình luận</th>
+                <th className="px-6 py-4 font-semibold text-center">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
-              {displayed.map((video) => (
-                <tr key={video.id} className="bg-gray-900 hover:bg-gray-800/60 transition-colors group">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-4">
-                      <Link to={`/watch/${video.id}`} target="_blank"
-                        className="relative shrink-0 w-36 aspect-video rounded-lg overflow-hidden bg-black block">
-                        <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
-                          {formatDuration(video.duration)}
+            <tbody>
+              {paginatedVideos.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="px-6 py-20 text-center text-gray-500">
+                    Không tìm thấy video nào.
+                  </td>
+                </tr>
+              ) : (
+                paginatedVideos.map(video => {
+                  const statusColors = video.visibility === 'Public' ? 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.2)]' :
+                    video.visibility === 'Private' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_10px_rgba(234,179,8,0.2)]' :
+                    'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
+                  const statusText = 
+                    video.visibility === 'Public' ? 'Công khai' :
+                    video.visibility === 'Private' ? 'Chờ duyệt' : 'Bị từ chối';
+
+                  return (
+                    <tr key={video.id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-6 py-4"><input type="checkbox" className="rounded bg-black/50 border-gray-600 text-purple-500 focus:ring-purple-500/50 cursor-pointer" /></td>
+                      <td className="px-2 py-4 min-w-[350px] max-w-[450px] whitespace-normal">
+                        <div className="flex gap-4">
+                          <div className="relative w-32 aspect-video rounded-lg overflow-hidden shrink-0 bg-black/50 border border-white/5 flex items-center justify-center">
+                            {video.isShort ? (
+                              <>
+                                <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="" className="absolute inset-0 w-full h-full object-cover blur-md opacity-40 scale-110" />
+                                <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="Thumb" className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                              </>
+                            ) : (
+                              <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="Thumb" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            )}
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[9px] font-medium text-white shadow-sm">{formatDuration(video.duration)}</div>
+                            {video.isShort && (
+                              <div className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase shadow-sm">Short</div>
+                            )}
+                          </div>
+                          <div className="flex flex-col justify-center min-w-0">
+                            <h4 className="text-sm font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-purple-400 transition-colors cursor-pointer">{video.title}</h4>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">{video.description || 'Không có mô tả'}</p>
+                            <p className="text-[10px] text-purple-400 mt-1.5 font-medium tracking-wide">#{video.category?.name?.replace(/\s+/g, '') || (video.isShort ? 'Shorts' : 'Video')}</p>
+                          </div>
                         </div>
-                        {video.isShort && (
-                          <div className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Short</div>
-                        )}
-                      </Link>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-white font-medium line-clamp-2 leading-snug">{video.title}</p>
-                        <p className="text-red-400 text-xs mt-1 font-medium">{video.channelName}</p>
-                        {video.description && (
-                          <p className="text-gray-500 text-xs mt-1 line-clamp-2 leading-relaxed">{video.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      video.visibility === 'Public' ? 'bg-emerald-500/15 text-emerald-400' :
-                      video.visibility === 'Private' ? 'bg-red-500/15 text-red-400' : 'bg-yellow-500/15 text-yellow-400'
-                    }`}>
-                      {video.visibility === 'Public' && <Globe className="w-3 h-3" />}
-                      {video.visibility === 'Private' && <Lock className="w-3 h-3" />}
-                      {video.visibility === 'Scheduled' && <Clock className="w-3 h-3" />}
-                      {video.visibility === 'Public' ? 'Công khai' : video.visibility === 'Private' ? 'Riêng tư' : 'Lên lịch'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-center text-gray-400 text-xs whitespace-nowrap">{formatDate(video.createdAt)}</td>
-                  <td className="px-4 py-4 text-center text-gray-300 font-medium">{formatViews(video.viewsCount)}</td>
-                  <td className="px-4 py-4 text-center text-gray-300 font-medium">{formatViews(video.likesCount)}</td>
-                  <td className="px-4 py-4 text-center text-gray-300 font-medium">{video.commentsCount}</td>
-                  <td className="px-4 py-4 text-center">
-                    <div className="relative inline-block" ref={openMenuId === video.id ? menuRef : null}>
-                      <button
-                        id={`menu-btn-${video.id}`}
-                        onClick={() => setOpenMenuId(openMenuId === video.id ? null : video.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-                      >
+                      </td>
+                      <td className="px-6 py-4 text-xs font-medium text-gray-400">{video.category?.name || 'Chưa phân loại'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-medium border ${statusColors}`}>
+                          {statusText}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-400 whitespace-pre-line leading-relaxed">{formatDateString(video.createdAt)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-300">{formatViews(video.viewsCount)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-300">{formatViews(video.likesCount)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-300">{formatViews(video.commentsCount)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link to={`/watch/${video.id}`} target="_blank" className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Xem video">
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <button onClick={() => handleEdit(video)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Sửa video">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <div className="relative" ref={openMenuId === video.id ? menuRef : null}>
+                            <button onClick={() => setOpenMenuId(openMenuId === video.id ? null : video.id)} className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                            {openMenuId === video.id && (
+                              <div className="absolute right-0 top-full mt-1 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl z-50 w-36 overflow-hidden">
+                                <button onClick={() => { setDeletingId(video.id); setOpenMenuId(null); }}
+                                  className="w-full text-left px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                                  <Trash2 className="w-3.5 h-3.5" /> Xóa video
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 min-h-[400px]">
+        {paginatedVideos.length === 0 ? (
+          <div className="col-span-full py-20 text-center text-gray-500 bg-[#15171f] rounded-2xl border border-white/5 flex items-center justify-center">
+            Không tìm thấy video nào.
+          </div>
+        ) : (
+          paginatedVideos.map((video) => {
+            const statusColors = video.visibility === 'Public' ? 'bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.2)]' :
+              video.visibility === 'Private' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_10px_rgba(234,179,8,0.2)]' :
+              'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]';
+            const statusText = 
+              video.visibility === 'Public' ? 'Công khai' :
+              video.visibility === 'Private' ? 'Chờ duyệt' : 'Bị từ chối';
+
+            return (
+              <div key={video.id} className="bg-[#15171f] rounded-2xl border border-white/5 overflow-hidden group hover:border-white/10 transition-colors flex flex-col">
+                <div className="relative aspect-video flex items-center justify-center bg-black/50 overflow-hidden">
+                  {video.isShort ? (
+                    <>
+                      <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="" className="absolute inset-0 w-full h-full object-cover blur-md opacity-40 scale-110" />
+                      <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="Thumb" className="relative h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                    </>
+                  ) : (
+                    <img src={video.thumbnailUrl || 'https://via.placeholder.com/320x180'} alt="Thumb" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  )}
+                  <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-1 rounded text-xs font-medium text-white shadow-sm">{formatDuration(video.duration)}</div>
+                  {video.isShort && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">Short</div>
+                  )}
+                </div>
+                <div className="p-4 flex flex-col flex-1">
+                  <h4 className="text-sm font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-purple-400 transition-colors cursor-pointer mb-2" title={video.title}>{video.title}</h4>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-medium border ${statusColors}`}>{statusText}</span>
+                    <span className="text-xs text-gray-500">{formatDateString(video.createdAt)}</span>
+                  </div>
+                  <p className="text-xs font-medium text-gray-400 mb-3">{video.category?.name || 'Chưa phân loại'}</p>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-400 mb-4 mt-auto">
+                    <div className="flex items-center gap-1.5" title="Lượt xem"><Eye className="w-4 h-4" /> {formatViews(video.viewsCount)}</div>
+                    <div className="flex items-center gap-1.5" title="Thích"><ThumbsUp className="w-4 h-4" /> {formatViews(video.likesCount)}</div>
+                    <div className="flex items-center gap-1.5" title="Bình luận"><MessageSquare className="w-4 h-4" /> {formatViews(video.commentsCount)}</div>
+                  </div>
+                  
+                  <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-3 relative">
+                    <Link to={`/watch/${video.id}`} target="_blank" className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Xem video">
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                    <button onClick={() => handleEdit(video)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Sửa video">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <div className="relative" ref={openMenuId === video.id ? menuRef : null}>
+                      <button onClick={() => setOpenMenuId(openMenuId === video.id ? null : video.id)} className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {openMenuId === video.id && (
-                        <div className="absolute right-0 top-9 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-30 w-40">
-                          <button onClick={() => handleEdit(video)}
-                            className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2.5">
-                            <Pencil className="w-3.5 h-3.5 text-blue-400" /> Chỉnh sửa
-                          </button>
+                        <div className="absolute right-0 bottom-full mb-1 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl z-50 w-36 overflow-hidden">
                           <button onClick={() => { setDeletingId(video.id); setOpenMenuId(null); }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2.5">
+                            className="w-full text-left px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 flex items-center gap-2">
                             <Trash2 className="w-3.5 h-3.5" /> Xóa video
                           </button>
                         </div>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
       )}
+        
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <div className="px-6 py-4 mt-4 bg-[#15171f] rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-gray-500">
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} trong tổng số <span className="font-semibold text-gray-300">{totalItems.toLocaleString()} video</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1a1c23] border border-white/5 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><span className="leading-none pb-0.5">‹</span></button>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
 
+                  return (
+                    <button 
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                        currentPage === pageNum 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-[#1a1c23] border border-white/5 text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    <span className="px-1 text-gray-500">...</span>
+                    <button 
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1a1c23] border border-white/5 text-gray-400 hover:bg-white/5 hover:text-white transition-colors text-xs font-medium"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1a1c23] border border-white/5 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><span className="leading-none pb-0.5">›</span></button>
+              </div>
+              <div className="relative">
+                <select 
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none bg-[#1a1c23] border border-white/5 text-gray-300 text-xs font-medium rounded-lg pl-3 pr-8 py-2 focus:outline-none cursor-pointer"
+                >
+                  <option value={10}>10 / trang</option>
+                  <option value={20}>20 / trang</option>
+                  <option value={50}>50 / trang</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+        )}
+      {/* ─── Modals (Edit & Delete) ─── */}
       {/* Edit Modal */}
       {editingVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-gray-800">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#15171f] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h2 className="text-white font-bold text-lg">Chỉnh sửa video</h2>
               <button onClick={() => setEditingVideo(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Tiêu đề</label>
                 <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full bg-gray-800 text-white text-sm rounded-lg px-4 py-2.5 border border-gray-700 focus:border-red-500 focus:outline-none" />
+                  className="w-full bg-[#0f111a] text-white text-sm rounded-xl px-4 py-3 border border-white/5 focus:border-purple-500 focus:outline-none" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Mô tả</label>
                 <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3}
-                  className="w-full bg-gray-800 text-white text-sm rounded-lg px-4 py-2.5 border border-gray-700 focus:border-red-500 focus:outline-none resize-none" />
+                  className="w-full bg-[#0f111a] text-white text-sm rounded-xl px-4 py-3 border border-white/5 focus:border-purple-500 focus:outline-none resize-none" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Trạng thái hiển thị</label>
                 <div className="flex gap-2">
-                  {[['Public','Công khai',<Globe key="pub" className="w-3.5 h-3.5"/>],['Private','Riêng tư',<Lock key="priv" className="w-3.5 h-3.5"/>]].map(([val,label,icon]) => (
+                  {[['Public','Công khai',<Globe key="pub" className="w-4 h-4"/>],['Private','Chờ duyệt',<Lock key="priv" className="w-4 h-4"/>],['Scheduled','Bị từ chối',<Ban key="ban" className="w-4 h-4"/>]].map(([val,label,icon]) => (
                     <button key={val} onClick={() => setEditVisibility(val)}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium flex-1 justify-center transition-all ${editVisibility === val ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'}`}>
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium flex-1 justify-center transition-all ${editVisibility === val ? 'bg-purple-600 text-white' : 'bg-[#0f111a] text-gray-400 border border-white/5 hover:text-white hover:bg-white/5'}`}>
                       {icon} {label}
                     </button>
                   ))}
@@ -364,27 +628,19 @@ const VideoManagement = () => {
                     setThumbnailPreview(URL.createObjectURL(file));
                   }
                 }}
-                  className="w-full bg-gray-800 text-gray-400 text-sm rounded-lg px-4 py-2 border border-gray-700 focus:border-red-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-500/10 file:text-red-400 hover:file:bg-red-500/20" />
+                  className="w-full bg-[#0f111a] text-gray-400 text-sm rounded-xl px-4 py-2.5 border border-white/5 focus:border-purple-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-500/20 file:text-purple-400 hover:file:bg-purple-500/30" />
                 {thumbnailPreview && (
-                  <div className="mt-2 aspect-video w-full rounded-lg overflow-hidden bg-black border border-gray-700">
+                  <div className="mt-3 aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/10">
                     <img src={thumbnailPreview} alt="preview" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-medium mb-1.5 flex items-center gap-1.5"><Link2 className="w-3.5 h-3.5" /> Tải lên video mới (để trống nếu không đổi)</label>
-                <input type="file" accept="video/*" onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) setEditVideoFile(file);
-                }}
-                  className="w-full bg-gray-800 text-gray-400 text-sm rounded-lg px-4 py-2 border border-gray-700 focus:border-red-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20" />
-              </div>
             </div>
-            <div className="flex gap-3 p-5 border-t border-gray-800">
+            <div className="flex gap-3 p-5 border-t border-white/10">
               <button onClick={() => setEditingVideo(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-400 bg-gray-800 hover:bg-gray-700">Hủy</button>
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-400 bg-white/5 hover:bg-white/10 transition-colors">Hủy</button>
               <button onClick={handleSaveEdit} disabled={saving || !editTitle.trim()}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Lưu thay đổi
               </button>
             </div>
@@ -394,24 +650,25 @@ const VideoManagement = () => {
 
       {/* Delete Confirm */}
       {deletingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm shadow-2xl p-6">
-            <div className="flex items-center justify-center w-14 h-14 bg-red-500/15 rounded-full mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-400" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#15171f] border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl p-6">
+            <div className="flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-2xl mx-auto mb-5">
+              <Trash2 className="w-7 h-7 text-red-500" />
             </div>
-            <h3 className="text-white font-bold text-center text-lg mb-2">Xóa video?</h3>
-            <p className="text-gray-400 text-sm text-center mb-6">Hành động này không thể hoàn tác. Video sẽ bị xóa vĩnh viễn.</p>
+            <h3 className="text-white font-bold text-center text-xl mb-2">Xóa video?</h3>
+            <p className="text-gray-400 text-sm text-center mb-8">Hành động này không thể hoàn tác. Video sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-400 bg-gray-800 hover:bg-gray-700">Hủy</button>
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 hover:bg-white/10 transition-colors">Hủy</button>
               <button onClick={() => handleDelete(deletingId)} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2">
-                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Xóa
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Xác nhận Xóa
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

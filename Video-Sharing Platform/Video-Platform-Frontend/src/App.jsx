@@ -22,6 +22,11 @@ import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
 import AdminLayout from './components/layout/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/user/AdminUsers';
+import AdminVideoCategory from './pages/admin/category/AdminVideoCategory';
+import AdminComments from './pages/admin/comment/AdminComments';
+import AdminRoles from './pages/admin/roles/AdminRoles';
+import NotFound from './pages/error/NotFound';
 
 function App() {
   return (
@@ -47,12 +52,21 @@ function App() {
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
+          
+          {/* 404 Catch-all */}
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="videos" element={<VideoManagement />} />
+            <Route path="categories" element={<AdminVideoCategory />} />
+            <Route path="comments" element={<AdminComments />} />
+            <Route path="roles" element={<AdminRoles />} />
+            {/* Catch-all for Admin */}
+            <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>
         </Route>
       </Routes>

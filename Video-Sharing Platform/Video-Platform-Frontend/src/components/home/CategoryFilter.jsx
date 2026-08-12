@@ -2,21 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, LayoutGrid, Flame, ChevronRight, Clapperboard, Coffee } from 'lucide-react';
 
-// Map danh mục → icon + màu nền icon box
-export const CATEGORY_ICONS = {
-  'Tất cả':    { icon: Flame,      iconColor: 'text-white'     },
-  'Âm nhạc':   { icon: Music,      iconColor: 'text-pink-300'     },
-  'Công nghệ': { icon: Monitor,    iconColor: 'text-blue-300'     },
-  'Giải trí':  { icon: Tv,         iconColor: 'text-yellow-300'     },
-  'Trò chơi':  { icon: Gamepad2,   iconColor: 'text-green-300'     },
-  'Giáo dục':  { icon: BookOpen,   iconColor: 'text-purple-300'     },
-  'Thể thao':  { icon: Dumbbell,   iconColor: 'text-orange-300'     },
-  'Game':      { icon: Gamepad2,   iconColor: 'text-green-300'     },
-  'Phim & TV': { icon: Clapperboard, iconColor: 'text-yellow-300'     },
-  'Đời sống':  { icon: Coffee,     iconColor: 'text-orange-300'     },
-};
+import * as LucideIcons from 'lucide-react';
 
-export const DEFAULT_CATEGORY_ICON = { icon: LayoutGrid, iconColor: 'text-gray-400', bg: 'bg-white/10' };
+export const DEFAULT_CATEGORY_ICON = { icon: 'LayoutGrid', iconColor: 'text-gray-400', bg: 'bg-white/10' };
 
 export default function CategoryFilter({ onSelect }) {
   const [categories, setCategories] = useState([]);
@@ -27,7 +15,7 @@ export default function CategoryFilter({ onSelect }) {
     const fetchCategories = async () => {
       try {
         const response = await axios.get('/api/videos/categories');
-        setCategories([{ id: 0, name: 'Tất cả' }, ...response.data]);
+        setCategories([{ id: 0, name: 'Tất cả', icon: 'Flame' }, ...response.data]);
       } catch (err) {
         console.error('Failed to fetch categories:', err);
       }
@@ -59,7 +47,25 @@ export default function CategoryFilter({ onSelect }) {
         >
           {categories.map((category) => {
             const isActive = activeCategory === category.id;
-            const { icon: Icon, iconColor, bg } = CATEGORY_ICONS[category.name] ?? DEFAULT_CATEGORY_ICON;
+            const IconComponent = LucideIcons[category.icon] || LucideIcons.LayoutGrid;
+            
+            // Map màu sắc linh động cho các icon để đẹp hơn
+            const getIconColor = (iconName) => {
+              if (isActive) return 'text-white';
+              switch (iconName) {
+                case 'Music': return 'text-pink-300';
+                case 'Monitor': return 'text-blue-300';
+                case 'Tv': return 'text-yellow-300';
+                case 'Gamepad2': return 'text-green-300';
+                case 'BookOpen': return 'text-purple-300';
+                case 'Dumbbell': return 'text-orange-300';
+                case 'Clapperboard': return 'text-yellow-300';
+                case 'Flame': return 'text-[#FF5722]';
+                default: return 'text-gray-400';
+              }
+            };
+            
+            const iconColor = getIconColor(category.icon);
 
             return (
               <button
@@ -72,8 +78,8 @@ export default function CategoryFilter({ onSelect }) {
                 }`}
               >
                 {/* Icon box */}
-                <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${isActive ? '' : bg}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : iconColor}`} />
+                <span className={`w-6 h-6 flex items-center justify-center`}>
+                  <IconComponent className={`w-5 h-5 ${iconColor}`} />
                 </span>
                 {category.name}
               </button>

@@ -26,7 +26,7 @@ export default function MainLayout() {
         {isShorts ? (
           <Outlet />
         ) : (
-          <div className="p-4">
+          <div className="p-2">
             <Outlet />
           </div>
         )}

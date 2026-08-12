@@ -27,11 +27,13 @@ namespace Video_Platform_Backend.Controllers
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _context.VideoCategories
+                .Where(c => c.IsActive)
                 .Select(c => new CategoryResponseDTO
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Description = c.Description ?? ""
+                    Description = c.Description ?? "",
+                    Icon = c.Icon
                 })
                 .ToListAsync();
 
@@ -60,6 +62,7 @@ namespace Video_Platform_Backend.Controllers
                     ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                     IsShort = v.IsShort ?? false,
+                    CategoryId = v.CategoryId,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -115,6 +118,7 @@ namespace Video_Platform_Backend.Controllers
                     ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                     IsShort = v.IsShort ?? false,
+                    CategoryId = v.CategoryId,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -353,12 +357,12 @@ namespace Video_Platform_Backend.Controllers
                 .Include(c => c.CommentReplies)
                     .ThenInclude(cr => cr.User)
                         .ThenInclude(u => u.Profile)
-                .Where(c => c.VideoId == id)
+                .Where(c => c.VideoId == id && c.FilterStatus != "Blocked")
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new CommentResponseDTO
                 {
                     Id = c.Id,
-                    Content = c.Content,
+                    Content = c.DisplayContent ?? c.Content,
                     LikesCount = c.LikesCount ?? 0,
                     CreatedAt = c.CreatedAt ?? DateTime.UtcNow,
                     UserId = c.UserId,
@@ -400,13 +404,58 @@ namespace Video_Platform_Backend.Controllers
             var video = await _context.Videos.FindAsync(id);
             if (video == null) return NotFound(new { message = "Video không tồn tại." });
 
+            // --- FILTER LOGIC ---
+            var bannedWords = await _context.BannedWords.Where(w => w.IsActive).ToListAsync();
+            var matchedKeywords = new List<string>();
+            var highestLevel = "";
+            var lowerContent = request.Content.ToLower();
+            
+            foreach (var bw in bannedWords)
+            {
+                if (lowerContent.Contains(bw.Keyword.ToLower()))
+                {
+                    matchedKeywords.Add(bw.Keyword);
+                    bw.HitCount += 1;
+
+                    if (bw.Level == "High") highestLevel = "High";
+                    else if (bw.Level == "Medium" && highestLevel != "High") highestLevel = "Medium";
+                    else if (bw.Level == "Low" && highestLevel == "") highestLevel = "Low";
+                }
+            }
+
+            var isFiltered = matchedKeywords.Any();
+            var filterStatus = "Normal";
+            var displayContent = request.Content;
+
+            if (isFiltered)
+            {
+                if (highestLevel == "High")
+                {
+                    filterStatus = "Blocked";
+                }
+                else if (highestLevel == "Medium")
+                {
+                    filterStatus = "Filtered";
+                    displayContent = "Nội dung chứa từ khóa bị cấm...";
+                }
+                else if (highestLevel == "Low")
+                {
+                    filterStatus = "Warning";
+                }
+            }
+            // ---------------------
+
             var comment = new Comment
             {
                 Id = Guid.NewGuid(),
                 VideoId = id,
                 UserId = userId,
                 Content = request.Content,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                DisplayContent = displayContent,
+                IsFiltered = isFiltered,
+                FilterStatus = filterStatus,
+                MatchedKeywords = matchedKeywords.Any() ? string.Join(", ", matchedKeywords) : null
             };
 
             _context.Comments.Add(comment);
@@ -415,13 +464,18 @@ namespace Video_Platform_Backend.Controllers
             
             await _context.SaveChangesAsync();
             
+            if (filterStatus == "Blocked")
+            {
+                return BadRequest("Bình luận của bạn chứa từ khóa vi phạm và đã bị chặn.");
+            }
+
             // Lấy thêm thông tin User vừa bình luận để trả về DTO
             var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
 
             var commentDto = new CommentResponseDTO
             {
                 Id = comment.Id,
-                Content = comment.Content,
+                Content = comment.DisplayContent ?? comment.Content,
                 LikesCount = comment.LikesCount ?? 0,
                 CreatedAt = comment.CreatedAt ?? DateTime.UtcNow,
                 UserId = comment.UserId,
@@ -616,6 +670,7 @@ namespace Video_Platform_Backend.Controllers
                     ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                     IsShort = v.IsShort ?? false,
+                    CategoryId = v.CategoryId,
                     ChannelId = v.ChannelId,
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
@@ -741,6 +796,7 @@ namespace Video_Platform_Backend.Controllers
                 ViewsCount = v.ViewsCount ?? 0,
                 CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                 IsShort = v.IsShort ?? false,
+                CategoryId = v.CategoryId,
                 ChannelId = v.ChannelId,
                 ChannelName = v.Channel.ChannelName,
                 ChannelHandle = v.Channel.Handle,
@@ -794,6 +850,7 @@ namespace Video_Platform_Backend.Controllers
             var videos = await _context.Videos
                 .Include(v => v.VideoThumbnails)
                 .Include(v => v.Channel)
+                .Include(v => v.Category)
                 .OrderByDescending(v => v.CreatedAt)
                 .Select(v => new VideoManageDTO
                 {
@@ -810,7 +867,14 @@ namespace Video_Platform_Backend.Controllers
                     CommentsCount = v.CommentsCount ?? 0,
                     Visibility = v.Visibility ?? "Public",
                     IsShort = v.IsShort ?? false,
-                    CreatedAt = v.CreatedAt ?? DateTime.UtcNow
+                    CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                    ChannelName = v.Channel != null ? v.Channel.ChannelName : "",
+                    Category = v.Category != null ? new CategoryResponseDTO
+                    {
+                        Id = v.Category.Id,
+                        Name = v.Category.Name,
+                        Description = v.Category.Description ?? ""
+                    } : null
                 })
                 .ToListAsync();
 

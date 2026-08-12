@@ -157,7 +157,7 @@ export default function Downloads() {
               >
                 {/* Thumbnail */}
                 <Link
-                  to={`/watch/${video.id}`}
+                  to={video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}
                   className="relative shrink-0 w-[140px] md:w-[200px] aspect-video rounded-xl overflow-hidden bg-[#212121]"
                 >
                   <img
@@ -176,7 +176,7 @@ export default function Downloads() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <Link to={`/watch/${video.id}`}>
+                  <Link to={video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}>
                     <h3 className="text-white font-medium text-sm md:text-base line-clamp-2 mb-1 group-hover:text-[#3EA6FF] transition-colors">
                       {video.title}
                     </h3>

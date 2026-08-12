@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, TrendingUp, Flame, Eye, Clock, MoreVertical, ChevronDown, LayoutList, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, TrendingUp, Flame, Eye, Clock, MoreVertical, ChevronDown, LayoutList, LayoutGrid, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const formatDuration = (seconds) => {
@@ -141,21 +141,44 @@ export default function Trending() {
                   return (
                     <div
                       key={video.id}
-                      onClick={() => navigate(`/watch/${video.id}`)}
+                      onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
                       className="group cursor-pointer relative rounded-2xl overflow-hidden bg-[#1A1A1A] border border-white/5 hover:border-white/10 transition-all duration-300 flex flex-col"
                     >
                       {/* Thumbnail */}
                       <div className="relative aspect-video overflow-hidden shrink-0">
-                        <img
-                          src={video.thumbnailUrl || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-xs text-white font-medium">
+                        {video.isShort ? (
+                          <>
+                            <img
+                              src={video.thumbnailUrl || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
+                              alt={video.title}
+                              className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <img
+                              src={video.thumbnailUrl || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
+                              alt={video.title}
+                              className="relative w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 z-10"
+                            />
+                            <div className="absolute top-2 right-2 bg-[#3A1404] px-2 py-0.5 rounded-[4px] text-[10px] font-bold text-[#FF8A65] tracking-wider z-20 border border-[#FF5722]/20 shadow-md">
+                              SHORTS
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <img
+                              src={video.thumbnailUrl || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute top-2 right-2 bg-[#2D163D] px-2 py-0.5 rounded-[4px] text-[10px] font-bold text-[#E040FB] tracking-wider z-20 border border-[#D500F9]/20 shadow-md">
+                              VIDEO
+                            </div>
+                          </>
+                        )}
+                        <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-xs text-white font-medium z-20">
                           {formatDuration(video.duration || 0)}
                         </div>
                         {/* Rank badge */}
-                        <div className={`absolute top-3 left-3 w-7 h-7 rounded-full ${rank.bg} ${rank.text} flex items-center justify-center text-xs font-bold shadow-md`}>
+                        <div className={`absolute top-3 left-3 w-7 h-7 rounded-full ${rank.bg} ${rank.text} flex items-center justify-center text-xs font-bold shadow-md z-20`}>
                           {idx + 1}
                         </div>
                       </div>
@@ -214,7 +237,7 @@ export default function Trending() {
                     return (
                       <div
                         key={video.id}
-                        onClick={() => navigate(`/watch/${video.id}`)}
+                        onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
                         className="group flex gap-4 md:gap-6 items-center p-3 rounded-2xl hover:bg-[#1A1A1A] border border-transparent hover:border-white/5 transition-all cursor-pointer"
                       >
                         {/* Rank number */}
@@ -224,12 +247,35 @@ export default function Trending() {
 
                         {/* Thumbnail */}
                         <div className="relative shrink-0 w-[140px] md:w-[220px] aspect-video rounded-xl overflow-hidden bg-[#212121]">
-                          <img
-                            src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[10px] md:text-xs text-white font-medium">
+                          {video.isShort ? (
+                            <>
+                              <img
+                                src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
+                                alt={video.title}
+                                className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <img
+                                src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
+                                alt={video.title}
+                                className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+                              />
+                              <div className="absolute top-1.5 right-1.5 bg-[#3A1404] px-2 py-0.5 rounded-[4px] text-[9px] font-bold text-[#FF8A65] tracking-wider z-20 border border-[#FF5722]/20 shadow-md">
+                                SHORTS
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <img
+                                src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
+                                alt={video.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-1.5 right-1.5 bg-[#2D163D] px-2 py-0.5 rounded-[4px] text-[9px] font-bold text-[#E040FB] tracking-wider z-20 border border-[#D500F9]/20 shadow-md">
+                                VIDEO
+                              </div>
+                            </>
+                          )}
+                          <div className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[10px] md:text-xs text-white font-medium z-20">
                             {formatDuration(video.duration || 0)}
                           </div>
                         </div>
@@ -240,7 +286,7 @@ export default function Trending() {
                             <h3 className="text-white font-semibold text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[#FF5722] transition-colors leading-snug">
                               {video.title}
                             </h3>
-                            <h4 className="flex items-center gap-2 text-gray-500 text-xs md:text-sm">
+                            <h4 className="text-gray-500 text-xs md:text-sm line-clamp-2 mb-1.5">
                              {video.description}
                             </h4>
                             <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs md:text-sm">

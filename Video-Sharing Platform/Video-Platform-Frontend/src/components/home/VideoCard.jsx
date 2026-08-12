@@ -7,7 +7,7 @@ export default function VideoCard({ video, isOwner, onEdit, onDelete }) {
     <div 
       onClick={(e) => {
         if (e.target.closest('a') || e.target.closest('button')) return;
-        navigate(`/watch/${video.id}`);
+        navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`);
       }}
       className="group cursor-pointer flex flex-col gap-3"
     >

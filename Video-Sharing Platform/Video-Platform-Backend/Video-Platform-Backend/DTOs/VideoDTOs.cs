@@ -7,6 +7,7 @@ namespace Video_Platform_Backend.DTOs
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string Icon { get; set; } = "LayoutGrid";
     }
 
     public class VideoResponseDTO
@@ -102,6 +103,7 @@ namespace Video_Platform_Backend.DTOs
         public bool IsShort { get; set; }
         public DateTime CreatedAt { get; set; }
         public string ChannelName { get; set; } = string.Empty;
+        public CategoryResponseDTO? Category { get; set; }
     }
 
     public class VideoUpdateDTO

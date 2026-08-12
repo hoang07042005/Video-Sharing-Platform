@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, Bell, CheckCircle2, Share2, Search, Star, Users, Link as LinkIcon, X, Mail, MonitorPlay, Globe, Info, PlaySquare, TrendingUp, Flag, Pencil, Home, Upload, Check, UploadCloud, ChevronDown, Play, Settings, Calendar, Clock, FileVideo, HardDrive, FileCode, Image as ImageIcon, Trash2, AlertTriangle } from 'lucide-react';
+import { Loader2, Bell, CheckCircle2, Share2, Search, Star, Users, Link as LinkIcon, X, Mail, MonitorPlay, Globe, Info, PlaySquare, TrendingUp, Flag, Pencil, Home, Upload, Check, UploadCloud, ChevronDown, Play, Settings, Calendar, Clock, FileVideo, HardDrive, FileCode, Image as ImageIcon, Trash2, AlertTriangle, Smartphone } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import CustomizeChannelModal from '../../../components/channel/CustomizeChannelModal';
 
@@ -832,19 +832,15 @@ export default function ChannelProfile() {
                     </button>
                   )}
 
-                  {!isOwner && (
-                    <>
-                      {channelBtnSettings.showJoinButton && (
-                        <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
-                          Tham gia
-                        </button>
-                      )}
-                      {channelBtnSettings.showCommunityButton && (
-                        <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
-                          Cộng đồng
-                        </button>
-                      )}
-                    </>
+                  {channelBtnSettings.showJoinButton && (
+                    <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
+                      Tham gia
+                    </button>
+                  )}
+                  {channelBtnSettings.showCommunityButton && (
+                    <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
+                      Cộng đồng
+                    </button>
                   )}
                 </div>
               </div>
@@ -941,7 +937,7 @@ export default function ChannelProfile() {
                   {/* Left side: Featured Video */}
                   {featuredVideo ? (
                     <Link
-                      to={`/watch/${featuredVideo.id}`}
+                      to={featuredVideo.isShort ? `/shorts?id=${featuredVideo.id}` : `/watch/${featuredVideo.id}`}
                       className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-4 group cursor-pointer flex flex-col md:flex-row gap-5 h-full"
                     >
                       {/* Thumbnail Container */}
@@ -1014,7 +1010,7 @@ export default function ChannelProfile() {
 
                     <div className="space-y-4 flex-1">
                       {featuredList.map(v => (
-                        <Link to={`/watch/${v.id}`} key={v.id} className="flex gap-3 group cursor-pointer items-center">
+                        <Link to={v.isShort ? `/shorts?id=${v.id}` : `/watch/${v.id}`} key={v.id} className="flex gap-3 group cursor-pointer items-center">
                           {/* Thumbnail */}
                           <div className="relative w-32 aspect-video rounded-lg overflow-hidden shrink-0">
                             <img

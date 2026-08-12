@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
+import * as LucideIcons from 'lucide-react';
+import { DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Compass, Zap, Music, Gamepad2, Film, BookOpen,
@@ -37,17 +38,7 @@ const timeAgo = (d) => {
 };
 
 const CATEGORIES = [
-  { key: 'all',     label: 'Tất cả',      icon: Flame,    color: 'text-white' },
-  { key: 'tech',    label: 'Công nghệ',   icon: Monitor,  color: 'text-blue-400' },
-  { key: 'music',   label: 'Âm nhạc',     icon: Music,    color: 'text-pink-400' },
-  { key: 'gaming',  label: 'Trò chơi',    icon: Gamepad2, color: 'text-green-400' },
-  { key: 'news',    label: 'Tin tức',     icon: LayoutGrid, color: 'text-gray-400' },
-  { key: 'sports',  label: 'Thể thao',    icon: Dumbbell, color: 'text-orange-400' },
-  { key: 'edu',     label: 'Giáo dục',    icon: BookOpen, color: 'text-purple-400' },
-  { key: 'entertainment', label: 'Giải trí', icon: Tv,    color: 'text-yellow-400' },
-  { key: 'food',    label: 'Ẩm thực',     icon: Utensils, color: 'text-orange-400' },
-  { key: 'travel',  label: 'Du lịch',     icon: Plane,    color: 'text-teal-400' },
-  { key: 'comedy',  label: 'Hài hước',    icon: Laugh,    color: 'text-rose-400' },
+  { key: 'all',     label: 'Tất cả',      icon: 'Flame',    color: 'text-white' },
 ];
 
 const INSPIRATIONS = [
@@ -70,6 +61,7 @@ const SEARCH_TRENDS = [
 const TOPICS = ['# Nhạc Remix', '# Công nghệ', '# Học Lập Trình', '# Đà Lạt', '# Nấu Ăn', '# Bóng Đá'];
 
 function CatIcon({ cat, active, onClick }) {
+  const IconComponent = LucideIcons[cat.icon] || LucideIcons.LayoutGrid;
   return (
     <button
       onClick={onClick}
@@ -79,7 +71,7 @@ function CatIcon({ cat, active, onClick }) {
           : 'bg-transparent text-gray-200 hover:bg-white/5 border border-gray-600/50'
       }`}
     >
-      <cat.icon className={`w-4 h-4 ${active ? 'text-white' : cat.color}`} />
+      <IconComponent className={`w-4 h-4 ${active ? 'text-white' : cat.color}`} />
       {cat.label}
     </button>
   );
@@ -293,9 +285,21 @@ export default function Explore() {
                 className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {[{ key: 'all', label: 'Tất cả', icon: Flame, color: 'text-white' }, ...dbCategories.map(cat => {
-                  const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
-                  return { key: cat.name, label: cat.name, icon: config.icon, color: config.iconColor };
+                {[{ key: 'all', label: 'Tất cả', icon: 'Flame', color: 'text-white' }, ...dbCategories.map(cat => {
+                  const getIconColor = (iconName) => {
+                    switch (iconName) {
+                      case 'Music': return 'text-pink-300';
+                      case 'Monitor': return 'text-blue-300';
+                      case 'Tv': return 'text-yellow-300';
+                      case 'Gamepad2': return 'text-green-300';
+                      case 'BookOpen': return 'text-purple-300';
+                      case 'Dumbbell': return 'text-orange-300';
+                      case 'Clapperboard': return 'text-yellow-300';
+                      case 'Flame': return 'text-[#FF5722]';
+                      default: return 'text-gray-400';
+                    }
+                  };
+                  return { key: cat.name, label: cat.name, icon: cat.icon || 'LayoutGrid', color: getIconColor(cat.icon) };
                 })].map(cat => (
                   <CatIcon 
                     key={cat.key} 
@@ -480,8 +484,14 @@ export default function Explore() {
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {dbCategories.slice(0, 6).map((cat, idx) => {
-            const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
-            const item = { label: cat.name, sub: cat.description || 'Khám phá video mới', icon: config.icon, bg: config.bg?.replace('bg-', 'from-').replace('/10', '/40') || 'from-gray-900/40', color: config.iconColor };
+            const IconComponent = LucideIcons[cat.icon] || LucideIcons.LayoutGrid;
+            const item = { 
+              label: cat.name, 
+              sub: cat.description || 'Khám phá video mới', 
+              icon: IconComponent, 
+              bg: 'from-gray-900/40', 
+              color: 'text-gray-400' 
+            };
             return (
             <div key={idx} onClick={() => { setSearchParams({ category: cat.name }); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`shrink-0 w-[220px] p-5 rounded-2xl bg-gradient-to-br ${item.bg} to-[#0A0A0A] border border-white/5 flex items-center gap-4 hover:border-white/20 hover:-translate-y-1 transition-all cursor-pointer group shadow-lg`}>
               <div className={`w-12 h-12 shrink-0 rounded-full bg-white/5 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>

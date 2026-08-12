@@ -32,7 +32,7 @@ function VideoCard({ video, featured }) {
   const [err, setErr] = useState(false);
   if (featured) {
     return (
-      <div onClick={() => navigate('/watch/' + video.id)}
+      <div onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
         className="group relative rounded-2xl overflow-hidden cursor-pointer bg-[#111] border border-white/5 hover:border-white/15 transition-all">
         <div className="relative aspect-video overflow-hidden">
           {!err && video.thumbnailUrl ? (
@@ -67,7 +67,7 @@ function VideoCard({ video, featured }) {
     );
   }
   return (
-    <div onClick={() => navigate('/watch/' + video.id)}
+    <div onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
       className="group cursor-pointer flex gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors">
       <div className="relative w-40 aspect-video rounded-lg overflow-hidden shrink-0 bg-[#1A1A1A]">
         {!err && video.thumbnailUrl ? (

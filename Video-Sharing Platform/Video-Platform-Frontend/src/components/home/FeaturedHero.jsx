@@ -34,7 +34,7 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
     <div
       onClick={(e) => {
         if (e.target.closest('a') || e.target.closest('button')) return;
-        navigate(`/watch/${video.id}`);
+        navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`);
       }}
       className="relative w-full h-[480px] md:h-[520px] rounded-3xl overflow-hidden group cursor-pointer select-none"
     >
@@ -116,7 +116,7 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
         {/* CTA Buttons */}
         <div className="flex items-center gap-4 flex-wrap">
           <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/watch/${video.id}`); }}
+            onClick={(e) => { e.stopPropagation(); navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`); }}
             className="flex items-center gap-2 bg-gradient-to-r from-[#FF5722] to-[#E91E63] hover:opacity-90 active:scale-95 text-white font-bold text-[15px] px-8 py-3 rounded-full transition-all shadow-lg shadow-[#FF5722]/30 cursor-pointer"
           >
             <Play className="w-5 h-5 fill-white" />

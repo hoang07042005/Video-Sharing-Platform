@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Video_Platform_Backend.Models;
@@ -20,6 +20,14 @@ public partial class Comment
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public string? DisplayContent { get; set; }
+
+    public bool? IsFiltered { get; set; }
+
+    public string? MatchedKeywords { get; set; }
+
+    public string? FilterStatus { get; set; } // Normal, Warning, Filtered, Blocked
 
     public virtual ICollection<CommentLike> CommentLikes { get; set; } = new List<CommentLike>();
 

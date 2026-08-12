@@ -61,7 +61,7 @@ function HistoryVideoRow({ video, onRemove }) {
     <div className="group flex gap-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 rounded-xl px-2 -mx-2 transition-colors">
       {/* Thumbnail */}
       <div
-        onClick={() => navigate(`/watch/${video.id}`)}
+        onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
         className="relative shrink-0 w-[200px] aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] cursor-pointer"
       >
         {!imgErr && video.thumbnailUrl ? (
@@ -92,7 +92,7 @@ function HistoryVideoRow({ video, onRemove }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0 py-0.5">
-        <Link to={`/watch/${video.id}`}>
+        <Link to={video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}>
           <h3 className="text-white font-semibold text-sm leading-snug line-clamp-2 hover:text-[#FF5722] transition-colors mb-1.5">
             {video.title}
           </h3>
@@ -132,7 +132,7 @@ function HistoryVideoRow({ video, onRemove }) {
                 <X className="w-3.5 h-3.5" /> Xoá khỏi lịch sử
               </button>
               <button
-                onClick={() => { navigate(`/watch/${video.id}`); setMenuOpen(false); }}
+                onClick={() => { navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`); setMenuOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <PlayCircle className="w-3.5 h-3.5" /> Xem lại
@@ -151,7 +151,7 @@ function ShortThumb({ video }) {
   const [imgErr, setImgErr] = useState(false);
   return (
     <div
-      onClick={() => navigate(`/watch/${video.id}`)}
+      onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
       className="shrink-0 w-[140px] md:w-[160px] cursor-pointer group"
     >
       <div className="relative w-full aspect-[4/6] rounded-xl overflow-hidden bg-[#1A1A1A]">

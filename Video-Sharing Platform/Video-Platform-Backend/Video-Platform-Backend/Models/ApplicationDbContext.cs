@@ -17,6 +17,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Channel> Channels { get; set; }
 
+    public virtual DbSet<BannedWord> BannedWords { get; set; }
+
     public virtual DbSet<Comment> Comments { get; set; }
 
     public virtual DbSet<CommentLike> CommentLikes { get; set; }

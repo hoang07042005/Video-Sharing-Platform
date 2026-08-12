@@ -173,6 +173,8 @@ export default function VideoDetail() {
       setCommentText('');
     } catch (err) {
       console.error(err);
+      const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi bình luận";
+      alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
     }
   };
 
@@ -200,6 +202,8 @@ export default function VideoDetail() {
       setReplyingTo(null);
     } catch (err) {
       console.error(err);
+      const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi phản hồi";
+      alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
     }
   };
 
@@ -726,7 +730,7 @@ export default function VideoDetail() {
           {sameChannelVideos.length > 0 && (
             <div className="flex flex-col gap-3 mb-6">
               {sameChannelVideos.map((recVideo) => (
-                <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
+                <Link to={recVideo.isShort ? `/shorts?id=${recVideo.id}` : `/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
                   <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                     <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
@@ -787,7 +791,7 @@ export default function VideoDetail() {
         {/* Recommended Long Videos */}
         <div className="flex flex-col gap-3">
           {recommendedVideos.filter(v => !v.isShort).map((recVideo) => (
-            <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
+            <Link to={recVideo.isShort ? `/shorts?id=${recVideo.id}` : `/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
               <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                 <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">

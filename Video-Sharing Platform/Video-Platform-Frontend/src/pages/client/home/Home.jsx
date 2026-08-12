@@ -35,7 +35,7 @@ function SmallVideoCard({ video }) {
   const navigate = useNavigate();
   return (
     <div
-      onClick={() => navigate(`/watch/${video.id}`)}
+      onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
       className="group cursor-pointer flex flex-col gap-2"
     >
       <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#1A1A1A]">
@@ -96,7 +96,7 @@ function HorizontalVideoCard({ video }) {
   const navigate = useNavigate();
   return (
     <div
-      onClick={() => navigate(`/watch/${video.id}`)}
+      onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
       className="group cursor-pointer flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
     >
       <div className="relative w-50 h-30 aspect-video rounded-lg overflow-hidden bg-[#1A1A1A] shrink-0">
@@ -246,7 +246,8 @@ function SectionHeader({ icon: Icon, title, linkTo }) {
 }
 
 // ─── Right Sidebar ──────────────────────────────────────────────
-import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
+import * as LucideIcons from 'lucide-react';
+import { DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
 
 function RightSidebar() {
   const [quickCategories, setQuickCategories] = useState([]);
@@ -255,8 +256,25 @@ function RightSidebar() {
     axios.get('/api/videos/categories')
       .then(res => {
         const mapped = res.data.slice(0, 6).map(cat => {
-          const config = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
-          return { label: cat.name, icon: config.icon, color: config.iconColor, bg: config.bg };
+          const getIconColor = (iconName) => {
+            switch (iconName) {
+              case 'Music': return 'text-pink-300';
+              case 'Monitor': return 'text-blue-300';
+              case 'Tv': return 'text-yellow-300';
+              case 'Gamepad2': return 'text-green-300';
+              case 'BookOpen': return 'text-purple-300';
+              case 'Dumbbell': return 'text-orange-300';
+              case 'Clapperboard': return 'text-yellow-300';
+              case 'Flame': return 'text-[#FF5722]';
+              default: return 'text-gray-400';
+            }
+          };
+          return { 
+            label: cat.name, 
+            iconName: cat.icon || 'LayoutGrid', 
+            color: getIconColor(cat.icon), 
+            bg: 'bg-white/10' 
+          };
         });
         setQuickCategories(mapped);
       })
@@ -327,15 +345,18 @@ function RightSidebar() {
       <div className="bg-[#161616] border border-white/8 rounded-2xl p-5">
         <h3 className="text-white font-bold text-sm mb-3">Khám phá nhanh</h3>
         <div className="grid grid-cols-2 gap-2">
-          {quickCategories.map(({ label, icon: Icon, color, bg }) => (
-            <button
-              key={label}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-500/50 ${bg} hover:brightness-125 transition-all cursor-pointer text-left`}
-            >
-              <Icon className={`w-4 h-4 ${color} shrink-0`} />
-              <span className="text-white text-xs font-medium">{label}</span>
-            </button>
-          ))}
+          {quickCategories.map(({ label, iconName, color, bg }) => {
+            const Icon = LucideIcons[iconName] || LucideIcons.LayoutGrid;
+            return (
+              <button
+                key={label}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-500/50 ${bg} hover:brightness-125 transition-all cursor-pointer text-left`}
+              >
+                <Icon className={`w-4 h-4 ${color} shrink-0`} />
+                <span className="text-white text-xs font-medium">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </aside>
@@ -348,6 +369,7 @@ export default function Home() {
   const [channels, setChannels] = useState([]);
   const [shorts, setShorts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategoryId, setActiveCategoryId] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -377,10 +399,18 @@ export default function Home() {
     );
   }
 
-  const featuredVideo = videos[0] ?? null;
-  const trending = videos.slice(0, 10);
-  const suggested = videos.slice(0, 12);
-  const latest = videos.slice(0, 9);
+  const filteredVideos = activeCategoryId === 0
+    ? videos
+    : videos.filter(v => v.categoryId === activeCategoryId);
+
+  const filteredShorts = activeCategoryId === 0
+    ? shorts
+    : shorts.filter(s => s.categoryId === activeCategoryId);
+
+  const featuredVideo = filteredVideos[0] ?? null;
+  const trending = filteredVideos.slice(0, 10);
+  const suggested = filteredVideos.slice(0, 12);
+  const latest = filteredVideos.slice(0, 9);
 
   // Fallback channels nếu API chưa có
   const mockChannels = [
@@ -407,7 +437,7 @@ export default function Home() {
 
             {/* Category Filter */}
             <div>
-              <CategoryFilter />
+              <CategoryFilter onSelect={(id) => setActiveCategoryId(id)} />
             </div>
 
 
@@ -445,7 +475,7 @@ export default function Home() {
               <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
             ) : (
               <div className="grid grid-cols-6 gap-4">
-                {shorts.slice(0, 6).map(s => (
+                {filteredShorts.slice(0, 6).map(s => (
                   <ShortVideoCard key={`short-${s.id}`} short={s} />
                 ))}
               </div>
