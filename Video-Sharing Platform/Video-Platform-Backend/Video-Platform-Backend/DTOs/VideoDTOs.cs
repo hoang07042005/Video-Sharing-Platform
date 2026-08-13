@@ -129,4 +129,9 @@ namespace Video_Platform_Backend.DTOs
         public int? CategoryId { get; set; }
         public bool IsShort { get; set; }
     }
+    public class CreateReportDTO
+    {
+        public string Reason { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
 }

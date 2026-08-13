@@ -7,7 +7,7 @@ export default function AdminLayout() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.removeItem('roles');
     navigate('/login');
   };
 
@@ -19,6 +19,15 @@ export default function AdminLayout() {
         { name: 'Báo cáo nhanh', path: '/admin/reports', icon: BarChart2 },
       ]
     },
+    
+    {
+      label: 'QUẢN LÝ NỘI DUNG',
+      items: [
+        { name: 'Quản lý Video', path: '/admin/videos', icon: Video },
+        { name: 'Danh mục', path: '/admin/categories', icon: List },
+        { name: 'Bình luận', path: '/admin/comments', icon: MessageSquare },
+      ]
+    },
     {
       label: 'QUẢN LÝ NGƯỜI DÙNG',
       items: [
@@ -27,30 +36,10 @@ export default function AdminLayout() {
       ]
     },
     {
-      label: 'QUẢN LÝ NỘI DUNG',
-      items: [
-        { name: 'Quản lý Video', path: '/admin/videos', icon: Video },
-        { name: 'Quản lý Shorts', path: '/admin/shorts', icon: PlaySquare },
-        { name: 'Danh mục', path: '/admin/categories', icon: List },
-      ]
-    },
-    {
-      label: 'CỘNG ĐỒNG',
-      items: [
-        { name: 'Bình luận', path: '/admin/comments', icon: MessageSquare },
-        { name: 'Từ khóa bị cấm', path: '/admin/banned-words', icon: ShieldBan },
-      ]
-    },
-    {
-      label: 'BÁO CÁO & KIỂM DUYỆT',
+      label: 'KIỂM DUYỆT & TÀI CHÍNH',
       items: [
         { name: 'Báo cáo & Khiếu nại', path: '/admin/complaints', icon: AlertTriangle },
         { name: 'Vi phạm', path: '/admin/violations', icon: ShieldAlert },
-      ]
-    },
-    {
-      label: 'GIAO DỊCH',
-      items: [
         { name: 'Doanh thu', path: '/admin/revenue', icon: DollarSign },
         { name: 'Giao dịch', path: '/admin/transactions', icon: CreditCard },
       ]
@@ -58,7 +47,6 @@ export default function AdminLayout() {
     {
       label: 'HỆ THỐNG',
       items: [
-        { name: 'Cấu hình', path: '/admin/settings', icon: SettingsIcon },
         { name: 'Cài đặt', path: '/admin/profile-settings', icon: SettingsIcon },
       ]
     },
@@ -82,7 +70,7 @@ export default function AdminLayout() {
           <nav className="px-3 py-2 space-y-4">
             {navGroups.map((group) => (
               <div key={group.label}>
-                <p className="px-2 mb-1 text-[9px] font-bold tracking-widest text-gray-600 uppercase">{group.label}</p>
+                 <p className="px-5 pt-5 border-t border-white/8 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</p>
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const isActive = location.pathname === item.path;
@@ -121,14 +109,14 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[#0b0c13] h-screen overflow-hidden">
         {/* Top Header */}
         <header className="h-[80px] px-8 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-1xl font-bold text-white flex items-center gap-2">
+            {/* <h2 className="text-1xl font-bold text-white flex items-center gap-2">
               Chào mừng trở lại, Admin! <span className="text-yellow-400 animate-wave">👋</span>
             </h2>
-            <p className="text-xs text-gray-400 mt-1">Đây là tổng quan hoạt động của hệ thống hôm nay.</p>
+            <p className="text-xs text-gray-400 mt-1">Đây là tổng quan hoạt động của hệ thống hôm nay.</p> */}
           </div>
           
           <div className="flex items-center gap-6">
@@ -139,10 +127,6 @@ export default function AdminLayout() {
                 placeholder="Tìm kiếm..." 
                 className="bg-[#1a1c23] border border-white/10 text-white text-sm rounded-full pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-purple-500 transition-colors"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 text-[10px] text-gray-500">
-                <span className="bg-white/10 px-1.5 py-0.5 rounded">⌘</span>
-                <span className="bg-white/10 px-1.5 py-0.5 rounded">K</span>
-              </div>
             </div>
             
             <div className="flex items-center gap-4 border-l border-white/10 pl-6">

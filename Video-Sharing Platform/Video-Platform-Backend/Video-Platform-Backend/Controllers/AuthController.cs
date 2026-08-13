@@ -40,6 +40,13 @@ namespace Video_Platform_Backend.Controllers
                 return BadRequest(new { Message = "Handle already taken." });
             }
 
+            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            var userRoles = new List<UserRole>();
+            if (userRole != null)
+            {
+                userRoles.Add(new UserRole { RoleId = userRole.Id });
+            }
+
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             var user = new User
@@ -47,7 +54,7 @@ namespace Video_Platform_Backend.Controllers
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
                 PasswordHash = passwordHash,
-                Role = "User"
+                UserRoles = userRoles
             };
 
             var profile = new Profile
@@ -78,6 +85,8 @@ namespace Video_Platform_Backend.Controllers
             var user = await _context.Users
                 .Include(u => u.Profile)
                 .Include(u => u.Channel)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email == dto.EmailOrPhone || u.PhoneNumber == dto.EmailOrPhone);
 
             if (user == null || user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
@@ -92,13 +101,16 @@ namespace Video_Platform_Backend.Controllers
 
             var token = GenerateJwtToken(user);
 
+            var userRoles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+            if (!userRoles.Any()) userRoles.Add("User");
+
             return Ok(new AuthResponseDto
             {
                 Token = token,
                 UserId = user.Id,
                 Email = user.Email,
                 FullName = user.Profile?.FullName,
-                Role = user.Role ?? "User",
+                Roles = userRoles,
                 Handle = user.Channel?.Handle,
                 AvatarUrl = user.Profile?.AvatarUrl
             });
@@ -111,13 +123,24 @@ namespace Video_Platform_Backend.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role ?? "User"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            if (user.UserRoles != null && user.UserRoles.Any())
+            {
+                foreach (var userRole in user.UserRoles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                }
+            }
+            else
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "User"));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],

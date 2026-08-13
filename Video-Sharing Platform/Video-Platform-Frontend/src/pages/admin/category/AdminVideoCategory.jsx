@@ -142,13 +142,12 @@ const AdminVideoCategory = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-[#1C1C24] p-1 rounded-xl border border-white/5">
-            <button className="p-2 bg-purple-600 rounded-lg text-white"><LucideIcons.List className="w-4 h-4" /></button>
+            <button className="p-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA]  rounded-lg text-white"><LucideIcons.List className="w-4 h-4" /></button>
             <button className="p-2 text-gray-400 hover:text-white transition-colors"><LucideIcons.LayoutGrid className="w-4 h-4" /></button>
           </div>
           <button 
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-purple-600/20"
-          >
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-lg shadow-[#FF5722]/20">
             <Plus className="w-4 h-4" /> Thêm danh mục
           </button>
         </div>

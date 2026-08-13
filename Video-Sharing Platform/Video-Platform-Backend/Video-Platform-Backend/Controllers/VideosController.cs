@@ -991,5 +991,33 @@ namespace Video_Platform_Backend.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Đã xóa video." });
         }
+        // POST: api/videos/{id}/report
+        [HttpPost("{id}/report")]
+        [Authorize]
+        public async Task<IActionResult> ReportVideo(Guid id, [FromBody] CreateReportDTO request)
+        {
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+            var video = await _context.Videos.FindAsync(id);
+            if (video == null) return NotFound(new { message = "Video không tồn tại." });
+
+            var report = new Report
+            {
+                Id = Guid.NewGuid(),
+                ReporterId = userId,
+                TargetId = id,
+                TargetType = "Video",
+                Reason = request.Reason,
+                Description = request.Description,
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Reports.Add(report);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Cảm ơn bạn. Báo cáo của bạn đã được gửi và sẽ được xem xét." });
+        }
     }
 }

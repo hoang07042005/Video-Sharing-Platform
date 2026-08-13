@@ -23,7 +23,7 @@ export default function Header({ toggleSidebar }) {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.removeItem('roles');
     localStorage.removeItem('handle');
     localStorage.removeItem('avatar');
     navigate('/login');

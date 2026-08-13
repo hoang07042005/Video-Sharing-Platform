@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Video_Platform_Backend.Models;
 
@@ -11,9 +12,11 @@ using Video_Platform_Backend.Models;
 namespace Video_Platform_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813010540_AddUserRoleTable")]
+    partial class AddUserRoleTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,47 +24,6 @@ namespace Video_Platform_Backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Video_Platform_Backend.Models.AuditLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Target")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AuditLogs");
-                });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.BannedWord", b =>
                 {
@@ -799,35 +761,14 @@ namespace Video_Platform_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BgColor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BorderColor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Icon")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Label")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("PermissionsJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TextColor")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -837,41 +778,20 @@ namespace Video_Platform_Backend.Migrations
                         new
                         {
                             Id = 1,
-                            BgColor = "bg-red-500/10",
-                            BorderColor = "border-red-500/20",
-                            Color = "from-red-500 to-orange-500",
                             Description = "Toàn quyền quản trị hệ thống",
-                            Icon = "Crown",
-                            Label = "Quản trị viên",
-                            Name = "Admin",
-                            PermissionsJson = "[\"Quản lý người dùng\", \"Quản lý video\", \"Quản lý bình luận\", \"Quản lý danh mục\", \"Xem báo cáo\", \"Cấu hình hệ thống\", \"Phân quyền vai trò\", \"Quản lý giao dịch\"]",
-                            TextColor = "text-red-400"
+                            Name = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            BgColor = "bg-blue-500/10",
-                            BorderColor = "border-blue-500/20",
-                            Color = "from-blue-500 to-purple-500",
                             Description = "Kiểm duyệt nội dung và bình luận",
-                            Icon = "ShieldCheck",
-                            Label = "Kiểm duyệt viên",
-                            Name = "Moderator",
-                            PermissionsJson = "[\"Quản lý bình luận\", \"Ẩn / xóa video vi phạm\", \"Xem báo cáo người dùng\", \"Quản lý từ khóa cấm\"]",
-                            TextColor = "text-blue-400"
+                            Name = "Moderator"
                         },
                         new
                         {
                             Id = 3,
-                            BgColor = "bg-gray-500/10",
-                            BorderColor = "border-gray-500/20",
-                            Color = "from-gray-500 to-gray-600",
                             Description = "Người dùng thông thường",
-                            Icon = "Users",
-                            Label = "Người dùng",
-                            Name = "User",
-                            PermissionsJson = "[\"Xem video\", \"Bình luận\", \"Thích video\", \"Đăng ký kênh\", \"Upload video\"]",
-                            TextColor = "text-gray-400"
+                            Name = "User"
                         });
                 });
 
@@ -1340,16 +1260,6 @@ namespace Video_Platform_Backend.Migrations
                     b.HasIndex("VideoId");
 
                     b.ToTable("WatchHistories");
-                });
-
-            modelBuilder.Entity("Video_Platform_Backend.Models.AuditLog", b =>
-                {
-                    b.HasOne("Video_Platform_Backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Channel", b =>

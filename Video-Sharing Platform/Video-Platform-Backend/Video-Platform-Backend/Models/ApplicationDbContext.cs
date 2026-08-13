@@ -75,7 +75,11 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<WatchHistory> WatchHistories { get; set; }
 
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<UserRole> UserRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -529,9 +533,6 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.IsBanned).HasDefaultValue(false);
             entity.Property(e => e.IsEmailVerified).HasDefaultValue(false);
             entity.Property(e => e.IsPhoneVerified).HasDefaultValue(false);
-            entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .HasDefaultValue("User");
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.UpdatedAt)
@@ -657,6 +658,74 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Video).WithMany(p => p.WatchHistories)
                 .HasForeignKey(d => d.VideoId)
                 .HasConstraintName("FK__WatchHist__Video__2645B050");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(255);
+
+            entity.HasData(
+                new Role { 
+                    Id = 1, 
+                    Name = "Admin", 
+                    Description = "Toàn quyền quản trị hệ thống",
+                    Label = "Quản trị viên",
+                    Color = "from-red-500 to-orange-500",
+                    TextColor = "text-red-400",
+                    BgColor = "bg-red-500/10",
+                    BorderColor = "border-red-500/20",
+                    Icon = "Crown",
+                    PermissionsJson = "[\"Quản lý người dùng\", \"Quản lý video\", \"Quản lý bình luận\", \"Quản lý danh mục\", \"Xem báo cáo\", \"Cấu hình hệ thống\", \"Phân quyền vai trò\", \"Quản lý giao dịch\"]"
+                },
+                new Role { 
+                    Id = 2, 
+                    Name = "Moderator", 
+                    Description = "Kiểm duyệt nội dung và bình luận",
+                    Label = "Kiểm duyệt viên",
+                    Color = "from-blue-500 to-purple-500",
+                    TextColor = "text-blue-400",
+                    BgColor = "bg-blue-500/10",
+                    BorderColor = "border-blue-500/20",
+                    Icon = "ShieldCheck",
+                    PermissionsJson = "[\"Quản lý bình luận\", \"Ẩn / xóa video vi phạm\", \"Xem báo cáo người dùng\", \"Quản lý từ khóa cấm\"]"
+                },
+                new Role { 
+                    Id = 3, 
+                    Name = "User", 
+                    Description = "Người dùng thông thường",
+                    Label = "Người dùng",
+                    Color = "from-gray-500 to-gray-600",
+                    TextColor = "text-gray-400",
+                    BgColor = "bg-gray-500/10",
+                    BorderColor = "border-gray-500/20",
+                    Icon = "Users",
+                    PermissionsJson = "[\"Xem video\", \"Bình luận\", \"Thích video\", \"Đăng ký kênh\", \"Upload video\"]"
+                }
+            );
+        });
+
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.RoleId });
+
+            entity.HasOne(d => d.Role).WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+        
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         OnModelCreatingPartial(modelBuilder);

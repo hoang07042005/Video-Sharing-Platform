@@ -84,14 +84,14 @@ export default function AdminUsers() {
   const newUsers = Math.floor(totalUsers * 0.02) || 0; 
   const activeUsers = users.filter(u => !u.isBanned).length;
   const bannedUsers = users.filter(u => u.isBanned).length;
-  const adminUsers = users.filter(u => u.role === 'Admin').length;
+  const adminUsers = users.filter(u => u.roles?.includes('Admin')).length;
 
   // Filtering Logic
   const filteredUsers = users.filter(u => {
     // Tab filtering
     if (activeTab === 'active' && u.isBanned) return false;
     if (activeTab === 'banned' && !u.isBanned) return false;
-    if (activeTab === 'admin' && u.role !== 'Admin') return false;
+    if (activeTab === 'admin' && !u.roles?.includes('Admin')) return false;
 
     // Search filtering
     const matchesSearch = u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -100,8 +100,8 @@ export default function AdminUsers() {
     
     // Role filter
     const matchesRole = roleFilter === 'Tất cả' || 
-                        (roleFilter === 'Admin' && u.role === 'Admin') || 
-                        (roleFilter === 'User' && u.role !== 'Admin');
+                        (roleFilter === 'Admin' && u.roles?.includes('Admin')) || 
+                        (roleFilter === 'User' && (!u.roles || !u.roles.includes('Admin')));
 
     // Status filter
     const matchesStatus = statusFilter === 'Tất cả' ||
@@ -146,7 +146,7 @@ export default function AdminUsers() {
           <button className="flex items-center gap-2 px-4 py-2 bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
             <Download className="w-4 h-4" /> Xuất dữ liệu
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-purple-500/20">
+          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-[#FF5722]/20">
             <UserCheck className="w-4 h-4" /> Thao tác hàng loạt
             <ChevronDown className="w-4 h-4 ml-1 opacity-70" />
           </button>
@@ -349,7 +349,7 @@ export default function AdminUsers() {
                 </tr>
               ) : (
                 paginatedUsers.map(user => {
-                  const isAdmin = user.role === 'Admin';
+                  const isAdmin = user.roles?.includes('Admin');
                   const isBanned = user.isBanned;
 
                   return (
@@ -425,7 +425,7 @@ export default function AdminUsers() {
                                 <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
                                   <UserCheck className="w-4 h-4" /> Xem lịch sử
                                 </button>
-                                {user.role !== 'Admin' && (
+                                {!user.roles?.includes('Admin') && (
                                   <>
                                     <div className="h-px bg-white/5 my-1"></div>
                                     <button 

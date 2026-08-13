@@ -17,13 +17,13 @@ export default function Login() {
     setError('');
     try {
       const response = await axios.post('/api/auth/login', { emailOrPhone, password });
-      const { token, role, handle, avatarUrl } = response.data;
+      const { token, roles, handle, avatarUrl } = response.data;
       localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
+      localStorage.setItem('roles', JSON.stringify(roles || []));
       if (handle) localStorage.setItem('handle', handle);
       if (avatarUrl) localStorage.setItem('avatar', avatarUrl);
       
-      if (role === 'Admin' || role === 'Moderator') {
+      if (roles && (roles.includes('Admin') || roles.includes('Moderator'))) {
         navigate('/admin');
       } else {
         navigate('/');

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
+using Video_Platform_Backend.DTOs;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -154,13 +157,16 @@ namespace Video_Platform_Backend.Controllers
         {
             var users = await _context.Users
                 .Include(u => u.Profile)
+                .Include(u => u.Channel)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .OrderByDescending(u => u.CreatedAt)
                 .Select(u => new {
                     Id = u.Id,
                     Email = u.Email,
                     FullName = u.Profile != null ? u.Profile.FullName : "Unknown",
                     AvatarUrl = u.Profile != null ? u.Profile.AvatarUrl : null,
-                    Role = u.Role ?? "User",
+                    Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
                     IsActive = u.IsActive ?? true,
                     IsBanned = u.IsBanned ?? false,
                     CreatedAt = u.CreatedAt,
@@ -195,26 +201,216 @@ namespace Video_Platform_Backend.Controllers
         }
 
         [HttpPut("users/{id}/role")]
-        public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateRoleDto dto)
+        public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateUserRolesDto dto)
         {
-            var validRoles = new[] { "User", "Moderator", "Admin" };
-            if (!validRoles.Contains(dto.Role))
-                return BadRequest(new { message = "Vai trò không hợp lệ." });
+            var validRoles = await _context.Roles.Select(r => r.Name).ToListAsync();
+            
+            if (dto.Roles == null || dto.Roles.Count == 0)
+                dto.Roles = new List<string> { "User" };
 
-            var user = await _context.Users.FindAsync(id);
+            foreach(var role in dto.Roles)
+            {
+                if (!validRoles.Contains(role))
+                    return BadRequest(new { message = $"Vai trò {role} không hợp lệ." });
+            }
+
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+                
             if (user == null)
                 return NotFound(new { message = "Không tìm thấy người dùng." });
 
-            user.Role = dto.Role;
-            _context.Users.Update(user);
+            // Xóa các role cũ
+            _context.UserRoles.RemoveRange(user.UserRoles);
+
+            // Thêm role mới
+            var newRoles = await _context.Roles.Where(r => dto.Roles.Contains(r.Name)).ToListAsync();
+            foreach(var role in newRoles)
+            {
+                user.UserRoles.Add(new UserRole { RoleId = role.Id, UserId = user.Id });
+            }
+
+            // Ghi AuditLog
+            var adminUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            Guid? adminUserId = null;
+            if (Guid.TryParse(adminUserIdStr, out Guid parsedId))
+            {
+                adminUserId = parsedId;
+            }
+
+            var log = new AuditLog
+            {
+                UserId = adminUserId,
+                Action = "Phân quyền",
+                ActionType = "assign",
+                Target = user.Email,
+                Details = $"Cập nhật quyền thành {string.Join(", ", dto.Roles)}",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.AuditLogs.Add(log);
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Đã cập nhật vai trò thành công.", role = user.Role });
+            return Ok(new { message = "Đã cập nhật vai trò thành công.", roles = dto.Roles });
         }
-    }
+        
+        [HttpGet("audit-logs")]
+        public async Task<IActionResult> GetAuditLogs()
+        {
+            var logs = await _context.AuditLogs
+                .Include(l => l.User)
+                    .ThenInclude(u => u.Profile)
+                .OrderByDescending(l => l.CreatedAt)
+                .Take(50)
+                .Select(l => new {
+                    Id = l.Id,
+                    Time = l.CreatedAt.ToString("HH:mm dd/MM/yyyy"),
+                    User = l.User != null ? l.User.Email : "Hệ thống",
+                    Role = "Quản trị viên", // Assuming only admins can do this for now
+                    Avatar = l.User != null && l.User.Profile != null && !string.IsNullOrEmpty(l.User.Profile.AvatarUrl)
+                        ? l.User.Profile.AvatarUrl
+                        : "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (l.User != null ? l.User.Email : "System"),
+                    Action = l.Action,
+                    ActionType = l.ActionType,
+                    Target = l.Target,
+                    Details = l.Details
+                })
+                .ToListAsync();
 
-    public class UpdateRoleDto
-    {
-        public string Role { get; set; } = "User";
+            return Ok(logs);
+        }
+        
+        [HttpGet("roles")]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = await _context.Roles
+                .Select(r => new {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Description = r.Description,
+                    Label = r.Label,
+                    Color = r.Color,
+                    TextColor = r.TextColor,
+                    BgColor = r.BgColor,
+                    BorderColor = r.BorderColor,
+                    Icon = r.Icon,
+                    PermissionsJson = r.PermissionsJson
+                })
+                .ToListAsync();
+            return Ok(roles);
+        }
+
+        [HttpPost("roles")]
+        public async Task<IActionResult> CreateRole([FromBody] CreateRoleDto dto)
+        {
+            if (await _context.Roles.AnyAsync(r => r.Name == dto.Name))
+            {
+                return BadRequest(new { message = "Vai trò với tên này đã tồn tại." });
+            }
+
+            var role = new Role
+            {
+                Name = dto.Name,
+                Label = dto.Label,
+                Description = dto.Description,
+                Color = dto.Color ?? "from-gray-500 to-gray-600",
+                TextColor = dto.TextColor ?? "text-gray-400",
+                BgColor = dto.BgColor ?? "bg-gray-500/10",
+                BorderColor = dto.BorderColor ?? "border-gray-500/20",
+                Icon = dto.Icon ?? "Users",
+                PermissionsJson = dto.PermissionsJson ?? "[]"
+            };
+
+            _context.Roles.Add(role);
+
+            // Audit log
+            var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(adminId, out Guid adminGuid))
+            {
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = adminGuid,
+                    Action = "Thêm vai trò",
+                    ActionType = "add",
+                    Target = dto.Label,
+                    Details = $"Tạo mới vai trò {dto.Label}"
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Thêm vai trò thành công." });
+        }
+
+        [HttpPut("roles/{id}")]
+        public async Task<IActionResult> UpdateRole(int id, [FromBody] UpdateRoleDto dto)
+        {
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null) return NotFound(new { message = "Không tìm thấy vai trò." });
+
+            if (role.Name != dto.Name && await _context.Roles.AnyAsync(r => r.Name == dto.Name))
+            {
+                return BadRequest(new { message = "Tên vai trò mới đã tồn tại." });
+            }
+
+            role.Name = dto.Name;
+            role.Label = dto.Label;
+            role.Description = dto.Description;
+            role.Color = dto.Color ?? role.Color;
+            role.TextColor = dto.TextColor ?? role.TextColor;
+            role.BgColor = dto.BgColor ?? role.BgColor;
+            role.BorderColor = dto.BorderColor ?? role.BorderColor;
+            role.Icon = dto.Icon ?? role.Icon;
+            role.PermissionsJson = dto.PermissionsJson ?? role.PermissionsJson;
+
+            // Audit log
+            var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(adminId, out Guid adminGuid))
+            {
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = adminGuid,
+                    Action = "Cập nhật vai trò",
+                    ActionType = "update",
+                    Target = dto.Label,
+                    Details = $"Cập nhật vai trò {dto.Label}"
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật vai trò thành công." });
+        }
+
+        [HttpDelete("roles/{id}")]
+        public async Task<IActionResult> DeleteRole(int id)
+        {
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null) return NotFound(new { message = "Không tìm thấy vai trò." });
+
+            bool isUsed = await _context.UserRoles.AnyAsync(ur => ur.RoleId == id);
+            if (isUsed)
+            {
+                return BadRequest(new { message = "Không thể xóa vai trò đang có người dùng." });
+            }
+
+            _context.Roles.Remove(role);
+
+            // Audit log
+            var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(adminId, out Guid adminGuid))
+            {
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = adminGuid,
+                    Action = "Xóa vai trò",
+                    ActionType = "delete",
+                    Target = role.Label,
+                    Details = $"Xóa vai trò {role.Label}"
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Xóa vai trò thành công." });
+        }
     }
 }

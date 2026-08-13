@@ -2,9 +2,9 @@ import { Navigate, Outlet } from 'react-router-dom';
 
 export default function AdminRoute() {
   const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
+  const roles = JSON.parse(localStorage.getItem('roles') || '[]');
 
-  if (!token || role !== 'Admin') {
+  if (!token || !roles.includes('Admin')) {
     // If not logged in or not admin, redirect to home page
     return <Navigate to="/" replace />;
   }

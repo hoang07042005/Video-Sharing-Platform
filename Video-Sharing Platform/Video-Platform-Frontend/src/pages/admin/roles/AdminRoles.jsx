@@ -1,147 +1,342 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, Fragment } from 'react';
 import axios from 'axios';
-import {
-  Shield, Users, Crown, Search, Loader2, Check, X, Lock,
-  UserCog, RefreshCw, ChevronDown, ShieldCheck
+import * as LucideIcons from 'lucide-react';
+import { 
+  Crown, Shield, Users, Search, Plus, MoreHorizontal,
+  ChevronLeft, ChevronRight, Activity, Clock, Check, Minus, Video, ShieldAlert, Settings, PieChart, ShieldCheck, Edit3
 } from 'lucide-react';
 
-// Role Definitions
-const ROLES = {
-  Admin: {
-    label: 'Quản trị viên',
-    color: 'from-red-500 to-orange-500',
-    textColor: 'text-red-400',
-    bgColor: 'bg-red-500/10',
-    borderColor: 'border-red-500/20',
-    icon: Crown,
-    description: 'Toàn quyền quản trị hệ thống',
-    permissions: [
-      'Quản lý người dùng', 'Quản lý video', 'Quản lý bình luận',
-      'Quản lý danh mục', 'Xem báo cáo', 'Cấu hình hệ thống',
-      'Phân quyền vai trò', 'Quản lý giao dịch'
-    ]
-  },
-  Moderator: {
-    label: 'Kiểm duyệt viên',
-    color: 'from-blue-500 to-purple-500',
-    textColor: 'text-blue-400',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    icon: ShieldCheck,
-    description: 'Kiểm duyệt nội dung và bình luận',
-    permissions: [
-      'Quản lý bình luận', 'Ẩn / xóa video vi phạm',
-      'Xem báo cáo người dùng', 'Quản lý từ khóa cấm'
-    ]
-  },
-  User: {
-    label: 'Người dùng',
-    color: 'from-gray-500 to-gray-600',
-    textColor: 'text-gray-400',
-    bgColor: 'bg-gray-500/10',
-    borderColor: 'border-gray-500/20',
-    icon: Users,
-    description: 'Người dùng thông thường',
-    permissions: [
-      'Xem video', 'Bình luận', 'Thích video',
-      'Đăng ký kênh', 'Upload video'
-    ]
-  }
-};
+// === CONSTANTS & MOCK DATA ===
 
-const PERMISSION_MATRIX = [
-  { name: 'Quản lý người dùng',  admin: true,  mod: false, user: false },
-  { name: 'Quản lý video',       admin: true,  mod: true,  user: false },
-  { name: 'Quản lý bình luận',   admin: true,  mod: true,  user: false },
-  { name: 'Quản lý danh mục',    admin: true,  mod: false, user: false },
-  { name: 'Xem báo cáo',         admin: true,  mod: true,  user: false },
-  { name: 'Cấu hình hệ thống',   admin: true,  mod: false, user: false },
-  { name: 'Phân quyền vai trò',  admin: true,  mod: false, user: false },
-  { name: 'Upload video',         admin: true,  mod: true,  user: true  },
-  { name: 'Bình luận',            admin: true,  mod: true,  user: true  },
-  { name: 'Xem video',            admin: true,  mod: true,  user: true  },
+// Dynamic permission grouping will be generated from DB data
+
+const ROLE_THEMES = [
+  { id: 'purple', name: 'Tím', textColor: 'text-purple-300', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/40', color: 'from-purple-500 to-purple-400', hex: '#d8b4fe' },
+  { id: 'blue', name: 'Xanh dương', textColor: 'text-blue-300', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/40', color: 'from-blue-500 to-blue-400', hex: '#93c5fd' },
+  { id: 'green', name: 'Xanh lá', textColor: 'text-emerald-300', bgColor: 'bg-emerald-500/20', borderColor: 'border-emerald-500/40', color: 'from-emerald-500 to-emerald-400', hex: '#6ee7b7' },
+  { id: 'red', name: 'Đỏ', textColor: 'text-red-300', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/40', color: 'from-red-500 to-red-400', hex: '#fca5a5' },
+  { id: 'orange', name: 'Cam', textColor: 'text-orange-300', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/40', color: 'from-orange-500 to-orange-400', hex: '#fdba74' },
+  { id: 'gray', name: 'Xám', textColor: 'text-gray-300', bgColor: 'bg-gray-500/20', borderColor: 'border-gray-500/40', color: 'from-gray-500 to-gray-400', hex: '#d1d5db' },
+  { id: 'pink', name: 'Hồng', textColor: 'text-pink-300', bgColor: 'bg-pink-500/20', borderColor: 'border-pink-500/40', color: 'from-pink-500 to-pink-400', hex: '#f9a8d4' },
+  { id: 'yellow', name: 'Vàng', textColor: 'text-yellow-300', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500/40', color: 'from-yellow-500 to-yellow-400', hex: '#fde047' },
 ];
 
 export default function AdminRoles() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [savingId, setSavingId] = useState(null);
-  const [notification, setNotification] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => { fetchUsers(); }, []);
-
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, roleFilter, itemsPerPage]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
-        setOpenDropdownId(null);
+  const getRoleCardStyle = (role) => {
+    if (role.color?.startsWith('#')) {
+      return {
+        className: 'p-4 rounded-xl border relative overflow-hidden group cursor-pointer transition-all hover:brightness-110',
+        style: { backgroundColor: `${role.color}1A`, borderColor: `${role.color}33` } // 1A = 10%, 33 = 20%
+      };
+    }
+    return {
+      className: `p-4 rounded-xl border ${role.borderColor} ${role.bgColor} relative overflow-hidden group cursor-pointer transition-all hover:brightness-110`,
+      style: {}
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  };
 
-  const fetchUsers = async () => {
+  const getRoleTextStyle = (role) => {
+    if (role.color?.startsWith('#')) {
+      return { className: '', style: { color: role.color } };
+    }
+    return { className: role.textColor || '', style: {} };
+  };
+
+  const getRoleBadgeStyle = (role) => {
+    if (role.color?.startsWith('#')) {
+      return {
+        className: 'w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold shrink-0',
+        style: { backgroundColor: `${role.color}4D`, color: role.color } // 4D = 30%
+      };
+    }
+    return {
+      className: `w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${role.bgColor?.replace(/\/10|\/20/, '/40') || ''} ${role.textColor} shrink-0`,
+      style: {}
+    };
+  };
+
+  const getRoleIconBoxStyle = (role) => {
+    if (role.color?.startsWith('#')) {
+      return {
+        className: 'w-10 h-10 rounded-xl border flex items-center justify-center shrink-0',
+        style: { backgroundColor: `${role.color}1A`, borderColor: `${role.color}33`, color: role.color }
+      };
+    }
+    return {
+      className: `w-10 h-10 rounded-xl ${role.bgColor} ${role.textColor} border ${role.borderColor} flex items-center justify-center shrink-0`,
+      style: {}
+    };
+  };
+
+  const [rolesList, setRolesList] = useState([]);
+  const [usersCountMap, setUsersCountMap] = useState({});
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [usersList, setUsersList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('matrix');
+  const [notification, setNotification] = useState(null);
+  const [dynamicPermissionGroups, setDynamicPermissionGroups] = useState([]);
+  const [roleUpdates, setRoleUpdates] = useState({});
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState('Tất cả nhóm quyền');
+
+  // Role Modal State
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [modalRoleData, setModalRoleData] = useState({
+    id: null,
+    name: '',
+    label: '',
+    description: '',
+    permissions: []
+  });
+  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
+      const [rolesRes, usersRes, logsRes] = await Promise.all([
+        axios.get('/api/admin/roles'),
+        axios.get('/api/admin/users'),
+        axios.get('/api/admin/audit-logs').catch(() => ({ data: [] }))
+      ]);
+      
+      const rolesData = rolesRes.data.map(r => {
+        let perms = [];
+        try {
+          const jsonStr = r.permissionsJson || r.PermissionsJson;
+          if (jsonStr) perms = JSON.parse(jsonStr);
+        } catch (e) {
+          console.error("Error parsing permissions", e);
+        }
+        
+        const iconName = r.icon || r.Icon;
+        return {
+          ...r,
+          Icon: LucideIcons[iconName] || LucideIcons.Shield,
+          label: r.label || r.Label || r.name || r.Name,
+          description: r.description || r.Description,
+          textColor: r.textColor || r.TextColor || 'text-gray-400',
+          bgColor: r.bgColor || r.BgColor || 'bg-gray-500/10',
+          borderColor: r.borderColor || r.BorderColor || 'border-gray-500/20',
+          name: r.name || r.Name,
+          permissions: perms
+        };
       });
-      setUsers(res.data);
-    } catch (err) {
-      console.error('Lỗi tải danh sách người dùng:', err);
+
+      setRolesList(rolesData);
+
+      const countMap = {};
+      usersRes.data.forEach(user => {
+        user.roles.forEach(roleName => {
+          countMap[roleName] = (countMap[roleName] || 0) + 1;
+        });
+      });
+      setUsersCountMap(countMap);
+      setAuditLogs(logsRes.data);
+      setUsersList(usersRes.data);
+
+      // Dynamically extract all permissions from DB roles
+      const allPerms = new Set();
+      rolesData.forEach(r => {
+        if (r.permissions) {
+          r.permissions.forEach(p => allPerms.add(p));
+        }
+      });
+
+      const groups = [
+        { name: 'Người dùng & Tương tác', icon: Users, color: 'text-purple-400', permissions: [] },
+        { name: 'Quản lý nội dung', icon: Video, color: 'text-blue-400', permissions: [] },
+        { name: 'Kiểm duyệt & Hệ thống', icon: ShieldAlert, color: 'text-orange-400', permissions: [] }
+      ];
+
+      allPerms.forEach(perm => {
+        const pLower = perm.toLowerCase();
+        let targetGroup = 2; // Default to System
+
+        if ((pLower.includes('video') && !pLower.includes('quản lý') && !pLower.includes('ẩn')) || 
+            (pLower.includes('bình luận') && !pLower.includes('quản lý')) || 
+            pLower.includes('kênh')) {
+          targetGroup = 0;
+        } else if (pLower.includes('video') || pLower.includes('danh mục') || pLower.includes('từ khóa') || (pLower.includes('bình luận') && pLower.includes('quản lý'))) {
+          targetGroup = 1;
+        }
+
+        groups[targetGroup].permissions.push({ id: perm, label: perm });
+      });
+
+      setDynamicPermissionGroups(groups.filter(g => g.permissions.length > 0));
+    } catch (error) {
+      console.error('Error fetching roles data:', error);
+      showNotification('Lỗi khi tải dữ liệu!', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRoleChange = async (userId, newRole) => {
-    setSavingId(userId);
-    setOpenDropdownId(null);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleRoleChange = (userId, newRole) => {
+    setRoleUpdates(prev => ({
+      ...prev,
+      [userId]: newRole
+    }));
+  };
+
+  const handleUpdateAllRoles = async () => {
+    const userIds = Object.keys(roleUpdates);
+    if (userIds.length === 0) return;
+
+    setIsUpdating(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`/api/admin/users/${userId}/role`, { role: newRole }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      showNotification('success', `Đã cập nhật vai trò thành ${ROLES[newRole]?.label || newRole}`);
-    } catch {
-      showNotification('error', 'Không thể cập nhật vai trò. Vui lòng thử lại.');
+      const promises = userIds.map(id => 
+        axios.put(`/api/admin/users/${id}/role`, {
+          roles: [roleUpdates[id]]
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      );
+      
+      await Promise.all(promises);
+      showNotification('Đã cập nhật vai trò thành công!');
+      setRoleUpdates({});
+      fetchData(); // reload all data to reflect changes
+    } catch (error) {
+      console.error('Error updating roles:', error);
+      showNotification('Lỗi khi cập nhật vai trò!', 'error');
     } finally {
-      setSavingId(null);
+      setIsUpdating(false);
     }
   };
 
-  const showNotification = (type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3500);
+  const openAddRoleModal = () => {
+    setModalRoleData({
+      id: null,
+      name: '',
+      label: '',
+      description: '',
+      color: '#a855f7',
+      textColor: '',
+      bgColor: '',
+      borderColor: '',
+      icon: 'Users',
+      permissions: []
+    });
+    setShowRoleModal(true);
   };
 
-  const adminCount = users.filter(u => u.role === 'Admin').length;
-  const moderatorCount = users.filter(u => u.role === 'Moderator').length;
-  const userCount = users.filter(u => !u.role || u.role === 'User').length;
+  const openEditRoleModal = (role) => {
+    setModalRoleData({
+      id: role.id,
+      name: role.name,
+      label: role.label,
+      description: role.description || '',
+      color: role.color || 'from-gray-500 to-gray-600',
+      textColor: role.textColor || 'text-gray-400',
+      bgColor: role.bgColor || 'bg-gray-500/10',
+      borderColor: role.borderColor || 'border-gray-500/20',
+      icon: role.icon || 'Users',
+      permissions: role.permissions || []
+    });
+    setShowRoleModal(true);
+  };
 
-  const filtered = users.filter(u => {
-    const matchSearch = !searchTerm ||
-      u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchRole = roleFilter === 'all' || (u.role || 'User') === roleFilter;
-    return matchSearch && matchRole;
-  });
+  const handleSaveRole = async () => {
+    if (!modalRoleData.name || !modalRoleData.label) {
+      showNotification('Vui lòng điền đầy đủ Tên và Label!', 'error');
+      return;
+    }
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const getRoleInfo = (role) => ROLES[role] || ROLES['User'];
+    setIsSubmittingRole(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        name: modalRoleData.name,
+        label: modalRoleData.label,
+        description: modalRoleData.description,
+        color: modalRoleData.color,
+        textColor: modalRoleData.textColor,
+        bgColor: modalRoleData.bgColor,
+        borderColor: modalRoleData.borderColor,
+        icon: modalRoleData.icon,
+        permissionsJson: JSON.stringify(modalRoleData.permissions)
+      };
+
+      if (modalRoleData.id) {
+        // Edit
+        await axios.put(`/api/admin/roles/${modalRoleData.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        showNotification('Đã cập nhật vai trò thành công!');
+      } else {
+        // Add
+        await axios.post('/api/admin/roles', payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        showNotification('Đã tạo vai trò thành công!');
+      }
+
+      setShowRoleModal(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error saving role:', error);
+      showNotification(error.response?.data?.message || 'Lỗi khi lưu vai trò!', 'error');
+    } finally {
+      setIsSubmittingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa vai trò này không?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/admin/roles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showNotification('Đã xóa vai trò thành công!');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      showNotification(error.response?.data?.message || 'Lỗi khi xóa vai trò!', 'error');
+    }
+  };
+
+  const getRoleCount = (roleName) => {
+    return usersCountMap[roleName] || 0;
+  };
+
+  const totalRoles = rolesList.length;
+  const totalPermissions = dynamicPermissionGroups.reduce((acc, g) => acc + g.permissions.length, 0);
+  const totalActiveUsers = usersList.length;
+  const usersWithRoles = usersList.filter(u => u.roles && u.roles.length > 0).length;
+  const permissionCoverage = totalActiveUsers > 0 ? Math.round((usersWithRoles / totalActiveUsers) * 100) : 0;
+
+  const getPermissionStatus = (role, permId) => {
+    if (role.permissions && role.permissions.includes(permId)) return 'allowed';
+    return 'denied';
+  };
+
+  const displayedGroups = selectedGroupFilter === 'Tất cả nhóm quyền' 
+    ? dynamicPermissionGroups 
+    : dynamicPermissionGroups.filter(g => g.name === selectedGroupFilter);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[500px]">
+        <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 max-w-[1600px] mx-auto min-h-full">
+    <div className="p-4 max-w-[1600px] mx-auto min-h-full pb-20">
 
       {/* Toast Notification */}
       {notification && (
@@ -150,259 +345,622 @@ export default function AdminRoles() {
             ? 'bg-emerald-900/90 border-emerald-500/40 text-emerald-300'
             : 'bg-red-900/90 border-red-500/40 text-red-300'
         }`}>
-          {notification.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          {notification.type === 'success' ? <Check className="w-4 h-4" /> : <LucideIcons.X className="w-4 h-4" />}
           {notification.message}
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            Vai trò &amp; Phân quyền
-          </h1>
-          <p className="text-gray-400 text-sm">Quản lý vai trò và quyền hạn của từng người dùng trong hệ thống.</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Quản lý vai trò & phân quyền</h1>
+          <p className="text-gray-400 text-sm">Tạo vai trò, phân quyền chi tiết và kiểm soát hoạt động hệ thống</p>
         </div>
-        <button onClick={fetchUsers} className="flex items-center gap-2 px-4 py-2 bg-[#1C1C24] hover:bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors cursor-pointer">
-          <RefreshCw className="w-4 h-4" /> Làm mới
+        <button 
+          onClick={openAddRoleModal}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-lg shadow-[#FF5722]/20"
+        >
+          <Plus className="w-4 h-4" /> Thêm vai trò mới
         </button>
       </div>
 
-      {/* Role Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        {Object.entries(ROLES).map(([key, role]) => {
-          const count = key === 'Admin' ? adminCount : key === 'Moderator' ? moderatorCount : userCount;
-          const Icon = role.icon;
-          return (
-            <div key={key} className={`bg-[#15151A] rounded-2xl border ${role.borderColor} p-5 relative overflow-hidden`}>
-              <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br ${role.color} opacity-5`} />
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl ${role.bgColor} border ${role.borderColor} flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${role.textColor}`} />
-                </div>
-                <span className={`text-3xl font-bold ${role.textColor}`}>{count}</span>
-              </div>
-              <h3 className="text-white font-bold text-base mb-1">{role.label}</h3>
-              <p className="text-gray-500 text-xs mb-4">{role.description}</p>
-              <div className="space-y-1.5">
-                {role.permissions.slice(0, 3).map(p => (
-                  <div key={p} className="flex items-center gap-2 text-xs text-gray-400">
-                    <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${role.color}`} />
-                    {p}
-                  </div>
-                ))}
-                {role.permissions.length > 3 && (
-                  <div className="text-xs text-gray-600">+{role.permissions.length - 3} quyền khác...</div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
+          <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Crown className="w-6 h-6 text-purple-400" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white leading-tight">{totalRoles}</div>
+            <div className="text-sm text-gray-200 font-semibold mt-0.5">Vai trò</div>
+            <div className="text-[10px] text-gray-500">Tổng số vai trò</div>
+          </div>
+        </div>
+
+        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Shield className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white leading-tight">{totalPermissions}</div>
+            <div className="text-sm text-gray-200 font-semibold mt-0.5">Quyền hạn</div>
+            <div className="text-[10px] text-gray-500">Tổng số quyền</div>
+          </div>
+        </div>
+
+        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all"></div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white leading-tight">{totalActiveUsers}</div>
+            <div className="text-sm text-gray-200 font-semibold mt-0.5">Người dùng</div>
+            <div className="text-[10px] text-gray-500">Đang sử dụng</div>
+          </div>
+        </div>
+
+        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition-all"></div>
+          <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
+            <PieChart className="w-6 h-6 text-orange-400" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white leading-tight">{permissionCoverage}%</div>
+            <div className="text-sm text-gray-200 font-semibold mt-0.5">Phân quyền</div>
+            <div className="text-[10px] text-gray-500">Đã phân quyền đầy đủ</div>
+          </div>
+        </div>
       </div>
 
-      {/* Permission Matrix */}
-      <div className="bg-[#15151A] rounded-2xl border border-white/5 p-5 mb-6">
-        <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Lock className="w-4 h-4 text-purple-400" />
+      {/* Tabs */}
+      <div className="flex items-center gap-6 border-b border-white/5 mb-6">
+        <button 
+          onClick={() => setActiveTab('matrix')}
+          className={`pb-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'matrix' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+        >
+          <Activity className="w-4 h-4" />
           Ma trận phân quyền
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left pb-3 text-gray-500 font-medium text-xs uppercase tracking-wider w-[40%]">Quyền hạn</th>
-                {Object.entries(ROLES).map(([key, role]) => (
-                  <th key={key} className="text-center pb-3 text-xs uppercase tracking-wider">
-                    <span className={`${role.textColor} font-semibold`}>{role.label}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {PERMISSION_MATRIX.map(perm => (
-                <tr key={perm.name} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3 text-gray-300 text-sm">{perm.name}</td>
-                  <td className="py-3 text-center">{perm.admin ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <X className="w-4 h-4 text-gray-700 mx-auto" />}</td>
-                  <td className="py-3 text-center">{perm.mod   ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <X className="w-4 h-4 text-gray-700 mx-auto" />}</td>
-                  <td className="py-3 text-center">{perm.user  ? <Check className="w-4 h-4 text-emerald-400 mx-auto" /> : <X className="w-4 h-4 text-gray-700 mx-auto" />}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        </button>
+        <button 
+          onClick={() => setActiveTab('list')}
+          className={`pb-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'list' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+        >
+          <LucideIcons.List className="w-4 h-4" />
+          Danh sách vai trò
+        </button>
       </div>
 
-      {/* User Role Table */}
-      <div className="bg-[#15151A] rounded-2xl border border-white/5 overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-5 border-b border-white/5 flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm người dùng..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1C1C24] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {['all', 'Admin', 'Moderator', 'User'].map(r => (
-              <button
-                key={r}
-                onClick={() => setRoleFilter(r)}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                  roleFilter === r ? 'bg-purple-600 text-white' : 'bg-[#1C1C24] text-gray-400 hover:text-white border border-white/10'
-                }`}
+      {/* Ma Trận Phân Quyền Content */}
+      {activeTab === 'matrix' && (
+        <div className="bg-[#12141c] border border-white/5 rounded-2xl mb-8 flex flex-col overflow-hidden">
+          
+          {/* Table Header Controls */}
+          <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <span className="text-sm text-gray-400 font-medium">Thiết lập quyền hạn chi tiết cho từng vai trò trong hệ thống</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">Nhóm quyền:</span>
+              <select 
+                className="bg-[#1a1c23] border border-white/10 rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500"
+                value={selectedGroupFilter}
+                onChange={(e) => setSelectedGroupFilter(e.target.value)}
               >
-                {r === 'all' ? 'Tất cả' : ROLES[r]?.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="w-full" ref={dropdownRef}>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/5 bg-[#1C1C24]/50 text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
-                <th className="px-5 py-4">NGƯỜI DÙNG</th>
-                <th className="px-4 py-4">EMAIL</th>
-                <th className="px-4 py-4 text-center">VAI TRÒ</th>
-                <th className="px-4 py-4 text-center">TRẠNG THÁI</th>
-                <th className="px-4 py-4 text-right">THAY ĐỔI VAI TRÒ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {loading ? (
-                <tr><td colSpan="5" className="text-center py-16"><Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-500" /></td></tr>
-              ) : currentItems.length === 0 ? (
-                <tr><td colSpan="5" className="text-center py-16 text-gray-500">Không tìm thấy người dùng nào.</td></tr>
-              ) : currentItems.map(u => {
-                const roleInfo = getRoleInfo(u.role);
-                const RoleIcon = roleInfo.icon;
-                return (
-                  <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-gray-800">
-                          {u.avatarUrl ? (
-                            <img src={u.avatarUrl} alt={u.fullName} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                              {u.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-200">{u.fullName || 'Unknown'}</div>
-                          <div className="text-[11px] text-gray-500">@{u.email?.split('@')[0]}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{u.email}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold ${roleInfo.bgColor} ${roleInfo.textColor} border ${roleInfo.borderColor}`}>
-                        <RoleIcon className="w-3 h-3" />
-                        {roleInfo.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {u.isBanned ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-red-400 bg-red-500/10 border border-red-500/20">
-                          <X className="w-3 h-3" /> Bị cấm
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
-                          <Check className="w-3 h-3" /> Hoạt động
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end">
-                        {savingId === u.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
-                        ) : (
-                          <div className="relative">
-                            <button
-                              onClick={() => setOpenDropdownId(openDropdownId === u.id ? null : u.id)}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-[#1C1C24] hover:bg-white/5 border border-white/10 rounded-xl text-xs font-medium text-gray-300 transition-colors cursor-pointer"
-                            >
-                              <UserCog className="w-3.5 h-3.5" /> Thay đổi <ChevronDown className="w-3 h-3" />
-                            </button>
-                            {openDropdownId === u.id && (
-                              <div className="absolute right-0 top-full mt-2 w-56 bg-[#1C1C24] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden">
-                                {Object.entries(ROLES).map(([key, role]) => {
-                                  const DIcon = role.icon;
-                                  const isCurrent = (u.role || 'User') === key;
-                                  return (
-                                    <button
-                                      key={key}
-                                      onClick={() => handleRoleChange(u.id, key)}
-                                      disabled={isCurrent}
-                                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                                        isCurrent ? 'text-gray-500 cursor-not-allowed bg-white/[0.02]' : 'text-gray-300 hover:bg-white/5 hover:text-white cursor-pointer'
-                                      }`}
-                                    >
-                                      <DIcon className={`w-4 h-4 ${role.textColor}`} />
-                                      <div className="text-left">
-                                        <div className="font-medium text-xs">{role.label}</div>
-                                        <div className="text-[10px] text-gray-500">{role.description}</div>
-                                      </div>
-                                      {isCurrent && <Check className="w-3.5 h-3.5 text-emerald-400 ml-auto" />}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="p-4 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Hiển thị</span>
-            <select
-              value={itemsPerPage}
-              onChange={e => setItemsPerPage(Number(e.target.value))}
-              className="bg-[#1C1C24] border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none cursor-pointer"
-            >
-              {[10, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <span className="text-xs text-gray-500">/ {filtered.length} người dùng</span>
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer">‹</button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const page = currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
-                if (page < 1 || page > totalPages) return null;
-                return (
-                  <button key={page} onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                      currentPage === page ? 'bg-purple-600 text-white border border-purple-500' : 'border border-white/10 text-gray-400 hover:text-white hover:border-white/30'
-                    }`}>{page}</button>
-                );
-              })}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer">›</button>
+                <option>Tất cả nhóm quyền</option>
+                {dynamicPermissionGroups.map((g, idx) => (
+                  <option key={idx} value={g.name}>{g.name}</option>
+                ))}
+              </select>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-col xl:flex-row">
+            
+            {/* Left Panel: Role Cards */}
+            <div className="xl:w-[320px] lg:w-[400px] md:w-[480px] sm:w-[450px] shrink-0 flex flex-col gap-5 p-6 border-r border-white/5 bg-white/[0.01]">
+              {rolesList.map(role => {
+                const Icon = role.Icon;
+                const count = getRoleCount(role.name);
+                return (
+                  <div key={role.id} {...getRoleCardStyle(role)}>
+                    {/* Căn giữa tất cả theo chiều dọc: items-center */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-3.5 items-center">
+                        
+                        {/* Vùng chứa Icon hình tròn có background chìm */}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 shrink-0">
+                          <Icon className="w-6 h-6" {...getRoleTextStyle(role)} />
+                        </div>
+
+                        {/* Thông tin Role */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{role.label}</h4>
+                          <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{role.description}</p>
+                        </div>
+                      </div>
+
+                      {/* Badge đếm số */}
+                      <div className="px-2.5 py-1 text-xs font-semibold rounded-xl flex items-center justify-center min-w-[28px]" {...getRoleBadgeStyle(role)}>
+                        {count}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right Panel: Matrix Table */}
+            <div className="flex-1 overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-white/10 bg-[#15171f]/50 divide-x divide-white/10">
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[280px]">NHÓM QUYỀN / QUYỀN HẠN</th>
+                    {rolesList.map(role => {
+                      const Icon = role.Icon;
+                      return (
+                        <th key={role.id} className="px-4 py-4 text-center w-[120px]">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Icon className={`w-4 h-4`} {...getRoleTextStyle(role)} />
+                            <span className="text-[11px] font-semibold text-gray-300">{role.label}</span>
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {displayedGroups.map(group => (
+                    <Fragment key={group.name}>
+                      {/* Group Header Row */}
+                      <tr className="bg-white/[0.02]">
+                        <td colSpan={rolesList.length + 1} className="px-6 py-3">
+                          <div className="flex items-center gap-2">
+                            <group.icon className={`w-4 h-4 ${group.color}`} />
+                            <span className="text-sm font-bold text-gray-200">{group.name}</span>
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Permissions Rows */}
+                      {group.permissions.map(perm => (
+                        <tr key={perm.id} className="hover:bg-white/[0.01] transition-colors divide-x divide-white/10">
+                          <td className="px-6 py-3 text-xs text-gray-400">{perm.label}</td>
+                          {rolesList.map(role => {
+                            const status = getPermissionStatus(role, perm.id);
+                            return (
+                             <td key={role.id} className="px-4 py-3 text-center align-middle">
+                              <div className="flex items-center justify-center">
+                                {status === 'allowed' && (
+                                  <div className="w-5 h-5 rounded-full bg-[#0e9f6e] text-white flex items-center justify-center">
+                                    <Check className="w-3.5 h-3.5" strokeWidth={4} />
+                                  </div>
+                                )}
+                                {status === 'denied' && (
+                                  <div className="w-5 h-5 rounded-full bg-[#ff5a1f] text-[#12141c] flex items-center justify-center">
+                                    <Minus className="w-3.5 h-3.5" strokeWidth={4} />
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          {/* Table Footer / Legend */}
+          <div className="p-4 bg-[#15171f] border-t border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <div className="w-5 h-5 rounded-full bg-[#0e9f6e] text-white flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5" strokeWidth={4} />
+                </div>
+                Được phép
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <div className="w-5 h-5 rounded-full bg-[#ff5a1f] text-[#12141c] flex items-center justify-center">
+                  <Minus className="w-3.5 h-3.5" strokeWidth={4} />
+                </div>
+                Không có quyền
+              </div>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 border border-purple-500/40 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+              <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa quyền hàng loạt
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Bảng Cập nhật vai trò và Nhật ký thay đổi quyền */}
+      {activeTab === 'matrix' && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-8">
+          
+          {/* Cập nhật vai trò (Cột trái) */}
+          <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden xl:col-span-1 flex flex-col">
+            <div className="p-5 flex items-center justify-between border-b border-white/5">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Cập nhật vai trò</h3>
+                <p className="text-xs text-gray-500">Gán nhanh quyền cho người dùng</p>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[600px] custom-scrollbar">
+              <table className="w-full text-left">
+                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f] sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Người dùng</th>
+                    <th className="px-4 py-3 font-semibold">Vai trò</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {usersList.map(user => (
+                    <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <img src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} alt="User" className="w-6 h-6 rounded-full bg-gray-800" />
+                          <div className="text-xs font-semibold text-gray-200 truncate max-w-[120px]">{user.fullName || user.email.split('@')[0]}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select 
+                          className="bg-[#1a1c23] border border-white/10 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-purple-500 w-full"
+                          value={roleUpdates[user.id] || user.roles?.[0] || 'User'}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        >
+                          {rolesList.map(r => (
+                            <option key={r.id} value={r.name}>{r.label}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t border-white/5 bg-[#15171f]">
+               <button 
+                 onClick={handleUpdateAllRoles}
+                 disabled={isUpdating || Object.keys(roleUpdates).length === 0}
+                 className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {isUpdating ? 'Đang xử lý...' : 'Cập nhật tất cả'}
+               </button>
+            </div>
+          </div>
+
+          {/* Nhật ký thay đổi quyền (Cột phải) */}
+          <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden xl:col-span-2 flex flex-col">
+            <div className="p-5 flex items-center justify-between border-b border-white/5">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Nhật ký thay đổi quyền</h3>
+                <p className="text-xs text-gray-500">Lịch sử thay đổi vai trò và phân quyền</p>
+              </div>
+              <button className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1c23] border border-white/10 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/5 transition-colors cursor-pointer">
+                Xem tất cả <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[600px] custom-scrollbar">
+              <table className="w-full text-left">
+                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f] sticky top-0 z-10">
+                  <tr>
+                    <th className="px-2 py-2 font-semibold">THỜI GIAN</th>
+                    <th className="px-2 py-2 font-semibold">NGƯỜI THỰC HIỆN</th>
+                    <th className="px-2 py-2 font-semibold">HÀNH ĐỘNG</th>
+                    <th className="px-2 py-2 font-semibold">ĐỐI TƯỢNG</th>
+                    <th className="px-2 py-2 font-semibold">CHI TIẾT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {auditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 text-sm">Chưa có dữ liệu nhật ký nào.</td>
+                    </tr>
+                  ) : auditLogs.map(log => {
+                    let actionBadgeClass = 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+                    if (log.actionType === 'update') actionBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                    if (log.actionType === 'add') actionBadgeClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                    if (log.actionType === 'delete') actionBadgeClass = 'bg-red-500/10 text-red-400 border-red-500/20';
+                    if (log.actionType === 'assign') actionBadgeClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+
+                    return (
+                      <tr key={log.id} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="px-2 py-2 text-xs text-gray-400 whitespace-nowrap">{log.time}</td>
+                        <td className="px-2 py-2">
+                          <div className="flex items-center gap-2">
+                            <img src={log.avatar} alt="User" className="w-7 h-7 rounded-full bg-gray-800" />
+                            <div>
+                              <div className="text-xs font-semibold text-gray-200">{log.user}</div>
+                              <div className="text-[10px] text-gray-500">{log.role}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2">
+                          <span className={`px-2.5 py-1 text-[10px] font-semibold border rounded-md whitespace-nowrap ${actionBadgeClass}`}>
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-300 font-medium">{log.target}</td>
+                        <td className="px-2 py-2 text-xs text-gray-400 min-w-[150px]">{log.details}</td>
+                        
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-4 border-t border-white/5 flex items-center justify-between bg-[#15171f]">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                Hiển thị 
+                <select className="bg-[#1a1c23] border border-white/10 rounded px-2 py-1 text-white focus:outline-none">
+                  <option>10</option>
+                  <option>20</option>
+                </select>
+                trên mỗi trang
+              </div>
+              <div className="flex items-center gap-1">
+                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer disabled:opacity-50">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button className="w-7 h-7 flex items-center justify-center rounded bg-purple-600 text-white font-medium text-xs cursor-pointer">1</button>
+                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-400 hover:text-white hover:bg-white/5 border border-white/5 font-medium text-xs cursor-pointer">2</button>
+                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-400 hover:text-white hover:bg-white/5 border border-white/5 font-medium text-xs cursor-pointer">3</button>
+                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Danh Sách Vai Trò Content */}
+      {activeTab === 'list' && (
+        <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden mt-8">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f]">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">TÊN VAI TRÒ</th>
+                  <th className="px-6 py-4 font-semibold">MÔ TẢ</th>
+                  <th className="px-6 py-4 font-semibold">SỐ NGƯỜI DÙNG</th>
+                  <th className="px-6 py-4 font-semibold">SỐ QUYỀN HẠN</th>
+                  <th className="px-6 py-4 font-semibold text-right">THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {rolesList.map(role => {
+                  const Icon = role.Icon;
+                  return (
+                    <tr key={role.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div {...getRoleIconBoxStyle(role)}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-gray-200 text-sm">{role.label}</div>
+                            <div className="text-[10px] text-gray-500">{role.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-400">{role.description}</td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-gray-300">
+                          {getRoleCount(role.name)} người
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-400 font-medium">
+                        {role.permissions?.length || 0} quyền
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button onClick={() => openEditRoleModal(role)} className="text-purple-400 hover:text-purple-300 text-xs font-semibold mr-4 transition-colors cursor-pointer">Chỉnh sửa</button>
+                        <button onClick={() => handleDeleteRole(role.id)} className="text-red-400 hover:text-red-300 text-xs font-semibold transition-colors cursor-pointer">Xóa</button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL THÊM / SỬA VAI TRÒ */}
+      {showRoleModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-[#12141c] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#15171f]">
+              <div>
+                <h3 className="text-lg font-bold text-white">{modalRoleData.id ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới'}</h3>
+                <p className="text-xs text-gray-500 mt-1">Cấu hình thông tin và phân quyền chi tiết cho vai trò</p>
+              </div>
+              <button 
+                onClick={() => setShowRoleModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <LucideIcons.X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tên vai trò (Mã hệ thống)</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-[#1a1c23] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="VD: Admin, Moderator..."
+                      value={modalRoleData.name}
+                      onChange={e => setModalRoleData({...modalRoleData, name: e.target.value})}
+                      disabled={modalRoleData.id ? true : false} // Không cho sửa mã hệ thống nếu đang Edit
+                    />
+                    <p className="text-[10px] text-gray-500">Mã duy nhất, không dấu, không khoảng trắng.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tên hiển thị (Label)</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-[#1a1c23] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="VD: Quản trị viên, Người dùng..."
+                      value={modalRoleData.label}
+                      onChange={e => setModalRoleData({...modalRoleData, label: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mô tả chi tiết</label>
+                  <input 
+                    type="text"
+                    className="w-full bg-[#1a1c23] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    placeholder="Mô tả chức năng của vai trò này..."
+                    value={modalRoleData.description}
+                    onChange={e => setModalRoleData({...modalRoleData, description: e.target.value})}
+                  />
+                </div>
+
+                <div className="flex gap-10">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Màu sắc chủ đạo</label>
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/20 shrink-0 shadow-lg">
+                        <input
+                          type="color"
+                          value={modalRoleData.color?.startsWith('#') ? modalRoleData.color : '#a855f7'}
+                          onChange={(e) => setModalRoleData({
+                            ...modalRoleData,
+                            color: e.target.value,
+                            textColor: '',
+                            bgColor: '',
+                            borderColor: ''
+                          })}
+                          className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
+                        />
+                      </div>
+                      <input 
+                        type="text"
+                        className="w-28 bg-[#1a1c23] border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 font-mono"
+                        value={modalRoleData.color?.startsWith('#') ? modalRoleData.color : '#a855f7'}
+                        onChange={(e) => setModalRoleData({
+                          ...modalRoleData,
+                          color: e.target.value,
+                          textColor: '',
+                          bgColor: '',
+                          borderColor: ''
+                        })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 flex-1">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Biểu tượng (Icon Lucide)</label>
+                    <div className="flex items-center gap-3">
+                      <div {...getRoleIconBoxStyle(modalRoleData)}>
+                        {(() => {
+                          const IconComp = LucideIcons[modalRoleData.icon] || LucideIcons.Users;
+                          return <IconComp className="w-5 h-5" />;
+                        })()}
+                      </div>
+                      <input 
+                        type="text"
+                        className="flex-1 bg-[#1a1c23] border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                        placeholder="VD: Crown, Shield, Users..."
+                        value={modalRoleData.icon}
+                        onChange={e => setModalRoleData({...modalRoleData, icon: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-purple-400" /> Phân quyền chi tiết
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    {dynamicPermissionGroups.map(group => (
+                      <div key={group.name} className="bg-[#15171f] rounded-xl p-4 border border-white/5">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
+                          <group.icon className={`w-4 h-4 ${group.color}`} />
+                          <span className="text-sm font-bold text-gray-300">{group.name}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {group.permissions.map(perm => {
+                            const isChecked = modalRoleData.permissions.includes(perm.id);
+                            return (
+                              <label key={perm.id} className="flex items-center gap-3 cursor-pointer group/perm">
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                  isChecked 
+                                    ? 'bg-purple-600 border-purple-500' 
+                                    : 'bg-white/5 border-white/20 group-hover/perm:border-purple-500'
+                                }`}>
+                                  {isChecked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                </div>
+                                <span className={`text-xs ${isChecked ? 'text-gray-200 font-medium' : 'text-gray-500 group-hover/perm:text-gray-300'}`}>
+                                  {perm.label}
+                                </span>
+                                <input 
+                                  type="checkbox"
+                                  className="hidden"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setModalRoleData(prev => ({...prev, permissions: [...prev.permissions, perm.id]}));
+                                    } else {
+                                      setModalRoleData(prev => ({...prev, permissions: prev.permissions.filter(p => p !== perm.id)}));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-white/5 bg-[#15171f] flex justify-end gap-3">
+              <button 
+                onClick={() => setShowRoleModal(false)}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleSaveRole}
+                disabled={isSubmittingRole}
+                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-purple-500/20 cursor-pointer"
+              >
+                {isSubmittingRole ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                {modalRoleData.id ? 'Cập nhật' : 'Tạo vai trò'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
-

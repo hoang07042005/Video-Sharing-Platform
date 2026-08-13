@@ -315,7 +315,7 @@ const AdminComments = () => {
                           <input type="checkbox" className="rounded border-white/20 bg-transparent text-purple-600 focus:ring-purple-600/50 cursor-pointer" />
                         </td>
                         <td className="px-1 py-2">
-                          <div className="text-gray-200 mb-2 max-w-[280px] break-words line-clamp-2">
+                          <div className="text-gray-200 text-[11px] mb-2 max-w-[280px] break-words line-clamp-2">
                             {c.displayContent || c.content}
                           </div>
                           <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
@@ -353,7 +353,7 @@ const AdminComments = () => {
                               )}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-200">{c.userName}</div>
+                              <div className="text-[11px] font-semibold text-gray-200">{c.userName}</div>
                               <div className="text-[11px] text-gray-500">@{c.userEmail?.split('@')[0]}</div>
                             </div>
                             <div className="ml-2 text-right">
@@ -497,7 +497,7 @@ const AdminComments = () => {
                 <input type="text" placeholder="Tìm kiếm..." className="w-full bg-[#1C1C24] border border-white/5 rounded-xl pl-8 pr-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500 transition-colors" />
                 <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-2.5" />
               </div>
-              <button onClick={openAddKeywordModal} className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-lg shadow-purple-500/20 cursor-pointer">
+              <button onClick={openAddKeywordModal} className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white text-xs font-semibold rounded-xl transition-colors shadow-lg shadow-[#FF5722]/20 cursor-pointer">
                 <Plus className="w-3.5 h-3.5" /> Thêm từ khóa
               </button>
             </div>

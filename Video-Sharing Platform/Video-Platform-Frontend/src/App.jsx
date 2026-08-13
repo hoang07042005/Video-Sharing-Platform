@@ -26,6 +26,7 @@ import AdminUsers from './pages/admin/user/AdminUsers';
 import AdminVideoCategory from './pages/admin/category/AdminVideoCategory';
 import AdminComments from './pages/admin/comment/AdminComments';
 import AdminRoles from './pages/admin/roles/AdminRoles';
+import AdminReports from './pages/admin/reports/AdminReports';
 import NotFound from './pages/error/NotFound';
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
             <Route path="categories" element={<AdminVideoCategory />} />
             <Route path="comments" element={<AdminComments />} />
             <Route path="roles" element={<AdminRoles />} />
+            <Route path="reports" element={<AdminReports />} />
             {/* Catch-all for Admin */}
             <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>

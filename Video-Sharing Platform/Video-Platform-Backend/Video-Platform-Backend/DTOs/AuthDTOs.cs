@@ -38,8 +38,13 @@ namespace Video_Platform_Backend.DTOs
         public string Token { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? FullName { get; set; }
-        public string Role { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new List<string>();
         public string? Handle { get; set; }
         public string? AvatarUrl { get; set; }
+    }
+
+    public class UpdateUserRolesDto
+    {
+        public List<string> Roles { get; set; } = new List<string>();
     }
 }

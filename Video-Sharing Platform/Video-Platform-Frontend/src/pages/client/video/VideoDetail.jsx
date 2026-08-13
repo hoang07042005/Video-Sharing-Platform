@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
@@ -32,6 +32,12 @@ export default function VideoDetail() {
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [showMoreActions, setShowMoreActions] = useState(false);
+
+  // Report Modal States
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('Nội dung phản cảm');
+  const [reportDescription, setReportDescription] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const getCurrentUserId = () => {
     const token = localStorage.getItem('token');
@@ -204,6 +210,28 @@ export default function VideoDetail() {
       console.error(err);
       const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi phản hồi";
       alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
+    }
+  };
+
+  const handleReportSubmit = async () => {
+    if (!requireAuth('Vui lòng đăng nhập để báo cáo vi phạm!')) return;
+    setIsSubmittingReport(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`/api/videos/${id}/report`, {
+        reason: reportReason,
+        description: reportDescription
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Cảm ơn bạn. Báo cáo của bạn đã được gửi và sẽ được xem xét.');
+      setShowReportModal(false);
+      setReportDescription('');
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi xảy ra khi gửi báo cáo.');
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -557,7 +585,7 @@ export default function VideoDetail() {
                       onClick={() => {
                         setShowMoreActions(false);
                         if (!requireAuth('Vui lòng đăng nhập để báo cáo vi phạm!')) return;
-                        // Implement report logic here
+                        setShowReportModal(true);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3F3F3F] transition-colors text-white cursor-pointer"
                     >
@@ -813,6 +841,76 @@ export default function VideoDetail() {
         </div>{/* closes border-t wrapper */}
       </div>{/* closes right column */}
       </div>{/* closes flex container */}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowReportModal(false)}>
+          <div 
+            className="bg-[#212121] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-white/10"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h3 className="text-lg font-bold text-white">Báo vi phạm video này</h3>
+              <button onClick={() => setShowReportModal(false)} className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 flex flex-col gap-4">
+              <div className="space-y-3">
+                <p className="text-sm text-gray-300 font-medium">Chọn một lý do chính xác nhất:</p>
+                
+                {[
+                  "Nội dung tình dục hoặc bạo lực",
+                  "Ngôn từ thù ghét, quấy rối",
+                  "Spam hoặc lừa đảo",
+                  "Xâm phạm quyền riêng tư",
+                  "Vi phạm bản quyền",
+                  "Lý do khác"
+                ].map(reason => (
+                  <label 
+                    key={reason} 
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => setReportReason(reason)}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${reportReason === reason ? 'border-[#FF5722]' : 'border-gray-500 group-hover:border-gray-400'}`}>
+                      {reportReason === reason && <div className="w-2.5 h-2.5 rounded-full bg-[#FF5722]" />}
+                    </div>
+                    <span className={`text-sm ${reportReason === reason ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-2">
+                <p className="text-sm text-gray-300 font-medium mb-2">Chi tiết thêm (Không bắt buộc):</p>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Cung cấp thêm thông tin giúp chúng tôi hiểu rõ hơn..."
+                  className="w-full bg-[#151515] border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#FF5722]/50 resize-none h-24"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-white/10 flex items-center justify-end gap-3 bg-[#1A1A1A]">
+              <button 
+                onClick={() => setShowReportModal(false)}
+                className="px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 rounded-full transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleReportSubmit}
+                disabled={isSubmittingReport}
+                className="px-4 py-2 text-sm font-semibold bg-[#FF5722] hover:bg-[#F4511E] text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSubmittingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Gửi báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
