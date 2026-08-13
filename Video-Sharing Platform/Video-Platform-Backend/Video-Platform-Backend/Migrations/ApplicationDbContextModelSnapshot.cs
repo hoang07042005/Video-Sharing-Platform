@@ -958,6 +958,28 @@ namespace Video_Platform_Backend.Migrations
                     b.ToTable("Subscriptions");
                 });
 
+            modelBuilder.Entity("Video_Platform_Backend.Models.SystemSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("GroupName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("Video_Platform_Backend.Models.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1223,6 +1245,43 @@ namespace Video_Platform_Backend.Migrations
                     b.HasIndex("VideoId");
 
                     b.ToTable("VideoFiles");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.VideoResolution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Bitrate")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Resolution")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VideoId");
+
+                    b.ToTable("VideoResolutions");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.VideoTag", b =>
@@ -1728,6 +1787,17 @@ namespace Video_Platform_Backend.Migrations
                     b.Navigation("Video");
                 });
 
+            modelBuilder.Entity("Video_Platform_Backend.Models.VideoResolution", b =>
+                {
+                    b.HasOne("Video_Platform_Backend.Models.Video", "Video")
+                        .WithMany("VideoResolutions")
+                        .HasForeignKey("VideoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Video");
+                });
+
             modelBuilder.Entity("Video_Platform_Backend.Models.VideoTag", b =>
                 {
                     b.HasOne("Video_Platform_Backend.Models.Video", "Video")
@@ -1883,6 +1953,8 @@ namespace Video_Platform_Backend.Migrations
                     b.Navigation("PlaylistVideos");
 
                     b.Navigation("VideoFiles");
+
+                    b.Navigation("VideoResolutions");
 
                     b.Navigation("VideoTags");
 

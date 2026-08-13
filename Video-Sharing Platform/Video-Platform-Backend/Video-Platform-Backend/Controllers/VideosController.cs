@@ -8,6 +8,8 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -16,10 +18,12 @@ namespace Video_Platform_Backend.Controllers
     public class VideosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public VideosController(ApplicationDbContext context)
+        public VideosController(ApplicationDbContext context, IServiceScopeFactory scopeFactory)
         {
             _context = context;
+            _scopeFactory = scopeFactory;
         }
 
         // GET: api/videos/categories
@@ -141,6 +145,7 @@ namespace Video_Platform_Backend.Controllers
                         .ThenInclude(u => u.Profile)
                 .Include(v => v.VideoFiles)
                 .Include(v => v.VideoThumbnails)
+                .Include(v => v.VideoResolutions)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (video == null)
@@ -217,7 +222,13 @@ namespace Video_Platform_Backend.Controllers
                 ChannelHandle = video.Channel.Handle,
                 ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
                 SubscriberCount = subscriberCount,
-                OwnerUserId = video.Channel.UserId
+                OwnerUserId = video.Channel.UserId,
+                Resolutions = video.VideoResolutions.Select(r => new VideoResolutionDTO
+                {
+                    Id = r.Id,
+                    Resolution = r.Resolution,
+                    FileUrl = r.FileUrl
+                }).ToList()
             };
 
             if (currentUserId.HasValue)
@@ -443,6 +454,14 @@ namespace Video_Platform_Backend.Controllers
                     filterStatus = "Warning";
                 }
             }
+            else
+            {
+                var autoApproveSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "autoApproveComments");
+                if (autoApproveSetting != null && autoApproveSetting.Value == "false")
+                {
+                    filterStatus = "Pending";
+                }
+            }
             // ---------------------
 
             var comment = new Comment
@@ -627,11 +646,33 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = h.Video.Channel.User.Profile != null 
                         ? (h.Video.Channel.User.Profile.AvatarUrl ?? "") 
                         : "",
-                    IsShort = h.Video.IsShort ?? false
+                    IsShort = h.Video.IsShort ?? false,
+                    WatchedDuration = h.WatchedDuration ?? 0
                 })
                 .ToListAsync();
 
             return Ok(history);
+        }
+
+        // POST: api/videos/{id}/progress
+        [HttpPost("{id}/progress")]
+        [Authorize]
+        public async Task<IActionResult> SaveProgress(Guid id, [FromBody] SaveProgressRequest request)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var watchHistory = await _context.WatchHistories
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.VideoId == id);
+
+            if (watchHistory != null)
+            {
+                watchHistory.WatchedDuration = request.WatchedDuration;
+                watchHistory.LastWatchedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
         }
 
         // GET: api/videos/subscriptions
@@ -921,6 +962,31 @@ namespace Video_Platform_Backend.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(dto.VideoUrl))
+            {
+                var request = HttpContext.Request;
+                var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+                
+                try
+                {
+                    var fileName = Path.GetFileName(new Uri(dto.VideoUrl).LocalPath);
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "videos", fileName);
+                    
+                    _ = Task.Run(async () => {
+                        using (var scope = _scopeFactory.CreateScope())
+                        {
+                            var processingService = scope.ServiceProvider.GetRequiredService<Video_Platform_Backend.Services.VideoProcessingService>();
+                            await processingService.ProcessVideoResolutionsAsync(videoId, filePath, fileName, baseUrl);
+                        }
+                    });
+                }
+                catch (Exception e)
+                {
+                    // Log but don't fail the request
+                    Console.WriteLine("Could not start background transcoding: " + e.Message);
+                }
+            }
 
             return Ok(new { message = "Đã tải video lên thành công.", videoId = videoId });
         }

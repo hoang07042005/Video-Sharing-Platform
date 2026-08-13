@@ -47,7 +47,7 @@ export default function AdminLayout() {
     {
       label: 'HỆ THỐNG',
       items: [
-        { name: 'Cài đặt', path: '/admin/profile-settings', icon: SettingsIcon },
+        { name: 'Cài đặt', path: '/admin/settings', icon: SettingsIcon },
       ]
     },
   ];

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import * as LucideIcons from 'lucide-react';
 import { DEFAULT_CATEGORY_ICON } from '../../../components/home/CategoryFilter';
+import { getIconColor } from '../../../utils/iconHelpers';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, Compass, Zap, Music, Gamepad2, Film, BookOpen,
@@ -285,20 +286,7 @@ export default function Explore() {
                 className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {[{ key: 'all', label: 'Tất cả', icon: 'Flame', color: 'text-white' }, ...dbCategories.map(cat => {
-                  const getIconColor = (iconName) => {
-                    switch (iconName) {
-                      case 'Music': return 'text-pink-300';
-                      case 'Monitor': return 'text-blue-300';
-                      case 'Tv': return 'text-yellow-300';
-                      case 'Gamepad2': return 'text-green-300';
-                      case 'BookOpen': return 'text-purple-300';
-                      case 'Dumbbell': return 'text-orange-300';
-                      case 'Clapperboard': return 'text-yellow-300';
-                      case 'Flame': return 'text-[#FF5722]';
-                      default: return 'text-gray-400';
-                    }
-                  };
+                {[{ key: 'all', label: 'Tất cả', icon: 'Flame', color: 'text-[#FF5722]' }, ...dbCategories.map(cat => {
                   return { key: cat.name, label: cat.name, icon: cat.icon || 'LayoutGrid', color: getIconColor(cat.icon) };
                 })].map(cat => (
                   <CatIcon 

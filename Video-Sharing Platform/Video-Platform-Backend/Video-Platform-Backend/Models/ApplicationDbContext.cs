@@ -53,6 +53,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Report> Reports { get; set; }
 
+    public virtual DbSet<SystemSetting> SystemSettings { get; set; }
+
     public virtual DbSet<Setting> Settings { get; set; }
 
     public virtual DbSet<Subscription> Subscriptions { get; set; }
@@ -72,6 +74,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<VideoThumbnail> VideoThumbnails { get; set; }
 
     public virtual DbSet<View> Views { get; set; }
+
+    public virtual DbSet<VideoResolution> VideoResolutions { get; set; }
 
     public virtual DbSet<WatchHistory> WatchHistories { get; set; }
 
@@ -726,6 +730,15 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.User).WithMany()
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VideoResolution>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(d => d.Video).WithMany(p => p.VideoResolutions)
+                .HasForeignKey(d => d.VideoId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

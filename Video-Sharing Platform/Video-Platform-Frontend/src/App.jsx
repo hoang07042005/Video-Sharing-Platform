@@ -16,6 +16,7 @@ import Explore from './pages/client/video/Explore';
 import Latest from './pages/client/video/Latest';
 import Playlists from './pages/client/video/Playlists';
 import StudioUpload from './pages/client/studio/StudioUpload';
+import SearchResults from './pages/client/search/SearchResults';
 import VideoManagement from './pages/admin/video/VideoManagement';
 
 import MainLayout from './components/layout/client/MainLayout';
@@ -27,6 +28,9 @@ import AdminVideoCategory from './pages/admin/category/AdminVideoCategory';
 import AdminComments from './pages/admin/comment/AdminComments';
 import AdminRoles from './pages/admin/roles/AdminRoles';
 import AdminReports from './pages/admin/reports/AdminReports';
+import AdminComplaints from './pages/admin/reports/AdminComplaints';
+import AdminViolations from './pages/admin/reports/AdminViolations';
+import AdminSettings from './pages/admin/settings/AdminSettings';
 import NotFound from './pages/error/NotFound';
 
 function App() {
@@ -53,6 +57,7 @@ function App() {
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
+          <Route path="/results" element={<SearchResults />} />
           
           {/* 404 Catch-all */}
           <Route path="*" element={<NotFound />} />
@@ -67,6 +72,9 @@ function App() {
             <Route path="comments" element={<AdminComments />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="complaints" element={<AdminComplaints />} />
+            <Route path="violations" element={<AdminViolations />} />
+            <Route path="settings" element={<AdminSettings />} />
             {/* Catch-all for Admin */}
             <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>

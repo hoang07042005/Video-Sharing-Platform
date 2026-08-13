@@ -4,6 +4,9 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
+using Video_Platform_Backend.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace Video_Platform_Backend.Controllers
 {
     [Route("api/[controller]")]
@@ -11,10 +14,12 @@ namespace Video_Platform_Backend.Controllers
     public class UploadController : ControllerBase
     {
         private readonly IWebHostEnvironment _environment;
+        private readonly ApplicationDbContext _context;
 
-        public UploadController(IWebHostEnvironment environment)
+        public UploadController(IWebHostEnvironment environment, ApplicationDbContext context)
         {
             _environment = environment;
+            _context = context;
         }
 
         [HttpPost("image")]
@@ -66,8 +71,32 @@ namespace Video_Platform_Backend.Controllers
                 return BadRequest(new { message = "Không tìm thấy file" });
             }
 
-            // Chỉ cho phép video
-            if (!file.ContentType.StartsWith("video/"))
+            // Lấy giới hạn từ SystemSettings
+            var maxSizeSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "maxUploadSize");
+            long maxSizeMB = 1024; // Default 1GB
+            if (maxSizeSetting != null && long.TryParse(maxSizeSetting.Value, out var parsedSize))
+            {
+                maxSizeMB = parsedSize;
+            }
+
+            long maxSizeBytes = maxSizeMB * 1024 * 1024;
+            if (file.Length > maxSizeBytes)
+            {
+                return BadRequest(new { message = $"Dung lượng video vượt quá giới hạn cho phép ({maxSizeMB}MB)." });
+            }
+
+            // Chỉ cho phép định dạng video cấu hình (nếu có)
+            var allowedExtensionsSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "allowedExtensions");
+            if (allowedExtensionsSetting != null && !string.IsNullOrWhiteSpace(allowedExtensionsSetting.Value))
+            {
+                var allowedExts = allowedExtensionsSetting.Value.Split(',').Select(e => e.Trim().ToLower()).ToList();
+                var fileExt = Path.GetExtension(file.FileName).TrimStart('.').ToLower();
+                if (!allowedExts.Contains(fileExt) && !allowedExts.Contains("." + fileExt))
+                {
+                    return BadRequest(new { message = $"Định dạng không được hỗ trợ. Các định dạng cho phép: {allowedExtensionsSetting.Value}" });
+                }
+            }
+            else if (!file.ContentType.StartsWith("video/"))
             {
                 return BadRequest(new { message = "File không phải là định dạng video" });
             }

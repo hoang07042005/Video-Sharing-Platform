@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, LayoutGrid, Flame, ChevronRight, Clapperboard, Coffee } from 'lucide-react';
 
 import * as LucideIcons from 'lucide-react';
+import { getIconColor } from '../../utils/iconHelpers';
 
 export const DEFAULT_CATEGORY_ICON = { icon: 'LayoutGrid', iconColor: 'text-gray-400', bg: 'bg-white/10' };
 
@@ -49,23 +50,7 @@ export default function CategoryFilter({ onSelect }) {
             const isActive = activeCategory === category.id;
             const IconComponent = LucideIcons[category.icon] || LucideIcons.LayoutGrid;
             
-            // Map màu sắc linh động cho các icon để đẹp hơn
-            const getIconColor = (iconName) => {
-              if (isActive) return 'text-white';
-              switch (iconName) {
-                case 'Music': return 'text-pink-300';
-                case 'Monitor': return 'text-blue-300';
-                case 'Tv': return 'text-yellow-300';
-                case 'Gamepad2': return 'text-green-300';
-                case 'BookOpen': return 'text-purple-300';
-                case 'Dumbbell': return 'text-orange-300';
-                case 'Clapperboard': return 'text-yellow-300';
-                case 'Flame': return 'text-[#FF5722]';
-                default: return 'text-gray-400';
-              }
-            };
-            
-            const iconColor = getIconColor(category.icon);
+            const iconColor = getIconColor(category.icon, isActive);
 
             return (
               <button

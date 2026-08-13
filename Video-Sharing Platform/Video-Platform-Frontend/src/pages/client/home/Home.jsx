@@ -22,6 +22,7 @@ import { Link, useNavigate } from "react-router-dom";
 import CategoryFilter from "../../../components/home/CategoryFilter";
 import FeaturedHero from "../../../components/home/FeaturedHero";
 import VideoCard from "../../../components/home/VideoCard";
+import { getIconColor } from '../../../utils/iconHelpers';
 
 // ─── Helpers ───────────────────────────────────────────────────
 const formatDuration = (s) => {
@@ -317,32 +318,11 @@ function RightSidebar() {
       .get("/api/videos/categories")
       .then((res) => {
         const mapped = res.data.slice(0, 6).map((cat) => {
-          const getIconColor = (iconName) => {
-            switch (iconName) {
-              case "Music":
-                return "text-pink-300";
-              case "Monitor":
-                return "text-blue-300";
-              case "Tv":
-                return "text-yellow-300";
-              case "Gamepad2":
-                return "text-green-300";
-              case "BookOpen":
-                return "text-purple-300";
-              case "Dumbbell":
-                return "text-orange-300";
-              case "Clapperboard":
-                return "text-yellow-300";
-              case "Flame":
-                return "text-[#FF5722]";
-              default:
-                return "text-gray-400";
-            }
-          };
+          const colorClass = getIconColor(cat.icon);
           return {
             label: cat.name,
             iconName: cat.icon || "LayoutGrid",
-            color: getIconColor(cat.icon),
+            color: colorClass,
             bg: "bg-white/10",
           };
         });
@@ -508,10 +488,36 @@ export default function Home() {
       ? shorts
       : shorts.filter((s) => s.categoryId === activeCategoryId);
 
+  const interleave = (arr1, arr2) => {
+    const mixed = [];
+    let i = 0;
+    while (i < arr1.length || i < arr2.length) {
+      if (i < arr1.length) mixed.push(arr1[i]);
+      if (i < arr2.length) mixed.push(arr2[i]);
+      i++;
+    }
+    return mixed;
+  };
+
   const featuredVideo = filteredVideos[0] ?? null;
-  const trending = filteredVideos.slice(0, 10);
-  const suggested = filteredVideos.slice(0, 12);
-  const latest = filteredVideos.slice(0, 9);
+
+  // Dành riêng 6 video ngắn đầu tiên cho section "Video ngắn"
+  const dedicatedShorts = filteredShorts.slice(0, 6);
+
+  // Thịnh hành: 10 items (5 reg, 5 shorts)
+  const trendingVids = filteredVideos.slice(1, 6);
+  const trendingShorts = filteredShorts.slice(6, 11);
+  const trending = interleave(trendingVids, trendingShorts);
+
+  // Đề xuất: 12 items (6 reg, 6 shorts)
+  const suggestedVids = filteredVideos.slice(6, 12);
+  const suggestedShorts = filteredShorts.slice(11, 17);
+  const suggested = interleave(suggestedVids, suggestedShorts);
+
+  // Mới nhất: 9 items (5 reg, 4 shorts)
+  const latestVids = filteredVideos.slice(12, 17);
+  const latestShorts = filteredShorts.slice(17, 21);
+  const latest = interleave(latestVids, latestShorts);
 
   // Fallback channels nếu API chưa có
   const mockChannels = [
@@ -610,7 +616,7 @@ export default function Home() {
               <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
             ) : (
               <div className="grid grid-cols-6 gap-4">
-                {filteredShorts.slice(0, 6).map((s) => (
+                {dedicatedShorts.map((s) => (
                   <ShortVideoCard key={`short-${s.id}`} short={s} />
                 ))}
               </div>

@@ -17,6 +17,7 @@ namespace Video_Platform_Backend.DTOs
         public string Description { get; set; } = string.Empty;
         public string ThumbnailUrl { get; set; } = string.Empty;
         public int Duration { get; set; } // in seconds
+        public int WatchedDuration { get; set; } // Add watched duration for history
         public long ViewsCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsShort { get; set; }
@@ -55,6 +56,20 @@ namespace Video_Platform_Backend.DTOs
         public bool IsDisliked { get; set; }
         public bool IsSubscribed { get; set; }
         public bool IsSaved { get; set; }
+
+        public List<VideoResolutionDTO> Resolutions { get; set; } = new List<VideoResolutionDTO>();
+    }
+
+    public class VideoResolutionDTO
+    {
+        public Guid Id { get; set; }
+        public string Resolution { get; set; } = string.Empty;
+        public string FileUrl { get; set; } = string.Empty;
+    }
+
+    public class SaveProgressRequest
+    {
+        public int WatchedDuration { get; set; }
     }
 
     public class LikeRequestDTO

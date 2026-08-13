@@ -1,0 +1,237 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Video_Platform_Backend.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Video_Platform_Backend.Controllers
+{
+    [Route("api/admin/[controller]")]
+    [ApiController]
+    public class SeedController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public SeedController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SeedData()
+        {
+            try
+            {
+                var random = new Random();
+
+                // 1. Add 6 Video Categories
+                var categoriesToAdd = new List<string> { "Công nghệ", "Ẩm thực", "Giáo dục", "Thể thao", "Du lịch", "Giải trí" };
+                var categories = new List<VideoCategory>();
+                foreach (var catName in categoriesToAdd)
+                {
+                    var cat = await _context.VideoCategories.FirstOrDefaultAsync(c => c.Name == catName);
+                    if (cat == null)
+                    {
+                        cat = new VideoCategory
+                        {
+                            Name = catName,
+                            Description = $"Các video về {catName}",
+                            Icon = "Folder",
+                            IsActive = true
+                        };
+                        _context.VideoCategories.Add(cat);
+                    }
+                    categories.Add(cat);
+                }
+                await _context.SaveChangesAsync();
+
+                // 2. Add Users, Profiles, Channels
+                var users = new List<User>();
+                var channels = new List<Channel>();
+                for (int i = 1; i <= 10; i++)
+                {
+                    var email = $"user{i}_{Guid.NewGuid().ToString().Substring(0, 5)}@test.com";
+                    var user = new User
+                    {
+                        Email = email,
+                        PasswordHash = "hashedpassword", // Mock password
+                        IsActive = true,
+                        IsEmailVerified = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync(); // Save to get Id
+                    users.Add(user);
+
+                    var profile = new Profile
+                    {
+                        UserId = user.Id,
+                        FullName = $"Người Dùng {i}",
+                        Bio = $"Đây là tiểu sử của Người Dùng {i}",
+                        AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={i}"
+                    };
+                    _context.Profiles.Add(profile);
+
+                    var channel = new Channel
+                    {
+                        UserId = user.Id,
+                        ChannelName = $"Kênh của Người Dùng {i}",
+                        Handle = $"@user{i}_{Guid.NewGuid().ToString().Substring(0, 4)}",
+                        TotalViews = random.Next(100, 10000),
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Channels.Add(channel);
+                    channels.Add(channel);
+                }
+                await _context.SaveChangesAsync();
+
+                // Fetch real categories from DB
+                var dbCategories = await _context.VideoCategories.ToListAsync();
+
+                // 3. Add 40 Videos
+                var videos = new List<Video>();
+                for (int i = 1; i <= 40; i++)
+                {
+                    var channel = channels[random.Next(channels.Count)];
+                    var category = dbCategories[random.Next(dbCategories.Count)];
+                    var video = new Video
+                    {
+                        Id = Guid.NewGuid(),
+                        ChannelId = channel.Id,
+                        CategoryId = category.Id,
+                        Title = $"Video thông thường số {i}",
+                        Description = $"Mô tả cho video thông thường số {i}. Nội dung hấp dẫn.",
+                        ViewsCount = random.Next(10, 5000),
+                        LikesCount = random.Next(1, 500),
+                        Visibility = "Public",
+                        IsShort = false,
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30))
+                    };
+                    _context.Videos.Add(video);
+                    videos.Add(video);
+
+                    // Add a thumbnail
+                    _context.VideoThumbnails.Add(new VideoThumbnail
+                    {
+                        VideoId = video.Id,
+                        ThumbnailUrl = $"https://picsum.photos/seed/{video.Id}/1280/720",
+                        IsAutoGenerated = true
+                    });
+                }
+
+                // 4. Add 30 Shorts
+                for (int i = 1; i <= 30; i++)
+                {
+                    var channel = channels[random.Next(channels.Count)];
+                    var category = dbCategories[random.Next(dbCategories.Count)];
+                    var shortVideo = new Video
+                    {
+                        Id = Guid.NewGuid(),
+                        ChannelId = channel.Id,
+                        CategoryId = category.Id,
+                        Title = $"Video Short số {i}",
+                        Description = $"Mô tả ngắn gọn cho short {i}",
+                        ViewsCount = random.Next(100, 10000),
+                        LikesCount = random.Next(10, 1000),
+                        Visibility = "Public",
+                        IsShort = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30))
+                    };
+                    _context.Videos.Add(shortVideo);
+                    videos.Add(shortVideo);
+
+                    // Add a thumbnail for short (vertical)
+                    _context.VideoThumbnails.Add(new VideoThumbnail
+                    {
+                        VideoId = shortVideo.Id,
+                        ThumbnailUrl = $"https://picsum.photos/seed/{shortVideo.Id}/720/1280",
+                        IsAutoGenerated = true
+                    });
+                }
+                await _context.SaveChangesAsync();
+
+                // 5. Add Banned Keywords
+                var keywords = new List<string> { "chửi", "ngu ngốc", "đồi trụy", "phản động", "lừa đảo", "vô văn hóa" };
+                foreach (var kw in keywords)
+                {
+                    if (!await _context.BannedWords.AnyAsync(b => b.Keyword == kw))
+                    {
+                        _context.BannedWords.Add(new BannedWord { Keyword = kw, CreatedAt = DateTime.UtcNow });
+                    }
+                }
+                await _context.SaveChangesAsync();
+
+                // 6. Add Comments (Normal and Violating)
+                var comments = new List<Comment>();
+                for (int i = 0; i < 100; i++)
+                {
+                    var user = users[random.Next(users.Count)];
+                    var video = videos[random.Next(videos.Count)];
+                    bool isViolating = random.Next(100) < 20; // 20% chance of being violating
+                    var randomKeyword = keywords[random.Next(keywords.Count)];
+                    string content = isViolating ? $"Video này quá {randomKeyword}!" : "Video rất hay và ý nghĩa, cảm ơn kênh!";
+                    
+                    var comment = new Comment
+                    {
+                        Id = Guid.NewGuid(),
+                        VideoId = video.Id,
+                        UserId = user.Id,
+                        Content = content,
+                        DisplayContent = isViolating ? "Video này quá ***!" : content,
+                        IsFiltered = isViolating,
+                        FilterStatus = isViolating ? "Blocked" : "Approved",
+                        MatchedKeywords = isViolating ? randomKeyword : null,
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 10))
+                    };
+                    _context.Comments.Add(comment);
+                    comments.Add(comment);
+                }
+                await _context.SaveChangesAsync();
+
+                // 7. Add Violation Reports
+                for (int i = 0; i < 20; i++)
+                {
+                    var reporter = users[random.Next(users.Count)];
+                    var targetVideo = videos[random.Next(videos.Count)];
+                    
+                    _context.Reports.Add(new Report
+                    {
+                        ReporterId = reporter.Id,
+                        TargetId = targetVideo.Id,
+                        TargetType = "Video",
+                        Reason = "Nội dung phản cảm, không phù hợp",
+                        Description = "Tôi thấy video này có nội dung không tốt cho trẻ em.",
+                        Status = "Pending",
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 5))
+                    });
+                }
+
+                for (int i = 0; i < 15; i++)
+                {
+                    var reporter = users[random.Next(users.Count)];
+                    var targetComment = comments[random.Next(comments.Count)];
+                    
+                    _context.Reports.Add(new Report
+                    {
+                        ReporterId = reporter.Id,
+                        TargetId = targetComment.Id,
+                        TargetType = "Comment",
+                        Reason = "Spam hoặc quảng cáo",
+                        Description = "Bình luận này liên tục spam các đường link lạ.",
+                        Status = "Pending",
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 5))
+                    });
+                }
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Seeding dữ liệu thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message, inner = ex.InnerException?.Message });
+            }
+        }
+    }
+}

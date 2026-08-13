@@ -65,3 +65,4 @@ project.lock.json
 project.assets.json
 *.nuget.props
 *.nuget.targets
+ffmpeg/

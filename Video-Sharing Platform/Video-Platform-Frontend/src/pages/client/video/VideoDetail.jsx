@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
+import CustomVideoPlayer from '../../../components/video/CustomVideoPlayer';
 
 export default function VideoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [video, setVideo] = useState(null);
+  const [currentResolutionUrl, setCurrentResolutionUrl] = useState('');
+  const videoRef = useRef(null);
+  const lastSavedTime = useRef(0);
   const [recommendedVideos, setRecommendedVideos] = useState([]);
   const [sameChannelVideos, setSameChannelVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +30,7 @@ export default function VideoDetail() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [publicSettings, setPublicSettings] = useState({});
   
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
@@ -62,58 +68,87 @@ export default function VideoDetail() {
     return true;
   };
 
-  useEffect(() => {
-    const fetchVideoData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        
-        const res = await axios.get(`/api/videos/${id}`, { headers });
-        let data = res.data;
-        if (!data.videoUrl || data.videoUrl.includes('example.com') || data.videoUrl.includes('commondatastorage')) {
-          data.videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
-        }
-        setVideo(data);
-        setIsSubscribed(data.isSubscribed || false);
-        setSubscriberCount(res.data.subscriberCount || 0);
-        setIsLiked(res.data.isLiked || false);
-        setIsDisliked(res.data.isDisliked || false);
-        setLikesCount(res.data.likesCount || 0);
-        setIsSaved(res.data.isSaved || false);
-
-        // Fetch comments
-        const commentsRes = await axios.get(`/api/videos/${id}/comments`);
-        setComments(commentsRes.data);
-        
-        // Fetch recommended videos (all except current)
-        const recRes = await axios.get('/api/videos');
-        const allOthers = recRes.data.filter(v => v.id !== id);
-        setRecommendedVideos(allOthers);
-
-        // Fetch same-channel videos for "Up Next" top 5
-        const channelId = res.data.channelId;
-        if (channelId) {
-          try {
-            const chRes = await axios.get(`/api/channels/${channelId}/videos`);
-            const chVideos = (chRes.data || []).filter(v => v.id !== id && !v.isShort);
-            setSameChannelVideos(chVideos.slice(0, 5));
-          } catch {
-            setSameChannelVideos([]);
-          }
-        }
-      } catch (err) {
-        console.error("Lỗi chi tiết:", err);
-        setError(`Lỗi: ${err.message} ${err.response ? `(Mã lỗi: ${err.response.status})` : ''}`);
-      } finally {
-        setLoading(false);
+  const fetchVideoData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const res = await axios.get(`/api/videos/${id}`, { headers });
+      let data = res.data;
+      if (!data.videoUrl || data.videoUrl.includes('example.com') || data.videoUrl.includes('commondatastorage')) {
+        data.videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
       }
-    };
+      setVideo(data);
+      if (data.resolutions && data.resolutions.length > 0) {
+        // Find 1080p if available, else first one
+        const bestRes = data.resolutions.find(r => r.resolution === '1080p') || data.resolutions[0];
+        setCurrentResolutionUrl(bestRes.fileUrl);
+      } else {
+        setCurrentResolutionUrl(data.videoUrl);
+      }
+      setIsSubscribed(data.isSubscribed || false);
+      setSubscriberCount(res.data.subscriberCount || 0);
+      setIsLiked(res.data.isLiked || false);
+      setIsDisliked(res.data.isDisliked || false);
+      setLikesCount(res.data.likesCount || 0);
+      setIsSaved(res.data.isSaved || false);
 
+      // Fetch settings
+      try {
+        const settingsRes = await axios.get('/api/admin/settings/public');
+        setPublicSettings(settingsRes.data);
+      } catch (e) {
+        console.error('Lỗi khi tải cấu hình công khai', e);
+      }
+
+      // Fetch comments
+      const commentsRes = await axios.get(`/api/videos/${id}/comments`);
+      setComments(commentsRes.data);
+      
+      // Fetch recommended videos (all except current)
+      const recRes = await axios.get('/api/videos');
+      const allOthers = recRes.data.filter(v => v.id !== id);
+      setRecommendedVideos(allOthers);
+
+      // Fetch same-channel videos for "Up Next" top 5
+      const channelId = res.data.channelId;
+      if (channelId) {
+        try {
+          const chRes = await axios.get(`/api/channels/${channelId}/videos`);
+          const chVideos = (chRes.data || []).filter(v => v.id !== id && !v.isShort);
+          setSameChannelVideos(chVideos.slice(0, 5));
+        } catch {
+          setSameChannelVideos([]);
+        }
+      }
+      // If video loaded and ?t is present, we seek to it in onReady now
+    } catch (err) {
+      console.error("Lỗi chi tiết:", err);
+      setError(`Lỗi: ${err.message} ${err.response ? `(Mã lỗi: ${err.response.status})` : ''}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveWatchProgress = async (duration) => {
+    const token = localStorage.getItem('token');
+    if (!token || !id) return;
+    try {
+      await axios.post(`/api/videos/${id}/progress`, { watchedDuration: Math.floor(duration) }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (e) {
+      console.error('Failed to save progress', e);
+    }
+  };
+
+  useEffect(() => {
     if (id) {
       fetchVideoData();
     }
+    window.scrollTo(0, 0);
   }, [id]);
 
   const handleSubscribe = async () => {
@@ -456,13 +491,40 @@ export default function VideoDetail() {
         <div className="flex-1 max-w-[1280px] lg:w-[70%] xl:w-[75%]">
         {/* Video Player */}
         <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl relative group">
-          <video 
-            src={video.videoUrl} 
-            poster={video.thumbnailUrl}
-            controls 
-            autoPlay 
-            className="w-full h-full object-contain"
-          ></video>
+          <CustomVideoPlayer 
+            options={{
+              autoplay: false,
+              controls: true,
+              responsive: true,
+              fluid: true,
+              sources: [{
+                src: currentResolutionUrl,
+                type: 'video/mp4'
+              }],
+              poster: video.thumbnailUrl,
+              playbackRates: [0.5, 1, 1.25, 1.5, 2]
+            }}
+            onReady={(player) => {
+              const t = searchParams.get('t');
+              if (t) {
+                player.currentTime(parseInt(t, 10));
+              }
+
+              player.on('timeupdate', () => {
+                const currentTime = player.currentTime();
+                if (currentTime - lastSavedTime.current > 10) {
+                  lastSavedTime.current = currentTime;
+                  saveWatchProgress(currentTime);
+                }
+              });
+              player.on('pause', () => {
+                saveWatchProgress(player.currentTime());
+              });
+            }}
+            resolutions={video.resolutions}
+            currentResolutionUrl={currentResolutionUrl}
+            onResolutionChange={(newUrl) => setCurrentResolutionUrl(newUrl)}
+          />
         </div>
 
         {/* Video Info */}
@@ -561,26 +623,28 @@ export default function VideoDetail() {
                 {/* More Actions Dropdown */}
                 {showMoreActions && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-[#272727] rounded-xl shadow-xl py-2 z-50">
-                    <button 
-                      onClick={() => {
-                        setShowMoreActions(false);
-                        if (!requireAuth('Vui lòng đăng nhập để tải video!')) return;
-                        addDownload({
-                          id: video.id,
-                          title: video.title,
-                          thumbnailUrl: video.thumbnailUrl,
-                          duration: video.duration,
-                          viewsCount: video.viewsCount,
-                          channelName: video.channelName,
-                          channelHandle: video.channelHandle,
-                        });
-                        alert('Đã lưu vào danh sách tải xuống!');
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3F3F3F] transition-colors text-white cursor-pointer"
-                    >
-                      <Download className="w-5 h-5" />
-                      <span className="text-sm font-medium">Tải xuống</span>
-                    </button>
+                    {publicSettings?.allowDownloads !== false && (
+                      <button 
+                        onClick={() => {
+                          setShowMoreActions(false);
+                          if (!requireAuth('Vui lòng đăng nhập để tải video!')) return;
+                          addDownload({
+                            id: video.id,
+                            title: video.title,
+                            thumbnailUrl: video.thumbnailUrl,
+                            duration: video.duration,
+                            viewsCount: video.viewsCount,
+                            channelName: video.channelName,
+                            channelHandle: video.channelHandle,
+                          });
+                          alert('Đã lưu vào danh sách tải xuống!');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3F3F3F] transition-colors text-white cursor-pointer"
+                      >
+                        <Download className="w-5 h-5" />
+                        <span className="text-sm font-medium">Tải xuống</span>
+                      </button>
+                    )}
                     <button 
                       onClick={() => {
                         setShowMoreActions(false);

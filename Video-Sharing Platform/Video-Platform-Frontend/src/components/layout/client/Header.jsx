@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Video, Bell, LogIn, LogOut, Menu, User, UserPlus, Upload, Smartphone, Radio } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export default function Header({ toggleSidebar }) {
   const navigate = useNavigate();
@@ -9,17 +10,97 @@ export default function Header({ toggleSidebar }) {
   const avatar = localStorage.getItem('avatar') || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
   const headerRef = useRef(null);
 
+  useEffect(() => {
+    const fetchPublicSettings = async () => {
+      try {
+        const res = await axios.get('/api/admin/settings/public');
+        if (res.data) {
+          if (res.data.logoUrl) {
+            setLogoUrl(res.data.logoUrl);
+          }
+          if (res.data.faviconUrl) {
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            link.href = res.data.faviconUrl;
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải cấu hình public:", err);
+      }
+    };
+    fetchPublicSettings();
+  }, []);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  // Handle outside click for search suggestions
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (headerRef.current && !headerRef.current.contains(event.target)) {
         setActiveDropdown(null);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Debounced search for suggestions
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!searchQuery.trim()) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const res = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`);
+        const { channels, playlists, videos, shorts } = res.data;
+        
+        const allTitles = [
+          ...(channels || []).map(c => c.channelName),
+          ...(playlists || []).map(p => p.title),
+          ...(videos || []).map(v => v.title),
+          ...(shorts || []).map(s => s.title)
+        ];
+        
+        // Remove duplicate titles for suggestions
+        const uniqueTitles = Array.from(new Set(allTitles)).slice(0, 8);
+        const formattedSuggestions = uniqueTitles.map(title => ({ title }));
+        setSuggestions(formattedSuggestions);
+      } catch (err) {
+        console.error("Lỗi khi tìm kiếm gợi ý:", err);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setShowSuggestions(false);
+      navigate(`/results?search_query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSuggestionClick = (title) => {
+    setSearchQuery(title);
+    setShowSuggestions(false);
+    navigate(`/results?search_query=${encodeURIComponent(title)}`);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -40,20 +121,51 @@ export default function Header({ toggleSidebar }) {
           <Menu className="w-5 h-5" />
         </button>
         <Link to="/" className="flex items-center h-18 w-28 ml-2">
-          <img src="/logotrang.png" alt="VividStream" className="w-full h-full object-contain" />
+          <img src={logoUrl} alt="VividStream" className="w-full h-full object-contain" />
         </Link>
       </div>
 
       {/* Search Bar */}
-      <div className="flex-1 max-w-2xl mx-8">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm" 
-            className="w-full bg-[#1A1A1A] border border-white/5 rounded-full py-2.5 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-white/20 focus:bg-[#202020] transition-colors text-sm"
-          />
-        </div>
+      <div className="flex-1 max-w-2xl mx-8" ref={searchRef}>
+        <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+          <div className="relative w-full flex items-center">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none">
+              <Search className="w-full h-full" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm" 
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              className="w-full bg-[#1A1A1A] border border-white/5 rounded-full py-2.5 pl-12 pr-16 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-white/20 focus:bg-[#202020] transition-colors text-sm"
+            />
+            {/* Action button inside input (optional look like youtube) */}
+            <button type="submit" className="absolute right-0 top-0 bottom-0 px-5 bg-white/5 hover:bg-white/10 border-l border-white/5 rounded-r-full text-gray-400 hover:text-white transition-colors cursor-pointer">
+               <Search className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Autocomplete Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#202020] border border-white/10 rounded-2xl shadow-2xl py-3 z-50 overflow-hidden">
+              {suggestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSuggestionClick(item.title)}
+                  className="w-full flex items-center gap-4 px-5 py-2 hover:bg-white/5 transition-colors cursor-pointer text-left"
+                >
+                  <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                  <span className="text-[15px] font-medium text-gray-200 truncate">{item.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </form>
       </div>
 
       {/* Right Icons */}

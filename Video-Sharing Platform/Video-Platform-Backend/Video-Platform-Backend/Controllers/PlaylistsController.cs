@@ -36,6 +36,12 @@ namespace Video_Platform_Backend.Controllers
         public string Visibility { get; set; } = "Public";
     }
 
+    public class UpdatePlaylistRequest
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Visibility { get; set; } = "Public";
+    }
+
     public class ToggleVideoRequest
     {
         public Guid VideoId { get; set; }
@@ -266,7 +272,8 @@ namespace Video_Platform_Backend.Controllers
                     .Select(pv => pv.Video.VideoThumbnails.FirstOrDefault()!.ThumbnailUrl)
                     .FirstOrDefault() ?? "",
                 CreatedAt = p.CreatedAt ?? DateTime.UtcNow,
-                ContainsVideo = videoId.HasValue ? p.PlaylistVideos.Any(pv => pv.VideoId == videoId.Value) : false
+                ContainsVideo = videoId.HasValue ? p.PlaylistVideos.Any(pv => pv.VideoId == videoId.Value) : false,
+                Visibility = p.Visibility
             }).ToList();
 
             // Bring "Xem sau" to the top
@@ -421,6 +428,68 @@ namespace Video_Platform_Backend.Controllers
                 videoCount = result.Count,
                 videos = result
             });
+        }
+
+        // PUT: api/playlists/{id}
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdatePlaylist(Guid id, [FromBody] UpdatePlaylistRequest request)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return BadRequest(new { message = "User does not have a channel." });
+
+            var playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.ChannelId == userChannel.Id);
+            if (playlist == null) return NotFound(new { message = "Playlist not found or you don't have access." });
+            
+            if (playlist.Title == "Xem sau") return BadRequest(new { message = "Cannot edit default playlist." });
+
+            if (!string.IsNullOrWhiteSpace(request.Title))
+            {
+                playlist.Title = request.Title;
+            }
+            if (!string.IsNullOrWhiteSpace(request.Visibility))
+            {
+                playlist.Visibility = request.Visibility;
+            }
+
+            await _context.SaveChangesAsync();
+            
+            return Ok(new PlaylistResponseDTO
+            {
+                Id = playlist.Id,
+                Title = playlist.Title,
+                Description = playlist.Description ?? "",
+                VideoCount = playlist.PlaylistVideos?.Count ?? 0,
+                ThumbnailUrl = "",
+                CreatedAt = playlist.CreatedAt ?? DateTime.UtcNow,
+                ContainsVideo = false,
+                Visibility = playlist.Visibility
+            });
+        }
+
+        // DELETE: api/playlists/{id}
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeletePlaylist(Guid id)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel == null) return BadRequest(new { message = "User does not have a channel." });
+
+            var playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.ChannelId == userChannel.Id);
+            if (playlist == null) return NotFound(new { message = "Playlist not found or you don't have access." });
+
+            if (playlist.Title == "Xem sau") return BadRequest(new { message = "Cannot delete default playlist." });
+
+            _context.Playlists.Remove(playlist);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Playlist deleted successfully." });
         }
     }
 }

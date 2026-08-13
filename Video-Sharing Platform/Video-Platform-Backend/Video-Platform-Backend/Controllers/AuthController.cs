@@ -25,6 +25,12 @@ namespace Video_Platform_Backend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            var allowRegistrationSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "allowRegistration");
+            if (allowRegistrationSetting != null && allowRegistrationSetting.Value == "false")
+            {
+                return StatusCode(403, new { Message = "Registration is currently disabled by the administrator." });
+            }
+
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             {
                 return BadRequest(new { Message = "Email already in use." });

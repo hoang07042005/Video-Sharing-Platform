@@ -17,6 +17,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { getIconColor } from '../../../utils/iconHelpers';
 
 // List of available icons for categories
 const AVAILABLE_ICONS = [
@@ -128,7 +129,8 @@ const AdminVideoCategory = () => {
 
   const renderIcon = (iconName, className = "w-4 h-4") => {
     const IconComponent = LucideIcons[iconName] || LucideIcons.LayoutGrid;
-    return <IconComponent className={className} />;
+    const colorClass = getIconColor(iconName);
+    return <IconComponent className={`${className} ${colorClass}`} />;
   };
 
   return (

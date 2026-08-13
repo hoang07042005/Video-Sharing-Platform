@@ -108,6 +108,9 @@ namespace Video_Platform_Backend.Controllers
             var result = reports.Select(r => new AdminReportDTO
             {
                 Id = "#BC-" + r.Id.ToString().Substring(0, 4).ToUpper(),
+                OriginalId = r.Id,
+                TargetType = r.TargetType,
+                TargetId = r.TargetId,
                 User = r.Reporter?.Profile?.FullName ?? r.Reporter?.Email ?? "Unknown",
                 Avatar = r.Reporter?.Profile?.AvatarUrl ?? r.Reporter?.Profile?.FullName?.Substring(0, 1).ToUpper() ?? "U",
                 Reason = r.Reason ?? "Không rõ",
@@ -136,6 +139,72 @@ namespace Video_Platform_Backend.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/admin/violations
+        [HttpGet("/api/admin/violations")]
+        public async Task<ActionResult<IEnumerable<AdminReportDTO>>> GetViolations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var reportsQuery = _context.Reports
+                .Include(r => r.Reporter)
+                    .ThenInclude(u => u.Profile)
+                .Where(r => r.Status == "Resolved")
+                .OrderByDescending(r => r.CreatedAt);
+
+            var reports = await reportsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var blockedComments = await _context.Comments
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .Where(c => c.FilterStatus == "Blocked" || c.FilterStatus == "Rejected")
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = new List<AdminReportDTO>();
+
+            result.AddRange(reports.Select(r => new AdminReportDTO
+            {
+                Id = "#VP-" + r.Id.ToString().Substring(0, 4).ToUpper(),
+                OriginalId = r.Id,
+                TargetType = r.TargetType,
+                TargetId = r.TargetId,
+                User = r.Reporter?.Profile?.FullName ?? r.Reporter?.Email ?? "Unknown",
+                Avatar = r.Reporter?.Profile?.AvatarUrl ?? r.Reporter?.Profile?.FullName?.Substring(0, 1).ToUpper() ?? "U",
+                Reason = r.Reason ?? "Không rõ",
+                Description = r.Description,
+                Time = GetRelativeTime(r.CreatedAt),
+                Priority = GetPriority(r.Reason),
+                Status = "Vi phạm",
+                PColor = GetPriorityColor(GetPriority(r.Reason)),
+                SColor = "text-red-500"
+            }));
+
+            result.AddRange(blockedComments.Select(c => new AdminReportDTO
+            {
+                Id = "#VP-CM-" + c.Id.ToString().Substring(0, 4).ToUpper(),
+                OriginalId = c.Id,
+                TargetType = "Comment",
+                TargetId = c.Id,
+                User = c.User?.Profile?.FullName ?? c.User?.Email ?? "Unknown",
+                Avatar = c.User?.Profile?.AvatarUrl ?? c.User?.Profile?.FullName?.Substring(0, 1).ToUpper() ?? "U",
+                Reason = "Bình luận bị từ chối / Ẩn",
+                Description = string.IsNullOrEmpty(c.MatchedKeywords) ? c.Content : $"Từ khóa vi phạm: {c.MatchedKeywords} - Nội dung: {c.Content}",
+                Time = GetRelativeTime(c.CreatedAt),
+                Priority = "Nghiêm trọng",
+                Status = "Vi phạm",
+                PColor = "border-red-500 text-red-500",
+                SColor = "text-red-500"
+            }));
+
+            // Sort merged results by time descending (this is simple sorting in memory since page size is small)
+            var finalResult = result.OrderByDescending(r => r.Time).ToList();
+
+            return Ok(finalResult);
         }
 
         public class UpdateReportStatusRequest

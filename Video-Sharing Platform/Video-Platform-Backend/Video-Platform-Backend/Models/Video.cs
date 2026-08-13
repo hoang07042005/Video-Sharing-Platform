@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Video_Platform_Backend.Models;
@@ -56,4 +56,6 @@ public partial class Video
     public virtual ICollection<View> Views { get; set; } = new List<View>();
 
     public virtual ICollection<WatchHistory> WatchHistories { get; set; } = new List<WatchHistory>();
+
+    public virtual ICollection<VideoResolution> VideoResolutions { get; set; } = new List<VideoResolution>();
 }

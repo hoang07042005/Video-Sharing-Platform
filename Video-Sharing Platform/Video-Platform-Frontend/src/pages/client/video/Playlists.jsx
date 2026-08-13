@@ -89,7 +89,7 @@ function PlaylistCard({ playlist, onOpen, onDelete }) {
           {menuOpen && (
             <div className="absolute right-0 top-8 bg-[#1E1E1E] border border-white/10 rounded-xl shadow-2xl z-20 min-w-[140px] overflow-hidden">
               <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(false); }}
+                onClick={e => { e.stopPropagation(); setMenuOpen(false); onEdit(playlist); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
               >
                 <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa
@@ -143,7 +143,7 @@ function VideoItem({ video, index, onNavigate }) {
 }
 
 /* ── Playlist List Row (list-view) ──────────────────────────── */
-function PlaylistListItem({ playlist, onOpen, onDelete }) {
+function PlaylistListItem({ playlist, onOpen, onDelete, onEdit }) {
   const [imgErr, setImgErr] = useState(false);
   return (
     <div
@@ -173,6 +173,12 @@ function PlaylistListItem({ playlist, onOpen, onDelete }) {
           ? <Globe className="w-4 h-4 text-gray-500" />
           : <Lock className="w-4 h-4 text-gray-500" />
         }
+        <button
+          onClick={e => { e.stopPropagation(); onEdit(playlist); }}
+          className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
         <button
           onClick={e => { e.stopPropagation(); onDelete(playlist.id); }}
           className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -224,6 +230,17 @@ export default function Playlists() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [sort, setSort] = useState('newest');
 
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newVisibility, setNewVisibility] = useState('Public');
+  const [isCreating, setIsCreating] = useState(false);
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editVisibility, setEditVisibility] = useState('Public');
+  const [isEditing, setIsEditing] = useState(false);
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -246,8 +263,68 @@ export default function Playlists() {
 
   const deletePlaylist = async (id) => {
     if (!window.confirm('Xoá danh sách phát này?')) return;
-    setPlaylists(prev => prev.filter(p => p.id !== id));
-    showToast('Đã xoá danh sách phát');
+    try {
+      await axios.delete(`/api/playlists/${id}`, { headers: { Authorization: 'Bearer ' + token } });
+      setPlaylists(prev => prev.filter(p => p.id !== id));
+      showToast('Đã xoá danh sách phát');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra khi xoá');
+    }
+  };
+
+  const handleCreatePlaylist = async (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setIsCreating(true);
+    try {
+      const res = await axios.post('/api/playlists/create', {
+        title: newTitle,
+        visibility: newVisibility
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPlaylists([res.data, ...playlists]);
+      showToast('Tạo danh sách phát thành công!');
+      setShowCreate(false);
+      setNewTitle('');
+      setNewVisibility('Public');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const openEditModal = (playlist) => {
+    if (playlist.title === 'Xem sau') {
+      alert('Không thể chỉnh sửa danh sách mặc định.');
+      return;
+    }
+    setEditId(playlist.id);
+    setEditTitle(playlist.title);
+    setEditVisibility(playlist.visibility || 'Public');
+    setShowEdit(true);
+  };
+
+  const handleEditPlaylist = async (e) => {
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+    setIsEditing(true);
+    try {
+      const res = await axios.put(`/api/playlists/${editId}`, {
+        title: editTitle,
+        visibility: editVisibility
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPlaylists(prev => prev.map(p => p.id === editId ? res.data : p));
+      showToast('Đã lưu thay đổi!');
+      setShowEdit(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
@@ -338,6 +415,127 @@ export default function Playlists() {
                 ))
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create Playlist Modal ── */}
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isCreating && setShowCreate(false)} />
+          <div className="relative z-50 w-full max-w-md bg-[#181818] rounded-2xl shadow-2xl overflow-hidden border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Tạo danh sách phát</h3>
+              <button onClick={() => !isCreating && setShowCreate(false)} className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreatePlaylist} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tên danh sách phát *</label>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  placeholder="Nhập tên danh sách..."
+                  className="w-full bg-[#252525] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF5722] transition-colors"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Quyền riêng tư</label>
+                <select
+                  value={newVisibility}
+                  onChange={e => setNewVisibility(e.target.value)}
+                  className="w-full bg-[#252525] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF5722] transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="Public">Công khai</option>
+                  <option value="Private">Riêng tư</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(false)}
+                  disabled={isCreating}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating || !newTitle.trim()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#FF5722] hover:bg-[#E64A19] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Tạo mới
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Playlist Modal ── */}
+      {showEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isEditing && setShowEdit(false)} />
+          <div className="relative z-50 w-full max-w-md bg-[#181818] rounded-2xl shadow-2xl overflow-hidden border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Chỉnh sửa danh sách phát</h3>
+              <button onClick={() => !isEditing && setShowEdit(false)} className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditPlaylist} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tên danh sách phát *</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  className="w-full bg-[#252525] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF5722] transition-colors"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Quyền riêng tư</label>
+                <select
+                  value={editVisibility}
+                  onChange={e => setEditVisibility(e.target.value)}
+                  className="w-full bg-[#252525] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF5722] transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="Public">Công khai</option>
+                  <option value="Private">Riêng tư</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEdit(false)}
+                  disabled={isEditing}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditing || !editTitle.trim()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#FF5722] hover:bg-[#E64A19] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isEditing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Lưu
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -459,6 +657,7 @@ export default function Playlists() {
 
             {/* Create button */}
             <button
+              onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 active:scale-95 shadow-lg cursor-pointer"
               style={{ background: 'linear-gradient(to right,#FF5722,#E91E63)' }}
             >
@@ -498,6 +697,7 @@ export default function Playlists() {
                 playlist={pl}
                 onOpen={openPlaylist}
                 onDelete={deletePlaylist}
+                onEdit={openEditModal}
               />
             ))}
           </div>
@@ -510,6 +710,7 @@ export default function Playlists() {
                 playlist={pl}
                 onOpen={openPlaylist}
                 onDelete={deletePlaylist}
+                onEdit={openEditModal}
               />
             ))}
           </div>

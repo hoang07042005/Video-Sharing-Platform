@@ -61,7 +61,7 @@ function HistoryVideoRow({ video, onRemove }) {
     <div className="group flex gap-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 rounded-xl px-2 -mx-2 transition-colors">
       {/* Thumbnail */}
       <div
-        onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`)}
+        onClick={() => navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}${video.watchedDuration ? `?t=${video.watchedDuration}` : ''}`)}
         className="relative shrink-0 w-[200px] aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] cursor-pointer"
       >
         {!imgErr && video.thumbnailUrl ? (
@@ -84,10 +84,12 @@ function HistoryVideoRow({ video, onRemove }) {
             <Zap className="w-2.5 h-2.5" /> Shorts
           </div>
         )}
-        {/* Progress bar placeholder */}
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10">
-          <div className="h-full bg-[#FF5722] w-[65%]" />
-        </div>
+        {/* Progress bar */}
+        {video.watchedDuration > 0 && video.duration > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10">
+            <div className="h-full bg-[#FF5722]" style={{ width: `${Math.min(100, (video.watchedDuration / video.duration) * 100)}%` }} />
+          </div>
+        )}
       </div>
 
       {/* Info */}

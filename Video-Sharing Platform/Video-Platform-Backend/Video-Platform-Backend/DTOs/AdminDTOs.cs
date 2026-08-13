@@ -64,6 +64,9 @@ namespace Video_Platform_Backend.DTOs
     public class AdminReportDTO
     {
         public string Id { get; set; } = null!;
+        public Guid OriginalId { get; set; }
+        public string TargetType { get; set; } = null!;
+        public Guid TargetId { get; set; }
         public string User { get; set; } = null!;
         public string Avatar { get; set; } = null!;
         public string Reason { get; set; } = null!;
