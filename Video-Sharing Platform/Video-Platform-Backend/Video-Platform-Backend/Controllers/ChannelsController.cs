@@ -78,10 +78,50 @@ namespace Video_Platform_Backend.Controllers
                 ContactEmail = channel.ContactEmail,
                 Country = channel.Country,
                 SocialLinks = channel.SocialLinks,
+                MembershipFee = channel.MembershipFee,
                 CreatedAt = channel.CreatedAt ?? DateTime.UtcNow
             };
 
             return Ok(profileDto);
+        }
+
+        // GET: api/channels/{channelId}/members
+        [HttpGet("{channelId}/members")]
+        public async Task<IActionResult> GetChannelMembers(Guid channelId)
+        {
+            var members = await _context.Subscriptions
+                .Include(s => s.Subscriber)
+                    .ThenInclude(u => u.Profile)
+                .Where(s => s.ChannelId == channelId && s.Status == "Active" && (s.EndDate == null || s.EndDate > DateTime.UtcNow))
+                .OrderByDescending(s => s.StartDate)
+                .Select(s => new ChannelMemberDTO
+                {
+                    UserId = s.SubscriberId,
+                    FullName = s.Subscriber.Profile != null ? s.Subscriber.Profile.FullName : "Người dùng",
+                    AvatarUrl = s.Subscriber.Profile != null && s.Subscriber.Profile.AvatarUrl != null ? s.Subscriber.Profile.AvatarUrl : "",
+                    JoinedAt = s.StartDate,
+                    EndDate = s.EndDate,
+                    Tier = s.Tier ?? "Thường"
+                })
+                .ToListAsync();
+
+            return Ok(members);
+        }
+
+        // GET: api/channels/{channelId}/membership-revenue
+        [HttpGet("{channelId}/membership-revenue")]
+        public async Task<IActionResult> GetChannelMembershipRevenue(Guid channelId)
+        {
+            var totalRevenue = await _context.Transactions
+                .Include(t => t.Payment)
+                .Where(t => t.TargetChannelId == channelId 
+                         && t.TransactionType != null 
+                         && t.TransactionType.StartsWith("ChannelMembership")
+                         && t.Payment != null 
+                         && t.Payment.Status == "Completed")
+                .SumAsync(t => t.Amount);
+
+            return Ok(new { TotalRevenue = totalRevenue });
         }
 
         // GET: api/channels/{channelId}/videos
@@ -92,7 +132,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => v.ChannelId == channelId && v.Visibility == "Public")
+                .Where(v => v.ChannelId == channelId && (v.Visibility == "Public" || v.Visibility == "Private"))
                 .Select(v => new VideoResponseDTO
                 {
                     Id = v.Id,
@@ -148,6 +188,7 @@ namespace Video_Platform_Backend.Controllers
             channel.ContactEmail = dto.ContactEmail;
             channel.Country = dto.Country;
             channel.SocialLinks = dto.SocialLinks;
+            channel.MembershipFee = dto.MembershipFee;
 
             // Update Profile fields
             if (channel.User.Profile != null)
@@ -223,6 +264,29 @@ namespace Video_Platform_Backend.Controllers
                 .ToListAsync();
 
             return Ok(subscribedChannels);
+        }
+
+        // GET: api/channels/{channelId}/membership
+        [HttpGet("{channelId}/membership")]
+        [Authorize]
+        public async Task<IActionResult> GetMembershipStatus(Guid channelId)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.SubscriberId == userId && s.ChannelId == channelId && s.Status == "Active" && (s.EndDate == null || s.EndDate > DateTime.UtcNow));
+
+            if (subscription != null)
+            {
+                return Ok(new { 
+                    isMember = true, 
+                    tier = subscription.Tier, 
+                    endDate = subscription.EndDate 
+                });
+            }
+
+            return Ok(new { isMember = false });
         }
     }
 }

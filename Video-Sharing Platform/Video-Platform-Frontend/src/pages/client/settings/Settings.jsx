@@ -95,8 +95,8 @@ export default function Settings() {
           <SettingItem
             icon={Star}
             iconColor="text-yellow-400"
-            title='Nút "Tham gia"'
-            description="Hiển thị nút Tham gia trên trang kênh của người khác."
+            title='Nút "Hội viên"'
+            description="Hiển thị nút Hội viên trên trang kênh của người khác."
           >
             <Toggle
               checked={settings.showJoinButton}

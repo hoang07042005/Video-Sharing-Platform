@@ -121,13 +121,16 @@ export default function Sidebar({ isOpen }) {
 
         {/* Premium Card */}
         <div className="mx-3 my-3">
-          <div className="bg-gradient-to-br from-[#FF6B35] via-[#FF5722] to-[#C62828] rounded-xl p-4 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#ff2980] via-[#ff2222] to-[#db7622] rounded-xl p-4 relative overflow-hidden">
             {/* decorative blob */}
             <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full" />
             <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-white/10 rounded-full" />
-            <Crown className="w-6 h-6 text-yellow-300 mb-2 drop-shadow" />
-            <p className="text-white text-sm font-semibold leading-snug mb-3">
-              Trải nghiệm xem video không quảng cáo, chất lượng cao và nhiều tính năng hấp dẫn.
+            <div className="flex items-center justify-center">
+              <Crown className="w-6 h-6 text-yellow-300 mb-2 drop-shadow " />
+            </div>
+            <h3 className='text-white text-lg text-center font-bold mb-2'>Nâng cấp ngay</h3>
+            <p className="text-white text-[11px] text-center font-semibold leading-snug mb-3">
+              Trải nghiệm không giới hạn với VideoX Premium
             </p>
             <Link
               to="/premium"

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Video, Bell, LogIn, LogOut, Menu, User, UserPlus, Upload, Smartphone, Radio } from 'lucide-react';
+import { Search, Video, Bell, LogIn, LogOut, LayoutDashboard, Menu, User, UserPlus, Upload, Smartphone, Radio, Crown, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -8,9 +8,13 @@ export default function Header({ toggleSidebar }) {
   const token = localStorage.getItem('token');
   const handle = localStorage.getItem('handle');
   const avatar = localStorage.getItem('avatar') || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
+  const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+  const isAdmin = roles.includes('Admin');
 
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+  const [currentPlan, setCurrentPlan] = useState(null);
+  const [premiumUntil, setPremiumUntil] = useState(null);
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +41,27 @@ export default function Header({ toggleSidebar }) {
     };
     fetchPublicSettings();
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      const fetchPlan = async () => {
+        try {
+          const res = await axios.get('/api/payment/current-plan', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data && res.data.plan) {
+            setCurrentPlan(res.data.plan);
+            if (res.data.premiumUntil) {
+              setPremiumUntil(new Date(res.data.premiumUntil));
+            }
+          }
+        } catch (err) {
+          console.error("Lỗi khi tải gói:", err);
+        }
+      };
+      fetchPlan();
+    }
+  }, [token]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -169,7 +194,7 @@ export default function Header({ toggleSidebar }) {
       </div>
 
       {/* Right Icons */}
-      <div className="flex items-center gap-7 ml-8">
+      <div className="flex items-center gap-3 ml-8">
         {token ? (
           <>
             <div className="relative" ref={activeDropdown === 'create' ? headerRef : null}>
@@ -185,13 +210,13 @@ export default function Header({ toggleSidebar }) {
               {activeDropdown === 'create' && (
                 <div className="absolute right-0 top-full mt-4 w-56 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">
                   <Link to="/studio/upload" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-gray-200 transition-colors">
-                    <Upload className="w-5 h-5" /> Tạo video
+                    <Upload className="w-5 h-5" /> Tải video lên
                   </Link>
                   <Link to="/studio/upload-short" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-gray-200 transition-colors">
-                    <Smartphone className="w-5 h-5" /> Tạo video ngắn
+                    <Smartphone className="w-5 h-5" /> Tải video ngắn lên
                   </Link>
                   <Link to="/studio/live" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-gray-200 transition-colors">
-                    <Radio className="w-5 h-5" /> Live
+                    <Radio className="w-5 h-5" /> Phát trực tiếp
                   </Link>
                 </div>
               )}
@@ -205,6 +230,40 @@ export default function Header({ toggleSidebar }) {
             </div>
             
             <div className="w-[1px] h-10 bg-white/10 mx-1"></div>
+
+            {currentPlan && (
+              <Link to="/premium" className={`hidden md:flex items-center justify-between gap-3 px-4 py-1.5 rounded-full border ${currentPlan === 'Premium' ? 'border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]' : currentPlan === 'Family' ? 'border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]' : 'border-white/10 bg-[#1A1A1A] hover:bg-[#222]'} transition-colors cursor-pointer mx-1`}>
+                <div className="flex items-center justify-center">
+                  {currentPlan === 'Premium' ? (
+                     <Crown className="w-[22px] h-[22px] text-[#9C27B0]" fill="currentColor" />
+                  ) : currentPlan === 'Family' ? (
+                     <Users className="w-[22px] h-[22px] text-[#7E57C2]" fill="currentColor" />
+                  ) : (
+                     <User className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex flex-col pt-0.5">
+                   <span className="text-[14px] font-bold text-white leading-none">
+                     {currentPlan === 'Premium' ? 'Premium' : currentPlan === 'Family' ? 'Gia đình' : 'Miễn phí'}
+                   </span>
+                   {currentPlan !== 'Free' && premiumUntil ? (
+                     <span className="text-[10px] text-gray-400 mt-[5px] leading-none">
+                       HSD: {premiumUntil.toLocaleDateString('vi-VN')}
+                     </span>
+                   ) : (
+                     <span className="text-[10px] text-gray-400 mt-[5px] leading-none">{currentPlan === 'Free' ? 'HSD: Không giới hạn' : 'Gói bạn đang dùng'}</span>
+                   )}
+                </div>
+                {currentPlan !== 'Free' && (
+                  <svg className="w-[16px] h-[16px] text-[#8b5cf6] ml-1" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="12" />
+                    <path d="M10 16.5l-4-4 1.5-1.5 2.5 2.5 5.5-5.5 1.5 1.5-7 7z" fill="#fff" />
+                  </svg>
+                )}
+              </Link>
+            )}
+
+            <div className="w-[1px] h-10 bg-white/10 mx-1"></div> 
 
             <div className="relative flex items-center" ref={activeDropdown === 'user' ? headerRef : null}>
               <button onClick={() => setActiveDropdown(activeDropdown === 'user' ? null : 'user')} className="flex items-center gap-3 cursor-pointer text-left group">
@@ -222,6 +281,15 @@ export default function Header({ toggleSidebar }) {
                   <Link to={handle ? `/c/${handle}` : '#'} onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors">
                     <User className="w-4 h-4" /> Kênh của bạn
                   </Link>
+                  {isAdmin && (
+                    <Link 
+                      to="/admin" 
+                      onClick={() => setActiveDropdown(null)} 
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4" /> Trang quản trị
+                    </Link>
+                  )}
                   <button onClick={() => { setActiveDropdown(null); handleLogout(); }} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors text-left">
                     <LogOut className="w-4 h-4" /> Đăng xuất
                   </button>

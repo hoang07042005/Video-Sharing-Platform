@@ -29,6 +29,10 @@ public partial class User
 
     public bool? IsBanned { get; set; }
 
+    public bool? IsPremium { get; set; }
+
+    public DateTime? PremiumUntil { get; set; }
+
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 
     public virtual Channel? Channel { get; set; }

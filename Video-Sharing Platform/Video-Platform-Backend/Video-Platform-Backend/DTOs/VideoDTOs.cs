@@ -56,6 +56,7 @@ namespace Video_Platform_Backend.DTOs
         public bool IsDisliked { get; set; }
         public bool IsSubscribed { get; set; }
         public bool IsSaved { get; set; }
+        public bool IsMembersOnly { get; set; }
 
         public List<VideoResolutionDTO> Resolutions { get; set; } = new List<VideoResolutionDTO>();
     }

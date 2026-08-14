@@ -5,6 +5,7 @@ using System.Text;
 using Video_Platform_Backend.Models;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Video_Platform_Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,7 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"];
 
 builder.Services.AddScoped<Video_Platform_Backend.Services.VideoProcessingService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 builder.Services.AddAuthentication(options =>
 {

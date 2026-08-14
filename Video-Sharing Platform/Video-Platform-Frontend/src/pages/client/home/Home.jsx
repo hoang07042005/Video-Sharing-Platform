@@ -448,6 +448,7 @@ export default function Home() {
   const [shorts, setShorts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState(0);
+  const [featuredSlide, setFeaturedSlide] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -470,6 +471,23 @@ export default function Home() {
     fetchData();
   }, []);
 
+  const filteredVideos = (
+    activeCategoryId === 0
+      ? videos
+      : videos.filter((v) => v.categoryId === activeCategoryId)
+  ).filter((v) => !v.isShort);
+
+  const featuredVideos = filteredVideos.slice(0, 4);
+
+  // Auto-slide cho FeaturedHero
+  useEffect(() => {
+    if (featuredVideos.length <= 1) return;
+    const timer = setInterval(() => {
+      setFeaturedSlide((prev) => (prev + 1) % featuredVideos.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [featuredVideos.length]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-screen bg-[#0F0F0F]">
@@ -478,46 +496,24 @@ export default function Home() {
     );
   }
 
-  const filteredVideos =
-    activeCategoryId === 0
-      ? videos
-      : videos.filter((v) => v.categoryId === activeCategoryId);
 
   const filteredShorts =
     activeCategoryId === 0
       ? shorts
       : shorts.filter((s) => s.categoryId === activeCategoryId);
 
-  const interleave = (arr1, arr2) => {
-    const mixed = [];
-    let i = 0;
-    while (i < arr1.length || i < arr2.length) {
-      if (i < arr1.length) mixed.push(arr1[i]);
-      if (i < arr2.length) mixed.push(arr2[i]);
-      i++;
-    }
-    return mixed;
-  };
+  // Chia video ngắn làm 2 mục khác nhau
+  const shortsSection1 = filteredShorts.slice(0, 6);
+  const shortsSection2 = filteredShorts.slice(6, 12);
 
-  const featuredVideo = filteredVideos[0] ?? null;
+  // Thịnh hành: Dùng video thường
+  const trending = filteredVideos.slice(4, 14);
 
-  // Dành riêng 6 video ngắn đầu tiên cho section "Video ngắn"
-  const dedicatedShorts = filteredShorts.slice(0, 6);
+  // Đề xuất: Dùng video thường
+  const suggested = filteredVideos.slice(14, 26);
 
-  // Thịnh hành: 10 items (5 reg, 5 shorts)
-  const trendingVids = filteredVideos.slice(1, 6);
-  const trendingShorts = filteredShorts.slice(6, 11);
-  const trending = interleave(trendingVids, trendingShorts);
-
-  // Đề xuất: 12 items (6 reg, 6 shorts)
-  const suggestedVids = filteredVideos.slice(6, 12);
-  const suggestedShorts = filteredShorts.slice(11, 17);
-  const suggested = interleave(suggestedVids, suggestedShorts);
-
-  // Mới nhất: 9 items (5 reg, 4 shorts)
-  const latestVids = filteredVideos.slice(12, 17);
-  const latestShorts = filteredShorts.slice(17, 21);
-  const latest = interleave(latestVids, latestShorts);
+  // Mới nhất: Dùng video thường
+  const latest = filteredVideos.slice(26, 35);
 
   // Fallback channels nếu API chưa có
   const mockChannels = [
@@ -567,13 +563,21 @@ export default function Home() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F] min-h-screen">
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-4">
+      <div className="max-w-[1600px] mx-auto px-2 md:px-2 py-2">
         {/* ── 2-column layout ── */}
         <div className="flex gap-6 items-start">
           {/* ── Left: Main Content ── */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             {/* Featured Hero */}
-            {featuredVideo && <FeaturedHero video={featuredVideo} />}
+            {featuredVideos.length > 0 && (
+              <FeaturedHero 
+                video={featuredVideos[featuredSlide]} 
+                totalSlides={featuredVideos.length}
+                currentSlide={featuredSlide}
+                onNext={() => setFeaturedSlide((prev) => (prev + 1) % featuredVideos.length)}
+                onPrev={() => setFeaturedSlide((prev) => (prev - 1 + featuredVideos.length) % featuredVideos.length)}
+              />
+            )}
 
             {/* Category Filter */}
             <div>
@@ -612,12 +616,12 @@ export default function Home() {
               title="Video ngắn"
               linkTo="/shorts"
             />
-            {shorts.length === 0 ? (
+            {shortsSection1.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
             ) : (
               <div className="grid grid-cols-6 gap-4">
-                {dedicatedShorts.map((s) => (
-                  <ShortVideoCard key={`short-${s.id}`} short={s} />
+                {shortsSection1.map((s) => (
+                  <ShortVideoCard key={`short-1-${s.id}`} short={s} />
                 ))}
               </div>
             )}
@@ -636,6 +640,24 @@ export default function Home() {
               <div className="grid grid-cols-6 gap-4">
                 {suggested.map((v) => (
                   <SmallVideoCard key={`sug-${v.id}`} video={v} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Video ngắn 2 */}
+          <section>
+            <SectionHeader
+              icon={Smartphone}
+              title="Shorts xu hướng"
+              linkTo="/shorts"
+            />
+            {shortsSection2.length === 0 ? (
+              <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
+            ) : (
+              <div className="grid grid-cols-6 gap-4">
+                {shortsSection2.map((s) => (
+                  <ShortVideoCard key={`short-2-${s.id}`} short={s} />
                 ))}
               </div>
             )}

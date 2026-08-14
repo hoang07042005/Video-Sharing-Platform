@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
@@ -133,9 +133,10 @@ export default function VideoDetail() {
   };
 
   const saveWatchProgress = async (duration) => {
-    const token = localStorage.getItem('token');
-    if (!token || !id) return;
+    if (localStorage.getItem('pauseHistory') === 'true') return;
     try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
       await axios.post(`/api/videos/${id}/progress`, { watchedDuration: Math.floor(duration) }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -486,45 +487,76 @@ export default function VideoDetail() {
 
   return (
     <div className="flex-1 bg-[#0F0F0F] overflow-y-auto custom-scrollbar flex justify-center">
-      <div className="flex flex-col lg:flex-row px-4 md:px-8 py-6 gap-3 xl:gap-8 w-full max-w-[1800px]">
+      <div className="flex flex-col lg:flex-row px-2 md:px-4 py-6 gap-3 xl:gap-4 w-full max-w-[1800px]">
         {/* Left Column - Main Video Content */}
         <div className="flex-1 max-w-[1280px] lg:w-[70%] xl:w-[75%]">
         {/* Video Player */}
         <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl relative group">
-          <CustomVideoPlayer 
-            options={{
-              autoplay: false,
-              controls: true,
-              responsive: true,
-              fluid: true,
-              sources: [{
-                src: currentResolutionUrl,
-                type: 'video/mp4'
-              }],
-              poster: video.thumbnailUrl,
-              playbackRates: [0.5, 1, 1.25, 1.5, 2]
-            }}
-            onReady={(player) => {
-              const t = searchParams.get('t');
-              if (t) {
-                player.currentTime(parseInt(t, 10));
-              }
-
-              player.on('timeupdate', () => {
-                const currentTime = player.currentTime();
-                if (currentTime - lastSavedTime.current > 10) {
-                  lastSavedTime.current = currentTime;
-                  saveWatchProgress(currentTime);
+          {video.isMembersOnly ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#1A1A1A] text-center p-8">
+              <Lock className="w-16 h-16 text-[#FF4E00] mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">Video dành riêng cho hội viên</h2>
+              <p className="text-gray-400 mb-6 max-w-md">
+                Kênh này yêu cầu bạn phải là hội viên mới có thể xem video. Hãy tham gia ngay để ủng hộ kênh và tận hưởng các đặc quyền!
+              </p>
+              <button 
+                onClick={() => navigate(`/c/${video.channel.handle}/membership`)}
+                className="px-8 py-3 bg-gradient-to-r from-[#9C27B0] to-[#E91E63] text-white font-bold rounded-full hover:opacity-90 shadow-[0_0_20px_rgba(156,39,176,0.3)] transition-all"
+              >
+                Tham gia hội viên
+              </button>
+            </div>
+          ) : (
+            <CustomVideoPlayer 
+              options={{
+                autoplay: true,
+                controls: true,
+                responsive: true,
+                fluid: true,
+                sources: [{
+                  src: currentResolutionUrl,
+                  type: 'video/mp4'
+                }],
+                poster: video.thumbnailUrl,
+                playbackRates: [0.5, 1, 1.25, 1.5, 2]
+              }}
+              onReady={(player) => {
+                const t = searchParams.get('t');
+                
+                player.one('loadedmetadata', () => {
+                  if (t) {
+                    player.currentTime(parseInt(t, 10));
+                  }
+                  // force play
+                  const playPromise = player.play();
+                  if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                      console.log('Autoplay was prevented.', error);
+                    });
+                  }
+                });
+                
+                // Set immediately in case metadata is already loaded
+                if (t) {
+                  player.currentTime(parseInt(t, 10));
                 }
-              });
-              player.on('pause', () => {
-                saveWatchProgress(player.currentTime());
-              });
-            }}
-            resolutions={video.resolutions}
-            currentResolutionUrl={currentResolutionUrl}
-            onResolutionChange={(newUrl) => setCurrentResolutionUrl(newUrl)}
-          />
+
+                player.on('timeupdate', () => {
+                  const currentTime = player.currentTime();
+                  if (currentTime - lastSavedTime.current > 10) {
+                    lastSavedTime.current = currentTime;
+                    saveWatchProgress(currentTime);
+                  }
+                });
+                player.on('pause', () => {
+                  saveWatchProgress(player.currentTime());
+                });
+              }}
+              resolutions={video.resolutions}
+              currentResolutionUrl={currentResolutionUrl}
+              onResolutionChange={(newUrl) => setCurrentResolutionUrl(newUrl)}
+            />
+          )}
         </div>
 
         {/* Video Info */}
@@ -884,14 +916,14 @@ export default function VideoDetail() {
         <div className="flex flex-col gap-3">
           {recommendedVideos.filter(v => !v.isShort).map((recVideo) => (
             <Link to={recVideo.isShort ? `/shorts?id=${recVideo.id}` : `/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">
-              <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
+              <div className="w-40 md:w-48 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                 <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
                   {Math.floor(recVideo.duration / 60)}:{(recVideo.duration % 60).toString().padStart(2, '0')}
                 </span>
               </div>
-              <div className="flex flex-col flex-1 py-0.5">
-                <h5 className="text-white text-[13px] font-semibold line-clamp-2 leading-tight group-hover:text-[#FF5722] transition-colors">{recVideo.title}</h5>
+              <div className="flex flex-col flex-1 py-1">
+                <h5 className="text-white text-[13px] font-semibold line-clamp-3 leading-tight group-hover:text-[#FF5722] transition-colors">{recVideo.title}</h5>
                 <span className="text-gray-400 text-xs mt-1">{recVideo.channelName}</span>
                 <div className="text-gray-400 text-xs flex items-center gap-1 mt-0.5 flex-wrap">
                   <span>{formatViews(recVideo.viewsCount)} lượt xem</span>
@@ -975,6 +1007,7 @@ export default function VideoDetail() {
           </div>
         </div>
       )}
+      
     </div>
   );
 }

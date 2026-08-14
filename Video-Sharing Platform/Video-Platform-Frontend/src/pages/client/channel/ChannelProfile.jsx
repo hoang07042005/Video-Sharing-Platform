@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Loader2, Bell, CheckCircle2, Share2, Search, Star, Users, Link as LinkIcon, X, Mail, MonitorPlay, Globe, Info, PlaySquare, TrendingUp, Flag, Pencil, Home, Upload, Check, UploadCloud, ChevronDown, Play, Settings, Calendar, Clock, FileVideo, HardDrive, FileCode, Image as ImageIcon, Trash2, AlertTriangle, Smartphone } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import CustomizeChannelModal from '../../../components/channel/CustomizeChannelModal';
+
 
 function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit, isShortType }) {
   const [title, setTitle] = useState('');
@@ -340,8 +341,8 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
               <div className="flex items-center gap-3">
                 <Globe className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="text-white text-sm font-medium">{visibility === 'Public' ? 'Công khai' : 'Riêng tư'}</p>
-                  <p className="text-gray-500 text-xs">{visibility === 'Public' ? 'Mọi người đều có thể xem video này' : 'Chỉ bạn mới có thể xem'}</p>
+                  <p className="text-white text-sm font-medium">{visibility === 'Public' ? 'Công khai' : 'Dành cho hội viên'}</p>
+                  <p className="text-gray-500 text-xs">{visibility === 'Public' ? 'Mọi người đều có thể xem video này' : 'Chỉ hội viên kênh mới có thể xem'}</p>
                 </div>
               </div>
               <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -359,8 +360,8 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
                 <div onClick={() => { setVisibility('Private'); setShowVisibilityDropdown(false); }} className="p-3 hover:bg-white/10 cursor-pointer flex items-center gap-3">
                   <Settings className="w-5 h-5 text-gray-400" />
                   <div>
-                    <p className="text-white text-sm font-medium">Riêng tư</p>
-                    <p className="text-gray-500 text-[10px]">Chỉ bạn mới có thể xem</p>
+                    <p className="text-white text-sm font-medium">Dành cho hội viên</p>
+                    <p className="text-gray-500 text-[10px]">Chỉ hội viên mới có thể xem</p>
                   </div>
                 </div>
               </div>
@@ -415,7 +416,7 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
             <img src={channel?.avatarUrl || 'https://via.placeholder.com/24'} className="w-5 h-5 rounded-full" />
             <span className="text-white font-medium">{channel?.channelName || 'Bạn'}</span>
             <span>•</span>
-            <span>{visibility === 'Public' ? 'Công khai' : 'Riêng tư'}</span>
+            <span>{visibility === 'Public' ? 'Công khai' : 'Dành cho hội viên'}</span>
           </div>
           <div className="text-xs text-gray-500 mb-4">
             0 lượt xem • Vừa xong
@@ -427,7 +428,7 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
           <div className="space-y-4">
             <div className="flex justify-between text-xs">
               <span className="text-gray-400 flex items-center gap-2"><Settings className="w-4 h-4"/> Trạng thái</span>
-              <span className="text-green-500">{visibility === 'Public' ? 'Công khai' : 'Riêng tư'}</span>
+              <span className="text-green-500">{visibility === 'Public' ? 'Công khai' : 'Dành cho hội viên'}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-400 flex items-center gap-2"><Clock className="w-4 h-4"/> Độ dài</span>
@@ -553,6 +554,7 @@ function DeleteVideoModal({ video, onClose, onSuccess }) {
 
 export default function ChannelProfile() {
   const { handle } = useParams();
+  const navigate = useNavigate();
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState([]);
   const [playlists, setPlaylists] = useState([]);
@@ -586,6 +588,9 @@ export default function ChannelProfile() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
+  const [membershipStatus, setMembershipStatus] = useState({ isMember: false });
+
+
   // Đọc settings bật/tắt button từ localStorage
   const [channelBtnSettings, setChannelBtnSettings] = useState(() => {
     try {
@@ -597,6 +602,30 @@ export default function ChannelProfile() {
   });
 
   const isOwner = channel && localStorage.getItem('handle') === channel.handle;
+
+  const checkSubscription = async (channelId, token) => {
+    try {
+      const res = await axios.get('/api/channels/subscribed', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsSubscribed(res.data.some(c => c.id === channelId));
+    } catch (err) {
+      console.error("Lỗi kiểm tra đăng ký:", err);
+    }
+  };
+
+  const checkMembership = async (channelId, token) => {
+    try {
+      const res = await axios.get(`/api/channels/${channelId}/membership`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        setMembershipStatus(res.data);
+      }
+    } catch (err) {
+      console.error("Lỗi kiểm tra hội viên:", err);
+    }
+  };
 
   const fetchChannelData = async (targetHandle) => {
     setLoading(true);
@@ -618,11 +647,17 @@ export default function ChannelProfile() {
       }
       setChannel(channelData);
 
+      const token = localStorage.getItem('token');
+      if (token && channelData && channelData.id) {
+        checkSubscription(channelData.id, token);
+        checkMembership(channelData.id, token);
+      }
+
       // Fetch videos and playlists in parallel
       if (channelData && channelData.id) {
         const [videosRes, playlistsRes] = await Promise.all([
-          axios.get(`/api/channels/${profileRes.data.id}/videos`),
-          axios.get(`/api/playlists/channel/${profileRes.data.id}`)
+          axios.get(`/api/channels/${channelData.id}/videos`),
+          axios.get(`/api/playlists/channel/${channelData.id}`)
         ]).catch(err => {
           console.error("Lỗi khi tải videos/playlists", err);
           return [{ data: [] }, { data: [] }];
@@ -833,8 +868,11 @@ export default function ChannelProfile() {
                   )}
 
                   {channelBtnSettings.showJoinButton && (
-                    <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
-                      Tham gia
+                    <button 
+                      onClick={() => navigate(`/c/${channel.handle}/membership`)}
+                      className={`px-5 py-2 rounded-full font-semibold text-sm transition-colors ${isOwner || membershipStatus.isMember ? 'bg-gradient-to-r from-[#9C27B0] to-[#E91E63] text-white shadow-[0_0_10px_rgba(156,39,176,0.5)]' : 'text-white bg-white/10 hover:bg-white/20'}`}
+                    >
+                      {isOwner ? 'Danh sách hội viên' : membershipStatus.isMember ? 'Quyền lợi hội viên' : 'Hội viên'}
                     </button>
                   )}
                   {channelBtnSettings.showCommunityButton && (
@@ -895,7 +933,7 @@ export default function ChannelProfile() {
                 Danh sách phát
               </button>
               <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Cộng đồng</button>
-              <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Kênh</button>
+              {/* <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Kênh</button> */}
               <button
                 onClick={() => setActiveTab('about')}
                 className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'about' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
@@ -1724,6 +1762,14 @@ export default function ChannelProfile() {
           </div>
         </div>
       )}
+
+      <CustomizeChannelModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        channel={channel} 
+        onUpdate={fetchChannelData}
+      />
+
     </div>
   );
 }

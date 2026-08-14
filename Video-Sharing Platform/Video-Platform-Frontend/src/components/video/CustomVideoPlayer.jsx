@@ -1,31 +1,91 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import { Play, Pause, Volume2, VolumeX, FastForward, Rewind, Maximize, PictureInPicture, Settings, Check, ChevronRight } from 'lucide-react';
+
+const formatTime = (seconds) => {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl, onResolutionChange, ...props }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
-  const [showResMenu, setShowResMenu] = useState(false);
+  const containerRef = useRef(null);
+  
+  // UI States
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPiP, setIsPiP] = useState(false);
+  
+  const [showControls, setShowControls] = useState(true);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState('main'); // 'main', 'speed', 'resolution'
+  
+  const controlsTimeoutRef = useRef(null);
+  const progressRef = useRef(null);
+  const isDraggingProgress = useRef(false);
 
+  // Initialize video.js
   useEffect(() => {
     if (!playerRef.current) {
       const videoElement = document.createElement("video-js");
-      videoElement.classList.add('vjs-big-play-centered');
+      // Add necessary classes and hide default controls
+      videoElement.classList.add('vjs-custom-skin');
+      videoElement.classList.add('w-full', 'h-full', 'object-contain');
       videoRef.current.appendChild(videoElement);
 
-      const player = playerRef.current = videojs(videoElement, options, () => {
+      const finalOptions = { ...options, controls: false };
+
+      const player = playerRef.current = videojs(videoElement, finalOptions, () => {
         videojs.log('player is ready');
+        
+        player.on('play', () => setIsPlaying(true));
+        player.on('pause', () => setIsPlaying(false));
+        player.on('timeupdate', () => {
+          if (!isDraggingProgress.current) {
+            setCurrentTime(player.currentTime());
+          }
+        });
+        player.on('loadedmetadata', () => {
+          setDuration(player.duration());
+          setVolume(player.volume());
+          setIsMuted(player.muted());
+        });
+        player.on('durationchange', () => {
+          setDuration(player.duration());
+        });
+        player.on('volumechange', () => {
+          setVolume(player.volume());
+          setIsMuted(player.muted());
+        });
+        player.on('ratechange', () => {
+          setPlaybackRate(player.playbackRate());
+        });
+        player.on('fullscreenchange', () => {
+          setIsFullscreen(player.isFullscreen());
+        });
+        player.on('enterpictureinpicture', () => setIsPiP(true));
+        player.on('leavepictureinpicture', () => setIsPiP(false));
+        player.on('ended', () => setIsPlaying(false));
+
         if (onReady) {
           onReady(player);
         }
       });
-    } else {
-      const player = playerRef.current;
-      player.autoplay(options.autoplay);
-      player.src(options.sources);
     }
-  }, [options, videoRef]);
+  }, []);
 
+  // Cleanup
   useEffect(() => {
     const player = playerRef.current;
     return () => {
@@ -36,62 +96,353 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
     };
   }, [playerRef]);
 
+  const isFirstMount = useRef(true);
+
+  // Handle resolution change without resetting time/play state
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
     if (playerRef.current && currentResolutionUrl) {
-      const currentTime = playerRef.current.currentTime();
-      const isPaused = playerRef.current.paused();
+      const currentVideoTime = playerRef.current.currentTime();
+      const isVideoPaused = playerRef.current.paused();
       
       playerRef.current.src({ src: currentResolutionUrl, type: 'video/mp4' });
       
       playerRef.current.ready(() => {
-        playerRef.current.currentTime(currentTime);
-        if (!isPaused) {
-          playerRef.current.play();
+        playerRef.current.currentTime(currentVideoTime);
+        if (!isVideoPaused) {
+          const playPromise = playerRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => { console.log('Autoplay was prevented.', error); });
+          }
         }
       });
     }
   }, [currentResolutionUrl]);
 
-  return (
-    <div data-vjs-player className="relative w-full h-full group">
-      <div ref={videoRef} className="w-full h-full bg-black" />
-      
-      {/* Custom Resolution Menu Overlay */}
-      {resolutions && resolutions.length > 0 && (
-        <div className="absolute bottom-12 right-4 z-50 flex items-end justify-end">
-          <div className="relative">
-            <button 
-              onClick={(e) => { e.stopPropagation(); setShowResMenu(!showResMenu); }}
-              className="bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all vjs-button opacity-0 group-hover:opacity-100 focus:opacity-100"
-              title="Cài đặt độ phân giải"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
+  // Controls Visibility
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    if (isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        if (!showSettingsMenu) setShowControls(false);
+      }, 2500);
+    }
+  };
 
-            {showResMenu && (
-              <div className="absolute bottom-full right-0 mb-2 w-32 bg-[#282828] border border-white/10 rounded-lg shadow-xl overflow-hidden py-1 animate-in fade-in slide-in-from-bottom-2">
-                <div className="px-3 py-2 border-b border-white/10 text-xs font-semibold text-gray-400">Độ phân giải</div>
-                {resolutions.map((res) => (
-                  <button
-                    key={res.id}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors flex items-center justify-between ${currentResolutionUrl === res.fileUrl ? 'text-[#FF5722]' : 'text-white'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onResolutionChange(res.fileUrl);
-                      setShowResMenu(false);
-                    }}
-                  >
-                    {res.resolution}
-                    {currentResolutionUrl === res.fileUrl && (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+  const handleMouseLeave = () => {
+    if (isPlaying && !showSettingsMenu) {
+      setShowControls(false);
+    }
+  };
+
+  // Playback Controls
+  const togglePlay = (e) => {
+    e?.stopPropagation();
+    if (!playerRef.current) return;
+    if (playerRef.current.paused()) {
+      playerRef.current.play().catch(() => {});
+    } else {
+      playerRef.current.pause();
+    }
+  };
+
+  const skipTime = (amount, e) => {
+    e?.stopPropagation();
+    if (!playerRef.current) return;
+    const currentVidTime = playerRef.current.currentTime();
+    const vidDuration = playerRef.current.duration() || duration;
+    const newTime = Math.max(0, Math.min(currentVidTime + amount, vidDuration));
+    playerRef.current.currentTime(newTime);
+  };
+
+  const toggleMute = (e) => {
+    e?.stopPropagation();
+    if (!playerRef.current) return;
+    const currentMuted = playerRef.current.muted();
+    playerRef.current.muted(!currentMuted);
+    if (currentMuted && playerRef.current.volume() === 0) {
+      playerRef.current.volume(1);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    e.stopPropagation();
+    const newVol = parseFloat(e.target.value);
+    if (playerRef.current) {
+      playerRef.current.volume(newVol);
+      playerRef.current.muted(newVol === 0);
+    }
+  };
+
+  const toggleFullscreen = (e) => {
+    e?.stopPropagation();
+    if (!playerRef.current) return;
+    
+    // Use containerRef for fullscreen so the custom controls are included
+    if (isFullscreen) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else {
+      if (containerRef.current) {
+        if (containerRef.current.requestFullscreen) {
+          containerRef.current.requestFullscreen();
+        }
+      }
+    }
+  };
+
+  // Listen to document fullscreenchange for accurate state
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const togglePiP = async (e) => {
+    e?.stopPropagation();
+    if (!playerRef.current) return;
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        const videoHtml = videoRef.current.querySelector('video');
+        if (videoHtml) await videoHtml.requestPictureInPicture();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSpeedChange = (speed) => {
+    if (playerRef.current) {
+      playerRef.current.playbackRate(speed);
+    }
+    setActiveSettingsTab('main');
+    setShowSettingsMenu(false);
+  };
+
+  // Progress Bar
+  const calculateProgressTime = (e) => {
+    if (!progressRef.current) return 0;
+    const rect = progressRef.current.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    return pos * duration;
+  };
+
+  const handleProgressDown = (e) => {
+    e.stopPropagation();
+    isDraggingProgress.current = true;
+    const newTime = calculateProgressTime(e);
+    setCurrentTime(newTime);
+  };
+
+  const handleProgressMove = useCallback((e) => {
+    if (isDraggingProgress.current) {
+      const newTime = calculateProgressTime(e);
+      setCurrentTime(newTime);
+    }
+  }, [duration]);
+
+  const handleProgressUp = useCallback((e) => {
+    if (isDraggingProgress.current) {
+      isDraggingProgress.current = false;
+      const newTime = calculateProgressTime(e);
+      if (playerRef.current) {
+        playerRef.current.currentTime(newTime);
+      }
+    }
+  }, [duration]);
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleProgressMove);
+    document.addEventListener('mouseup', handleProgressUp);
+    return () => {
+      document.removeEventListener('mousemove', handleProgressMove);
+      document.removeEventListener('mouseup', handleProgressUp);
+    };
+  }, [handleProgressMove, handleProgressUp]);
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  return (
+    <div 
+      ref={containerRef}
+      className={`relative w-full h-full bg-black flex overflow-hidden group select-none ${!showControls && isPlaying ? 'cursor-none' : ''}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={togglePlay}
+      onDoubleClick={toggleFullscreen}
+    >
+      <div ref={videoRef} className="w-full h-full pointer-events-none" />
+
+      {/* Center Play Button Overlay */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none transition-opacity">
+          <div className="w-20 h-20 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl">
+            <Play className="w-10 h-10 text-white ml-2" fill="white" />
           </div>
         </div>
       )}
+
+      {/* Controls Overlay */}
+      <div 
+        className={`absolute bottom-0 left-0 right-0 px-4 pt-16 pb-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-300 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
+        {/* Progress Bar */}
+        <div 
+          ref={progressRef}
+          className="relative h-1 w-full bg-white/20 mb-3 cursor-pointer group/progress transition-all hover:h-1.5"
+          onMouseDown={handleProgressDown}
+        >
+          <div 
+            className="absolute top-0 left-0 h-full bg-[#FF0000]"
+            style={{ width: `${progressPercent}%` }}
+          />
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-[#FF0000] rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"
+            style={{ left: `calc(${progressPercent}% - 6px)` }}
+          />
+        </div>
+
+        {/* Buttons Bar */}
+        <div className="flex items-center justify-between">
+          {/* Left Controls */}
+          <div className="flex items-center gap-4 text-white">
+            <button type="button" onClick={togglePlay} className="hover:text-white/80 transition-colors focus:outline-none">
+              {isPlaying ? <Pause className="w-6 h-6" fill="currentColor" /> : <Play className="w-6 h-6" fill="currentColor" />}
+            </button>
+            <button type="button" onClick={(e) => skipTime(-10, e)} className="hover:text-white/80 transition-colors focus:outline-none" title="Tua lại 10s">
+              <Rewind className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={(e) => skipTime(10, e)} className="hover:text-white/80 transition-colors focus:outline-none" title="Tua tới 10s">
+              <FastForward className="w-5 h-5" />
+            </button>
+
+            {/* Volume */}
+            <div className="flex items-center gap-2 group/volume relative">
+              <button onClick={toggleMute} className="hover:text-white/80 transition-colors focus:outline-none">
+                {isMuted || volume === 0 ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+              </button>
+              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition-all duration-300 ease-out flex items-center">
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.05" 
+                  value={isMuted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-20 h-1.5 accent-white bg-white/30 appearance-none cursor-pointer rounded-full"
+                />
+              </div>
+            </div>
+
+            {/* Time */}
+            <div className="text-sm font-medium tracking-wide">
+              {formatTime(currentTime)} <span className="text-white/50 mx-1">/</span> {formatTime(duration)}
+            </div>
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-4 text-white relative">
+            <button 
+              onClick={() => {
+                setShowSettingsMenu(!showSettingsMenu);
+                setActiveSettingsTab('main');
+              }} 
+              className="hover:text-white/80 transition-all duration-300 focus:outline-none"
+              style={{ transform: showSettingsMenu ? 'rotate(90deg)' : 'none' }}
+              title="Cài đặt"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+
+            {/* Settings Dropdown */}
+            {showSettingsMenu && (
+              <div className="absolute bottom-full right-10 mb-4 w-64 bg-black/95 backdrop-blur-md rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden text-sm z-50">
+                {activeSettingsTab === 'main' && (
+                  <div className="py-2">
+                    {resolutions && resolutions.length > 0 && (
+                      <button type="button" onClick={() => setActiveSettingsTab('resolution')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors">
+                        <span className="flex items-center gap-3 font-medium"><Settings className="w-4 h-4 text-white/70" /> Chất lượng</span>
+                        <span className="text-white/70 flex items-center gap-1">{resolutions.find(r => r.fileUrl === currentResolutionUrl)?.resolution || 'Auto'} <ChevronRight className="w-4 h-4"/></span>
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setActiveSettingsTab('speed')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors">
+                      <span className="flex items-center gap-3 font-medium"><Play className="w-4 h-4 text-white/70" /> Tốc độ phát</span>
+                      <span className="text-white/70 flex items-center gap-1">{playbackRate === 1 ? 'Chuẩn' : `${playbackRate}x`} <ChevronRight className="w-4 h-4"/></span>
+                    </button>
+                  </div>
+                )}
+                
+                {activeSettingsTab === 'resolution' && (
+                  <div className="py-2">
+                    <button onClick={() => setActiveSettingsTab('main')} className="w-full flex items-center gap-3 px-4 py-3 border-b border-white/10 hover:bg-white/10 transition-colors font-medium">
+                      <ChevronRight className="w-4 h-4 rotate-180 text-white/70" /> Trở lại
+                    </button>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                      {resolutions && resolutions.length > 0 ? resolutions.map((res) => (
+                        <button
+                          type="button"
+                          key={res.id}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors text-left"
+                          onClick={() => {
+                            onResolutionChange(res.fileUrl);
+                            setActiveSettingsTab('main');
+                            setShowSettingsMenu(false);
+                          }}
+                        >
+                          <div className="w-4 flex justify-center">
+                            {currentResolutionUrl === res.fileUrl && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                          <span>{res.resolution}</span>
+                        </button>
+                      )) : (
+                        <div className="px-4 py-3 text-white/50 text-center">Chưa có dữ liệu</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeSettingsTab === 'speed' && (
+                  <div className="py-2">
+                    <button onClick={() => setActiveSettingsTab('main')} className="w-full flex items-center gap-3 px-4 py-3 border-b border-white/10 hover:bg-white/10 transition-colors font-medium">
+                      <ChevronRight className="w-4 h-4 rotate-180 text-white/70" /> Trở lại
+                    </button>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                      {speeds.map((s) => (
+                        <button
+                          key={s}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors text-left"
+                          onClick={() => handleSpeedChange(s)}
+                        >
+                          <div className="w-4 flex justify-center">
+                            {playbackRate === s && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                          <span>{s === 1 ? 'Chuẩn' : s}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button onClick={togglePiP} className="hover:text-white/80 transition-colors focus:outline-none" title="Trình phát thu nhỏ">
+              <PictureInPicture className="w-5 h-5" />
+            </button>
+            <button onClick={toggleFullscreen} className="hover:text-white/80 transition-colors focus:outline-none" title="Toàn màn hình">
+              <Maximize className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,7 @@
 import { Play, Plus, CheckCircle, Flame } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import SaveToPlaylistDropdown from '../video/SaveToPlaylistDropdown';
 
 const formatViews = (v) => {
   if (!v) return '0';
@@ -21,6 +23,7 @@ const timeAgo = (d) => {
 
 export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0, onNext, onPrev }) {
   const navigate = useNavigate();
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
   if (!video) return null;
 
   // Split title to add gradient to middle parts
@@ -36,18 +39,21 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
         if (e.target.closest('a') || e.target.closest('button')) return;
         navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`);
       }}
-      className="relative w-full h-[480px] md:h-[520px] rounded-3xl overflow-hidden group cursor-pointer select-none"
+      className="relative w-full h-[480px] md:h-[520px] rounded-3xl group cursor-pointer select-none"
     >
-      {/* Thumbnail */}
-      <img
-        src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1400&q=80'}
-        alt={video.title}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-      />
+      {/* Background container with overflow-hidden */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+        {/* Thumbnail */}
+        <img
+          src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1400&q=80'}
+          alt={video.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
 
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0f0f1a]/95 via-[#0f0f1a]/70 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f1a] via-transparent to-transparent opacity-80" />
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0f1a]/95 via-[#0f0f1a]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f1a] via-transparent to-transparent opacity-80" />
+      </div>
 
       {/* Arrow right */}
       <button
@@ -114,7 +120,7 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap relative">
           <button
             onClick={(e) => { e.stopPropagation(); navigate(video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`); }}
             className="flex items-center gap-2 bg-gradient-to-r from-[#FF5722] to-[#E91E63] hover:opacity-90 active:scale-95 text-white font-bold text-[15px] px-8 py-3 rounded-full transition-all shadow-lg shadow-[#FF5722]/30 cursor-pointer"
@@ -122,13 +128,28 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
             <Play className="w-5 h-5 fill-white" />
             Xem ngay
           </button>
-          <button
-            onClick={e => e.stopPropagation()}
-            className="flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md active:scale-95 text-gray-200 hover:text-white font-medium text-[15px] px-6 py-3 rounded-full transition-all border border-white/10 cursor-pointer"
-          >
-            <Plus className="w-5 h-5" />
-            Danh sách phát
-          </button>
+          
+          <div className="relative">
+            <button
+              onClick={e => { e.stopPropagation(); setShowPlaylistDropdown(!showPlaylistDropdown); }}
+              className="flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md active:scale-95 text-gray-200 hover:text-white font-medium text-[15px] px-6 py-3 rounded-full transition-all border border-white/10 cursor-pointer"
+            >
+              <Plus className="w-5 h-5" />
+              Danh sách phát
+            </button>
+            
+            {showPlaylistDropdown && (
+              <div 
+                className="absolute top-full left-0 mt-2 z-50 min-w-[250px]"
+                onClick={e => e.stopPropagation()}
+              >
+                <SaveToPlaylistDropdown 
+                  videoId={video.id} 
+                  onClose={() => setShowPlaylistDropdown(false)} 
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -52,7 +52,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => v.Visibility == "Public")
+                .Where(v => v.Visibility == "Public" || v.Visibility == "Private")
                 .Select(v => new VideoResponseDTO
                 {
                     Id = v.Id,
@@ -92,7 +92,7 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
                 .Include(v => v.Category)
-                .Where(v => v.Visibility == "Public" && (v.IsShort == false || v.IsShort == null));
+                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && (v.IsShort == false || v.IsShort == null));
 
             if (!string.IsNullOrWhiteSpace(q))
                 query = query.Where(v => v.Title.Contains(q) || (v.Description != null && v.Description.Contains(q)));
@@ -153,44 +153,69 @@ namespace Video_Platform_Backend.Controllers
                 return NotFound(new { message = "Không tìm thấy video" });
             }
 
-            // Increase view count
-            video.ViewsCount = (video.ViewsCount ?? 0) + 1;
-            
-            // Add view record
             var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
                                    ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             Guid? currentUserId = Guid.TryParse(currentUserIdStr, out var cid) ? cid : null;
-            
-            _context.Views.Add(new View {
-                Id = Guid.NewGuid(),
-                VideoId = id,
-                UserId = currentUserId,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                ViewedAt = DateTime.UtcNow
-            });
-            
-            if (currentUserId.HasValue)
+
+            bool canWatch = true;
+            if (video.Visibility == "Private")
             {
-                var watchHistory = await _context.WatchHistories
-                    .FirstOrDefaultAsync(w => w.UserId == currentUserId.Value && w.VideoId == id);
-                if (watchHistory == null)
+                canWatch = false;
+                if (currentUserId.HasValue)
                 {
-                    _context.WatchHistories.Add(new WatchHistory
+                    if (video.Channel.UserId == currentUserId.Value)
                     {
-                        Id = Guid.NewGuid(),
-                        UserId = currentUserId.Value,
-                        VideoId = id,
-                        LastWatchedAt = DateTime.UtcNow,
-                        WatchedDuration = 0
-                    });
-                }
-                else
-                {
-                    watchHistory.LastWatchedAt = DateTime.UtcNow;
+                        canWatch = true;
+                    }
+                    else
+                    {
+                        bool isMember = await _context.Subscriptions.AnyAsync(s => 
+                            s.SubscriberId == currentUserId.Value && 
+                            s.ChannelId == video.ChannelId && 
+                            s.Status == "Active" && 
+                            (s.EndDate == null || s.EndDate > DateTime.UtcNow));
+                        if (isMember) canWatch = true;
+                    }
                 }
             }
-            
-            await _context.SaveChangesAsync();
+
+            if (canWatch)
+            {
+                // Increase view count
+                video.ViewsCount = (video.ViewsCount ?? 0) + 1;
+                
+                // Add view record
+                _context.Views.Add(new View {
+                    Id = Guid.NewGuid(),
+                    VideoId = id,
+                    UserId = currentUserId,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    ViewedAt = DateTime.UtcNow
+                });
+                
+                if (currentUserId.HasValue)
+                {
+                    var watchHistory = await _context.WatchHistories
+                        .FirstOrDefaultAsync(w => w.UserId == currentUserId.Value && w.VideoId == id);
+                    if (watchHistory == null)
+                    {
+                        _context.WatchHistories.Add(new WatchHistory
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = currentUserId.Value,
+                            VideoId = id,
+                            LastWatchedAt = DateTime.UtcNow,
+                            WatchedDuration = 0
+                        });
+                    }
+                    else
+                    {
+                        watchHistory.LastWatchedAt = DateTime.UtcNow;
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+            }
 
             var subscriberCount = await _context.Followers.CountAsync(f => f.ChannelId == video.ChannelId);
             var likesCount = await _context.Likes.CountAsync(l => l.VideoId == video.Id && l.IsLike);
@@ -201,6 +226,11 @@ namespace Video_Platform_Backend.Controllers
             if (string.IsNullOrEmpty(fileUrl) || fileUrl.Contains("example.com"))
             {
                 fileUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+            }
+
+            if (!canWatch)
+            {
+                fileUrl = "";
             }
 
             var dto = new VideoDetailDTO
@@ -223,12 +253,13 @@ namespace Video_Platform_Backend.Controllers
                 ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
                 SubscriberCount = subscriberCount,
                 OwnerUserId = video.Channel.UserId,
-                Resolutions = video.VideoResolutions.Select(r => new VideoResolutionDTO
+                IsMembersOnly = !canWatch,
+                Resolutions = canWatch ? video.VideoResolutions.Select(r => new VideoResolutionDTO
                 {
                     Id = r.Id,
                     Resolution = r.Resolution,
                     FileUrl = r.FileUrl
-                }).ToList()
+                }).ToList() : new List<VideoResolutionDTO>()
             };
 
             if (currentUserId.HasValue)
@@ -652,6 +683,21 @@ namespace Video_Platform_Backend.Controllers
                 .ToListAsync();
 
             return Ok(history);
+        }
+
+        // DELETE: api/videos/history
+        [HttpDelete("history")]
+        [Authorize]
+        public async Task<IActionResult> ClearHistory()
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var historyItems = await _context.WatchHistories.Where(h => h.UserId == userId).ToListAsync();
+            _context.WatchHistories.RemoveRange(historyItems);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Lịch sử đã được xoá" });
         }
 
         // POST: api/videos/{id}/progress

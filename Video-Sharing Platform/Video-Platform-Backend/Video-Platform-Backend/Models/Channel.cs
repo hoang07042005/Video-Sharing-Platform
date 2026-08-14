@@ -25,6 +25,8 @@ public partial class Channel
 
     public string? Country { get; set; }
 
+    public decimal? MembershipFee { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Follower> Followers { get; set; } = new List<Follower>();

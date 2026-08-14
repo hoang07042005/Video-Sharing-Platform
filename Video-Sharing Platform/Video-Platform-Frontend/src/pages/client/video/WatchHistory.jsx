@@ -6,6 +6,7 @@ import {
   PlayCircle, Zap, ChevronRight, X, Loader2,
   BarChart2, Pause, ExternalLink, Filter, MoreVertical
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 const timeAgo = (d) => {
@@ -193,7 +194,7 @@ export default function WatchHistory() {
   const [notLoggedIn, setNotLoggedIn] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'long' | 'shorts'
-  const [paused, setPaused] = useState(false);
+  const [paused, setPaused] = useState(localStorage.getItem('pauseHistory') === 'true');
   const [showCount, setShowCount] = useState(10);
 
   const token = localStorage.getItem('token');
@@ -209,8 +210,27 @@ export default function WatchHistory() {
   }, []);
 
   const removeVideo = (id) => setAllVideos(prev => prev.filter(v => v.id !== id));
-  const clearAll = () => {
-    if (window.confirm('Xoá tất cả lịch sử xem?')) setAllVideos([]);
+  const clearAll = async () => {
+    if (window.confirm('Xoá tất cả lịch sử xem?')) {
+      try {
+        await axios.delete('/api/videos/history', { headers: { Authorization: 'Bearer ' + token } });
+        setAllVideos([]);
+        toast.success('Đã xoá toàn bộ lịch sử xem');
+      } catch (err) {
+        toast.error('Lỗi khi xoá lịch sử xem');
+      }
+    }
+  };
+  
+  const togglePause = () => {
+    const newState = !paused;
+    setPaused(newState);
+    localStorage.setItem('pauseHistory', newState);
+    toast.success(newState ? 'Đã tạm dừng lưu lịch sử xem' : 'Đã tiếp tục lưu lịch sử xem');
+  };
+
+  const handleManageActivity = () => {
+    toast.info('Tính năng Quản lý hoạt động đang được phát triển');
   };
 
   // Filter by tab
@@ -239,15 +259,16 @@ export default function WatchHistory() {
   const totalMins  = Math.floor((allVideos.reduce((s, v) => s + (v.duration || 0), 0) % 3600) / 60);
 
   // Bar chart mock data (last 7 days buckets from real data)
-  const days = ['T2','T3','T4','T5','T6','T7','CN'];
-  const barData = days.map((_, i) => {
+  const days = ['CN','T2','T3','T4','T5','T6','T7'];
+  const barData = [...Array(7)].map((_, i) => {
     const targetDay = new Date();
     targetDay.setDate(targetDay.getDate() - (6 - i));
+    const label = days[targetDay.getDay()];
     const count = allVideos.filter(v => {
       const d = new Date(v.createdAt);
       return d.toDateString() === targetDay.toDateString();
     }).length;
-    return { label: days[i], count };
+    return { label, count };
   });
   const maxBar = Math.max(...barData.map(b => b.count), 1);
 
@@ -460,7 +481,7 @@ export default function WatchHistory() {
                   Xoá tất cả lịch sử xem
                 </button>
                 <button
-                  onClick={() => setPaused(v => !v)}
+                  onClick={togglePause}
                   className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
                 >
                   <span className="flex items-center gap-3">
@@ -471,7 +492,7 @@ export default function WatchHistory() {
                     <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${paused ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </div>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
+                <button onClick={handleManageActivity} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
                   <ExternalLink className="w-4 h-4 shrink-0" />
                   Quản lý hoạt động
                 </button>
