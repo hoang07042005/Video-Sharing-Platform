@@ -391,7 +391,7 @@ export default function WatchHistory() {
 
                   {/* Shorts strip inside the group */}
                   {group.videos.some(v => v.isShort) && activeTab !== 'long' && (
-                    <div className="mt-5 mb-8">
+                    <div className="mt-6 mb-8">
                       <div className="flex items-center gap-2 mb-4">
                         <Zap className="w-4 h-4 text-[#FF5722] fill-[#FF5722]" />
                         <span className="text-white text-[15px] font-bold">Shorts đã xem</span>
@@ -429,7 +429,7 @@ export default function WatchHistory() {
           <div className="sticky top-6 space-y-5">
 
             {/* Stats card */}
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
+            <div className="border-b border-white/8 p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <BarChart2 className="w-4 h-4 text-[#FF5722]" /> Thống kê xem
@@ -470,7 +470,8 @@ export default function WatchHistory() {
             </div>
 
             {/* Manage */}
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
+            {/* Filter by type */}
+            <div className="border-b border-white/8 p-5">
               <h3 className="text-sm font-bold text-white mb-4">Quản lý lịch sử</h3>
               <div className="space-y-1">
                 <button
@@ -500,7 +501,7 @@ export default function WatchHistory() {
             </div>
 
             {/* Filter by type */}
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
+            <div className="border-b border-white/8 p-5">
               <h3 className="text-sm font-bold text-white mb-4">Lọc theo loại</h3>
               <div className="space-y-1">
                 {[

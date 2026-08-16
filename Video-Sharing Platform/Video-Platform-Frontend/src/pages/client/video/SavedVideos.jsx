@@ -202,14 +202,14 @@ const SavedVideos = () => {
             <div className="flex flex-col gap-5 mb-8 px-2">
               <div className="flex items-start gap-4">
                 <Play className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
-                <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
                   <span className="text-white font-bold text-xl leading-none">{normalCount}</span>
-                  <span className="text-gray-500 text-[13px] mt-1.5">Video đã lưu</span>
+                  <span className="text-gray-500 text-[13px]">Video đã lưu</span>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <Zap className="w-5 h-5 text-[#FF4E00] fill-[#FF4E00] shrink-0 mt-0.5" />
-                <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
                   <span className="text-white font-bold text-xl leading-none">{shortsCount}</span>
                   <span className="text-gray-500 text-[13px] mt-1.5">Video ngắn</span>
                 </div>
@@ -217,19 +217,19 @@ const SavedVideos = () => {
             </div>
 
             {/* Actions */}
-            <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
               <button
                 disabled={filteredVideos.length === 0}
                 onClick={() => filteredVideos[0] && navigate(filteredVideos[0].isShort ? '/shorts' : `/watch/${filteredVideos[0].id}`)}
-                className="w-full bg-gradient-to-r from-[#FF4E00] to-[#FF1A1A] hover:opacity-90 text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer shadow-lg shadow-[#FF4E00]/20 transition-all"
+                className="flex-1 bg-gradient-to-r from-[#FF4E00] to-[#FF1A1A] hover:opacity-90 text-white text-xs  py-2.5 px-3 rounded-full font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-md shadow-[#FF4E00]/20 transition-all whitespace-nowrap"
               >
-                <Play className="w-4 h-4 fill-white" /> Phát tất cả
+                <Play className="w-3.5 h-3.5 fill-white shrink-0" /> Phát tất cả
               </button>
               <button
                 disabled={videos.length === 0}
-                className="w-full bg-[#1A1A1A] border border-white/5 hover:bg-[#252525] text-white py-3 rounded-full font-medium flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer transition-colors"
+                className="flex-1 bg-[#1A1A1A] border border-white/5 hover:bg-[#252525] text-white text-xs py-2.5 px-3 rounded-full font-medium flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer transition-colors whitespace-nowrap"
               >
-                <Shuffle className="w-4 h-4" /> Trộn ngẫu nhiên
+                <Shuffle className="w-3.5 h-3.5 shrink-0" /> Trộn ngẫu nhiên
               </button>
             </div>
           </div>
@@ -258,7 +258,7 @@ const SavedVideos = () => {
                 return (
                   <div
                     key={video.id}
-                    className={`flex items-center gap-4 p-3 border border-white/5 rounded-[20px] group hover:bg-[#121212] transition-colors ${isRemoving ? 'opacity-30 pointer-events-none' : ''}`}
+                    className={`flex items-center gap-4 p-3 group hover:bg-[#121212] transition-colors ${isRemoving ? 'opacity-30 pointer-events-none' : ''}`}
                   >
                     {/* Index Number */}
                     <div className="w-8 text-center text-gray-400 font-semibold shrink-0 text-[13px]">
@@ -354,18 +354,18 @@ const SavedVideos = () => {
                       {/* Action Buttons */}
                       <button
                         onClick={() => navigate(isShort ? '/shorts' : `/watch/${video.id}`)}
-                        className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
+                        className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
                       >
-                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                        <Play className="w-3 h-3 fill-current ml-0.5" />
                       </button>
                       <button
                         onClick={(e) => handleRemove(e, video.id)}
-                        className="w-10 h-10 rounded-full  flex items-center justify-center text-gray-300 hover:text-[#FF4E00] hover:bg-[#FF4E00]/10 hover:border-[#FF4E00]/30 cursor-pointer transition-all"
+                        className="w-8 h-8 rounded-full  flex items-center justify-center text-gray-300 hover:text-[#FF4E00] hover:bg-[#FF4E00]/10 hover:border-[#FF4E00]/30 cursor-pointer transition-all"
                       >
                         {isRemoving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </button>
                       <button
-                        className="w-10 h-10 rounded-full  flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
+                        className="w-8 h-8 rounded-full  flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
@@ -376,7 +376,7 @@ const SavedVideos = () => {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination
           {filteredVideos.length > 0 && !error && (
             <div className="flex items-center justify-center gap-1.5 mt-8 text-[13px] pb-8">
               <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 cursor-pointer transition-colors">
@@ -399,7 +399,7 @@ const SavedVideos = () => {
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
