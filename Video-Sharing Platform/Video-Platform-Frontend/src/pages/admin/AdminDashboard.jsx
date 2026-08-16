@@ -54,7 +54,7 @@ export default function AdminDashboard() {
       
       {/* ─── A. KPI Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-5 mb-5">
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-purple-500/20 rounded-lg"><Users className="w-4 h-4 text-purple-400" /></div>
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
           <p className="text-[10px] text-green-400 font-medium">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
         
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-indigo-500/20 rounded-lg"><Video className="w-4 h-4 text-indigo-400" /></div>
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
           <p className="text-[10px] text-green-400 font-medium">↑ 8.7% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-orange-500/20 rounded-lg"><Eye className="w-4 h-4 text-orange-400" /></div>
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
           <p className="text-[10px] text-green-400 font-medium">↑ 15.2% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-green-500/20 rounded-lg"><DollarSign className="w-4 h-4 text-green-400" /></div>
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
           <p className="text-[10px] text-green-400 font-medium">↑ {stats?.revenueGrowth}% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-blue-500/20 rounded-lg"><Database className="w-4 h-4 text-blue-400" /></div>
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
           <p className="text-[10px] text-gray-500">/ 100 GB</p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-pink-500/20 rounded-lg"><ThumbsUp className="w-4 h-4 text-pink-400" /></div>
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
         {/* Biểu đồ Lưu lượng (Chiếm 1.25 -> adjust layout later if needed, we'll just use grid layout. Actually, the image has 3 main blocks: AreaChart, DonutChart, Alerts. We can use grid-cols-10: 4, 4, 2 */}
         
         {/* Lượt xem trong 7 ngày qua */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-1 h-full flex flex-col">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-1 h-full flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-sm font-semibold text-white">Lượt xem trong 7 ngày qua</h3>
             <div className="bg-[#1a1c23] border border-white/10 px-2 py-1 rounded text-[10px] text-gray-400 cursor-pointer flex items-center gap-1">
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Phân bổ Doanh thu */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-1 h-full flex flex-col">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-1 h-full flex flex-col">
           <h3 className="text-sm font-semibold text-white mb-4">Phân bổ doanh thu</h3>
           <div className="flex-1 flex items-center">
             <div className="w-1/2 h-[200px] relative">
@@ -206,7 +206,7 @@ export default function AdminDashboard() {
 
         {/* Alerts Column */}
         <div className="lg:col-span-1 flex flex-col gap-4 h-full">
-          <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
+          <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
             <div className="p-3 bg-red-500/20 rounded-xl">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500">Video <span className="text-green-400 font-medium ml-1">↑ 15%</span> <span className="text-[10px]">so với tuần trước</span></p>
             </div>
           </div>
-          <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
+          <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
             <div className="p-3 bg-red-500/20 rounded-xl">
               <Flag className="w-6 h-6 text-red-500" />
             </div>
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500">Khiếu nại <span className="text-green-400 font-medium ml-1">↑ 8%</span> <span className="text-[10px]">so với tuần trước</span></p>
             </div>
           </div>
-          <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
+          <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex items-center gap-4 flex-1">
             <div className="p-3 bg-orange-500/20 rounded-xl">
               <VideoIcon className="w-6 h-6 text-orange-400" />
             </div>
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-5 mb-5">
         
         {/* Top Danh Mục (Bar chart) */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-3">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-3">
           <h3 className="text-sm font-semibold text-white mb-6">Top danh mục <span className="text-gray-500 text-xs font-normal">(theo lượt xem)</span></h3>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Cảnh báo (Alerts / Reports) */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-4">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-4">
           <h3 className="text-sm font-semibold text-white mb-4">Báo cáo chờ duyệt</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
         </div>
         
         {/* Giao dịch gần đây */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-3">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-3">
           <h3 className="text-sm font-semibold text-white mb-4">Giao dịch gần nhất</h3>
           <div className="flex flex-col gap-3">
             {stats?.recentTransactions?.map((trx, idx) => {
@@ -329,7 +329,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-5">
         
         {/* Top 5 Videos */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-4">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-4">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-sm font-semibold text-white">Top 5 video thịnh hành</h3>
             <span className="text-xs text-purple-400 cursor-pointer hover:underline">Xem tất cả</span>
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top 5 Channels */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-3">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-3">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-sm font-semibold text-white">Top 5 kênh hàng đầu</h3>
             <span className="text-xs text-purple-400 cursor-pointer hover:underline">Xem tất cả</span>
@@ -378,12 +378,12 @@ export default function AdminDashboard() {
         </div>
 
         {/* Luồng Sự kiện (Activity Feed) */}
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 lg:col-span-3">
+        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-3">
           <h3 className="text-sm font-semibold text-white mb-5">Hoạt động hệ thống</h3>
           <div className="flex flex-col gap-4 relative before:absolute before:inset-y-0 before:left-[11px] before:w-[1px] before:bg-white/10">
             {stats?.recentActivities?.map((activity, idx) => {
               const IconType = activity.type === 'user' ? Users : (activity.type === 'video' ? VideoIcon : DollarSign);
-              const Color = activity.type === 'user' ? 'text-purple-400 bg-[#15171f] border-purple-500/30' : (activity.type === 'video' ? 'text-pink-400 bg-[#15171f] border-pink-500/30' : 'text-orange-400 bg-[#15171f] border-orange-500/30');
+              const Color = activity.type === 'user' ? 'text-purple-400 bg-bg-[#0F0F0F] border-purple-500/30' : (activity.type === 'video' ? 'text-pink-400 bg-bg-[#0F0F0F] border-pink-500/30' : 'text-orange-400 bg-bg-[#0F0F0F] border-orange-500/30');
               
               return (
                 <div key={idx} className="flex gap-3 relative z-10">

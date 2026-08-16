@@ -366,7 +366,7 @@ export default function AdminRoles() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
             <Crown className="w-6 h-6 text-purple-400" />
@@ -378,7 +378,7 @@ export default function AdminRoles() {
           </div>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
             <Shield className="w-6 h-6 text-blue-400" />
@@ -390,7 +390,7 @@ export default function AdminRoles() {
           </div>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all"></div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6 text-emerald-400" />
@@ -402,7 +402,7 @@ export default function AdminRoles() {
           </div>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex items-center gap-4 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition-all"></div>
           <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
             <PieChart className="w-6 h-6 text-orange-400" />
@@ -435,7 +435,7 @@ export default function AdminRoles() {
 
       {/* Ma Trận Phân Quyền Content */}
       {activeTab === 'matrix' && (
-        <div className="bg-[#12141c] border border-white/5 rounded-2xl mb-8 flex flex-col overflow-hidden">
+        <div className="bg-[#0F0F0F] border border-white/5 rounded-2xl mb-8 flex flex-col overflow-hidden">
           
           {/* Table Header Controls */}
           <div className="p-6 border-b border-white/5 flex items-center justify-between">
@@ -494,7 +494,7 @@ export default function AdminRoles() {
             <div className="flex-1 overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="border-b border-white/10 bg-[#15171f]/50 divide-x divide-white/10">
+                  <tr className="border-b border-white/10 bg-[#0F0F0F]/50 divide-x divide-white/10">
                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[280px]">NHÓM QUYỀN / QUYỀN HẠN</th>
                     {rolesList.map(role => {
                       const Icon = role.Icon;
@@ -555,7 +555,7 @@ export default function AdminRoles() {
           </div>
 
           {/* Table Footer / Legend */}
-          <div className="p-4 bg-[#15171f] border-t border-white/5 flex items-center justify-between">
+          <div className="p-4 bg-[#0F0F0F] border-t border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-xs text-gray-300">
                 <div className="w-5 h-5 rounded-full bg-[#0e9f6e] text-white flex items-center justify-center">
@@ -583,7 +583,7 @@ export default function AdminRoles() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-8">
           
           {/* Cập nhật vai trò (Cột trái) */}
-          <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden xl:col-span-1 flex flex-col">
+          <div className="bg-[#0F0F0F] border border-white/5 rounded-2xl overflow-hidden xl:col-span-1 flex flex-col">
             <div className="p-5 flex items-center justify-between border-b border-white/5">
               <div>
                 <h3 className="text-lg font-bold text-white mb-1">Cập nhật vai trò</h3>
@@ -593,7 +593,7 @@ export default function AdminRoles() {
             
             <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[600px] custom-scrollbar">
               <table className="w-full text-left">
-                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f] sticky top-0 z-10">
+                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#0F0F0F] sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Người dùng</th>
                     <th className="px-4 py-3 font-semibold">Vai trò</th>
@@ -624,7 +624,7 @@ export default function AdminRoles() {
                 </tbody>
               </table>
             </div>
-            <div className="p-4 border-t border-white/5 bg-[#15171f]">
+            <div className="p-4 border-t border-white/5 bg-[#0F0F0F]">
                <button 
                  onClick={handleUpdateAllRoles}
                  disabled={isUpdating || Object.keys(roleUpdates).length === 0}
@@ -636,7 +636,7 @@ export default function AdminRoles() {
           </div>
 
           {/* Nhật ký thay đổi quyền (Cột phải) */}
-          <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden xl:col-span-2 flex flex-col">
+          <div className="bg-[#0F0F0F] border border-white/5 rounded-2xl overflow-hidden xl:col-span-2 flex flex-col">
             <div className="p-5 flex items-center justify-between border-b border-white/5">
               <div>
                 <h3 className="text-lg font-bold text-white mb-1">Nhật ký thay đổi quyền</h3>
@@ -649,7 +649,7 @@ export default function AdminRoles() {
             
             <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[600px] custom-scrollbar">
               <table className="w-full text-left">
-                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f] sticky top-0 z-10">
+                <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#0F0F0F] sticky top-0 z-10">
                   <tr>
                     <th className="px-2 py-2 font-semibold">THỜI GIAN</th>
                     <th className="px-2 py-2 font-semibold">NGƯỜI THỰC HIỆN</th>
@@ -697,7 +697,7 @@ export default function AdminRoles() {
               </table>
             </div>
 
-            <div className="p-4 border-t border-white/5 flex items-center justify-between bg-[#15171f]">
+            <div className="p-4 border-t border-white/5 flex items-center justify-between bg-[#0F0F0F]">
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 Hiển thị 
                 <select className="bg-[#1a1c23] border border-white/10 rounded px-2 py-1 text-white focus:outline-none">
@@ -724,10 +724,10 @@ export default function AdminRoles() {
 
       {/* Danh Sách Vai Trò Content */}
       {activeTab === 'list' && (
-        <div className="bg-[#12141c] border border-white/5 rounded-2xl overflow-hidden mt-8">
+        <div className="bg-[#0F0F0F] border border-white/5 rounded-2xl overflow-hidden mt-8">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#15171f]">
+              <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#0F0F0F]">
                 <tr>
                   <th className="px-6 py-4 font-semibold">TÊN VAI TRÒ</th>
                   <th className="px-6 py-4 font-semibold">MÔ TẢ</th>
@@ -780,7 +780,7 @@ export default function AdminRoles() {
           <div className="bg-[#12141c] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             
             {/* Modal Header */}
-            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#15171f]">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#0F0F0F]">
               <div>
                 <h3 className="text-lg font-bold text-white">{modalRoleData.id ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới'}</h3>
                 <p className="text-xs text-gray-500 mt-1">Cấu hình thông tin và phân quyền chi tiết cho vai trò</p>
@@ -892,7 +892,7 @@ export default function AdminRoles() {
                   
                   <div className="space-y-4">
                     {dynamicPermissionGroups.map(group => (
-                      <div key={group.name} className="bg-[#15171f] rounded-xl p-4 border border-white/5">
+                      <div key={group.name} className="bg-[#0F0F0F] rounded-xl p-4 border border-white/5">
                         <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
                           <group.icon className={`w-4 h-4 ${group.color}`} />
                           <span className="text-sm font-bold text-gray-300">{group.name}</span>
@@ -937,7 +937,7 @@ export default function AdminRoles() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 border-t border-white/5 bg-[#15171f] flex justify-end gap-3">
+            <div className="p-5 border-t border-white/5 bg-[#0F0F0F] flex justify-end gap-3">
               <button 
                 onClick={() => setShowRoleModal(false)}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"

@@ -143,7 +143,7 @@ export default function AdminUsers() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
             <Download className="w-4 h-4" /> Xuất dữ liệu
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-[#FF5722]/20">
@@ -155,7 +155,7 @@ export default function AdminUsers() {
 
       {/* ─── KPI Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-purple-500/30 transition-colors">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-purple-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-purple-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
@@ -167,7 +167,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-green-500/30 transition-colors">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-green-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-green-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
@@ -179,7 +179,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 18.3% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-orange-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.1)]">
@@ -191,7 +191,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 9.7% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-red-500/30 transition-colors">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-red-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-red-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
@@ -203,7 +203,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-red-400 font-medium relative z-10">↓ 4.3% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-blue-500/30 transition-colors">
+        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-blue-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
@@ -226,7 +226,7 @@ export default function AdminUsers() {
               placeholder="Tìm kiếm theo tên, email hoặc ID..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-full bg-[#15171f] border border-white/10 text-white pl-11 pr-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors text-sm"
+              className="w-full h-full bg-[#0F0F0F] border border-white/10 text-white pl-11 pr-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors text-sm"
             />
             <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
           </div>
@@ -238,7 +238,7 @@ export default function AdminUsers() {
               <select 
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full md:w-36 h-full appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-36 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả</option>
                 <option>Admin</option>
@@ -255,7 +255,7 @@ export default function AdminUsers() {
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full md:w-40 h-full appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-40 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả</option>
                 <option>Đang hoạt động</option>
@@ -272,7 +272,7 @@ export default function AdminUsers() {
               <select 
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full md:w-48 h-full appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-48 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả thời gian</option>
                 <option>Tháng này</option>
@@ -284,20 +284,20 @@ export default function AdminUsers() {
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto mt-5 md:mt-0">
-           <button onClick={() => fetchUsers()} className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
+           <button onClick={() => fetchUsers()} className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
              <RefreshCw className="w-4 h-4" /> Làm mới
            </button>
-           {/* <button className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
+           {/* <button className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
              <Filter className="w-4 h-4" /> Bộ lọc
            </button> */}
         </div>
       </div>
 
       {/* ─── Main Content ─── */}
-      <div className="bg-[#11131a] rounded-2xl border border-white/5 flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[#0F0F0F] rounded-2xl border border-white/5 flex flex-col shadow-2xl overflow-hidden">
         
         {/* Tabs Row */}
-        <div className="flex items-center gap-8 px-6 border-b border-white/5 bg-[#15171f]/50 overflow-x-auto">
+        <div className="flex items-center gap-8 px-6 border-b border-white/5 bg-[#0F0F0F]/50 overflow-x-auto">
           {[
             { id: 'all', label: 'Tất cả', count: totalUsers },
             { id: 'active', label: 'Đang hoạt động', count: activeUsers },
@@ -323,7 +323,7 @@ export default function AdminUsers() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-[#15171f]/80 text-[10px] uppercase tracking-widest text-gray-500 font-semibold">
+              <tr className="border-b border-white/5 bg-[#0F0F0F]/80 text-[10px] uppercase tracking-widest text-gray-500 font-semibold">
                 <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded bg-black/50 border-gray-600 text-purple-500 focus:ring-purple-500/50 cursor-pointer" /></th>
                 <th className="px-6 py-4">Người dùng</th>
                 <th className="px-6 py-4 text-center">Vai trò</th>

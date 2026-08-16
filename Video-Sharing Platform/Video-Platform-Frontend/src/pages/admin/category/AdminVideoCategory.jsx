@@ -143,7 +143,7 @@ const AdminVideoCategory = () => {
           <p className="text-gray-400 text-sm">Tạo, chỉnh sửa và quản lý danh mục video dễ dàng.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-[#1C1C24] p-1 rounded-xl border border-white/5">
+          <div className="flex bg-[#0F0F0F] p-1 rounded-xl border border-white/5">
             <button className="p-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA]  rounded-lg text-white"><LucideIcons.List className="w-4 h-4" /></button>
             <button className="p-2 text-gray-400 hover:text-white transition-colors"><LucideIcons.LayoutGrid className="w-4 h-4" /></button>
           </div>
@@ -157,7 +157,7 @@ const AdminVideoCategory = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#15151A] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20">
             <FolderOpen className="w-6 h-6 text-purple-400" />
           </div>
@@ -168,7 +168,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
         
-        <div className="bg-[#15151A] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
             <FolderOpen className="w-6 h-6 text-emerald-400" />
           </div>
@@ -179,7 +179,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
 
-        <div className="bg-[#15151A] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20">
             <EyeOff className="w-6 h-6 text-orange-400" />
           </div>
@@ -190,7 +190,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
 
-        <div className="bg-[#15151A] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
             <LucideIcons.PlaySquare className="w-6 h-6 text-blue-400" />
           </div>
@@ -211,7 +211,7 @@ const AdminVideoCategory = () => {
               placeholder="Tìm kiếm danh mục..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#15151A] border border-white/10 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:border-purple-500 focus:outline-none transition-colors"
+              className="w-full bg-bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:border-purple-500 focus:outline-none transition-colors"
             />
             <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
           </div>
@@ -220,7 +220,7 @@ const AdminVideoCategory = () => {
             <select 
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="appearance-none bg-[#15151A] border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none transition-colors cursor-pointer"
+              className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none transition-colors cursor-pointer"
             >
               <option value="all">Trạng thái: Tất cả</option>
               <option value="active">Trạng thái: Hiển thị</option>
@@ -229,27 +229,27 @@ const AdminVideoCategory = () => {
             <LucideIcons.ChevronDown className="w-4 h-4 text-gray-400 absolute right-3.5 top-3 pointer-events-none" />
           </div>
 
-          <button onClick={() => {setSearchTerm(''); setFilterStatus('all');}} className="flex items-center gap-2 px-4 py-2.5 bg-[#15151A] hover:bg-[#1C1C24] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors shrink-0">
+          <button onClick={() => {setSearchTerm(''); setFilterStatus('all');}} className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors shrink-0">
             <LucideIcons.RotateCcw className="w-4 h-4" /> Làm mới
           </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#15151A] hover:bg-[#1C1C24] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
             <Download className="w-4 h-4" /> Xuất dữ liệu
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#15151A] hover:bg-[#1C1C24] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
             <Filter className="w-4 h-4" /> Bộ lọc
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-[#15151A] rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
         <div className="w-full">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/5 bg-[#1C1C24]/50">
+              <tr className="border-b border-white/5 bg-[#0F0F0F]/50">
                 <th className="px-6 py-4 font-semibold text-gray-400 text-xs w-10">
                   <input type="checkbox" className="rounded border-white/20 bg-transparent text-purple-600 focus:ring-purple-600/50 cursor-pointer" />
                 </th>
@@ -312,7 +312,7 @@ const AdminVideoCategory = () => {
                           <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer">
                             <MoreVertical className="w-4 h-4" />
                           </button>
-                          <div className="absolute right-0 top-full mt-1 w-32 bg-[#1C1C24] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-10 py-1">
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-[#0F0F0F] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-10 py-1">
                             <button onClick={() => handleDelete(c.id)} className="w-full text-left px-4 py-2 text-xs font-medium text-red-400 hover:bg-white/5 flex items-center gap-2 cursor-pointer">
                               <Trash2 className="w-3.5 h-3.5" /> Xóa danh mục
                             </button>
@@ -380,7 +380,7 @@ const AdminVideoCategory = () => {
               <LucideIcons.ChevronRight className="w-4 h-4" />
             </button>
             
-            <div className="ml-4 flex items-center gap-2 border border-white/10 rounded-lg px-3 py-1.5 bg-[#15151A]">
+            <div className="ml-4 flex items-center gap-2 border border-white/10 rounded-lg px-3 py-1.5 bg-bg-[#0F0F0F]">
               <select 
                 value={itemsPerPage} 
                 onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
@@ -399,7 +399,7 @@ const AdminVideoCategory = () => {
       {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1C1C24] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="bg-[#0F0F0F] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h2 className="text-white font-bold text-lg">{modalMode === 'add' ? 'Thêm Danh mục mới' : 'Chỉnh sửa Danh mục'}</h2>
               <button onClick={closeModal} className="text-gray-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
@@ -412,7 +412,7 @@ const AdminVideoCategory = () => {
                   type="text" 
                   value={currentCategory.name} 
                   onChange={(e) => setCurrentCategory({...currentCategory, name: e.target.value})}
-                  className="w-full bg-[#15151A] text-white text-sm rounded-xl px-4 py-3 border border-white/10 focus:border-purple-500 focus:outline-none transition-colors" 
+                  className="w-full bg-bg-[#0F0F0F] text-white text-sm rounded-xl px-4 py-3 border border-white/10 focus:border-purple-500 focus:outline-none transition-colors" 
                   placeholder="Ví dụ: Âm nhạc, Trò chơi..." 
                   autoFocus 
                 />
@@ -456,14 +456,14 @@ const AdminVideoCategory = () => {
                 <textarea 
                   value={currentCategory.description || ''} 
                   onChange={(e) => setCurrentCategory({...currentCategory, description: e.target.value})}
-                  className="w-full bg-[#15151A] text-white text-sm rounded-xl px-4 py-3 border border-white/10 focus:border-purple-500 focus:outline-none transition-colors min-h-[80px]" 
+                  className="w-full bg-bg-[#0F0F0F] text-white text-sm rounded-xl px-4 py-3 border border-white/10 focus:border-purple-500 focus:outline-none transition-colors min-h-[80px]" 
                   placeholder="Mô tả ngắn gọn về danh mục này..." 
                 />
               </div>
 
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5 uppercase tracking-wider">Chọn Biểu tượng (Icon)</label>
-                <div className="bg-[#15151A] border border-white/10 rounded-xl p-3 grid grid-cols-6 sm:grid-cols-7 gap-2 max-h-[160px] overflow-y-auto sidebar-scroll">
+                <div className="bg-bg-[#0F0F0F] border border-white/10 rounded-xl p-3 grid grid-cols-6 sm:grid-cols-7 gap-2 max-h-[160px] overflow-y-auto sidebar-scroll">
                   {AVAILABLE_ICONS.map(iconName => {
                     const isSelected = currentCategory.icon === iconName;
                     return (
@@ -488,7 +488,7 @@ const AdminVideoCategory = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 p-5 border-t border-white/10 bg-[#15151A] rounded-b-2xl">
+            <div className="flex gap-3 p-5 border-t border-white/10 bg-bg-[#0F0F0F] rounded-b-2xl">
               <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-400 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">Hủy bỏ</button>
               <button onClick={handleSave} disabled={!currentCategory.name.trim()}

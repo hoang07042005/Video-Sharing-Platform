@@ -213,13 +213,13 @@ const VideoManagement = () => {
               placeholder="Tìm kiếm video, tiêu đề, kênh..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2.5 bg-[#15171f] text-gray-300 text-sm rounded-xl border border-white/10 focus:border-purple-500 focus:outline-none w-72 transition-colors"
+              className="pl-10 pr-10 py-2.5 bg-bg-[#0F0F0F] text-gray-300 text-sm rounded-xl border border-white/10 focus:border-purple-500 focus:outline-none w-72 transition-colors"
             />
             <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-white/5 rounded">
               <span className="text-[10px] text-gray-400 font-mono">⌘K</span>
             </button>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#15171f] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 transition-colors">
+          <button className="flex items-center gap-2 px-5 py-2.5 bg-bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 transition-colors">
             <Filter className="w-4 h-4" /> Bộ lọc
           </button>
         </div>
@@ -227,7 +227,7 @@ const VideoManagement = () => {
 
       {/* ─── Tabs & KPIs ─── */}
       <div className="mb-6 flex items-center gap-2 border-b border-white/5 pb-6">
-        <div className="flex bg-[#15171f] rounded-xl p-1 border border-white/5">
+        <div className="flex bg-bg-[#0F0F0F] rounded-xl p-1 border border-white/5">
           <button
             onClick={() => setActiveTab('videos')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'videos' ? 'bg-[#1e2029] text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
@@ -244,7 +244,7 @@ const VideoManagement = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5 mb-8">
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center"><FileVideo className="w-5 h-5 text-purple-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Tổng video</span>
@@ -253,7 +253,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-green-400 font-medium">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
         
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center"><Check className="w-5 h-5 text-green-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Video công khai</span>
@@ -262,7 +262,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-green-400 font-medium">↑ {publicPercent}% <span className="text-gray-500 font-normal">tổng số video</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center"><ClockIcon className="w-5 h-5 text-yellow-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Chờ duyệt</span>
@@ -271,7 +271,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-yellow-400 font-medium">↑ 3 <span className="text-gray-500 font-normal">video mới</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><Ban className="w-5 h-5 text-red-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Bị từ chối</span>
@@ -280,7 +280,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-red-400 font-medium">↓ 2 <span className="text-gray-500 font-normal">video</span></p>
         </div>
 
-        <div className="bg-[#15171f] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"><Eye className="w-5 h-5 text-blue-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Tổng lượt xem</span>
@@ -296,7 +296,7 @@ const VideoManagement = () => {
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] text-gray-500 font-medium ml-1">Danh mục</label>
             <div className="relative">
-              <select className="appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44">
+              <select className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44">
                 <option>Tất cả danh mục</option>
                 <option>Âm nhạc</option>
                 <option>Giáo dục</option>
@@ -311,7 +311,7 @@ const VideoManagement = () => {
               <select 
                 value={filterVisibility}
                 onChange={(e) => setFilterVisibility(e.target.value)}
-                className="appearance-none bg-[#15171f] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44"
+                className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="Public">Công khai</option>
@@ -330,7 +330,7 @@ const VideoManagement = () => {
         </div>
 
         <div className="flex flex-col gap-1.5 mt-5">
-           <div className="flex items-center gap-1 bg-[#15171f] border border-white/10 p-1 rounded-lg">
+           <div className="flex items-center gap-1 bg-bg-[#0F0F0F] border border-white/10 p-1 rounded-lg">
              <button onClick={() => setViewMode('list')} className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}><List className="w-4 h-4" /></button>
              <button onClick={() => setViewMode('grid')} className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}><LayoutGrid className="w-4 h-4" /></button>
            </div>
@@ -339,7 +339,7 @@ const VideoManagement = () => {
 
       {/* ─── Table / Grid ─── */}
       {viewMode === 'list' ? (
-      <div className="bg-[#15171f] rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead>
@@ -441,7 +441,7 @@ const VideoManagement = () => {
       ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 min-h-[400px]">
         {paginatedVideos.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-gray-500 bg-[#15171f] rounded-2xl border border-white/5 flex items-center justify-center">
+          <div className="col-span-full py-20 text-center text-gray-500 bg-bg-[#0F0F0F] rounded-2xl border border-white/5 flex items-center justify-center">
             Không tìm thấy video nào.
           </div>
         ) : (
@@ -454,7 +454,7 @@ const VideoManagement = () => {
               video.visibility === 'Private' ? 'Chờ duyệt' : 'Bị từ chối';
 
             return (
-              <div key={video.id} className="bg-[#15171f] rounded-2xl border border-white/5 overflow-hidden group hover:border-white/10 transition-colors flex flex-col">
+              <div key={video.id} className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden group hover:border-white/10 transition-colors flex flex-col">
                 <div className="relative aspect-video flex items-center justify-center bg-black/50 overflow-hidden">
                   {video.isShort ? (
                     <>
@@ -515,7 +515,7 @@ const VideoManagement = () => {
         
         {/* Pagination */}
         {totalItems > 0 && (
-          <div className="px-6 py-4 mt-4 bg-[#15171f] rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="px-6 py-4 mt-4 bg-bg-[#0F0F0F] rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-xs text-gray-500">
               Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} trong tổng số <span className="font-semibold text-gray-300">{totalItems.toLocaleString()} video</span>
             </div>
@@ -592,7 +592,7 @@ const VideoManagement = () => {
       {/* Edit Modal */}
       {editingVideo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#15171f] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
+          <div className="bg-bg-[#0F0F0F] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h2 className="text-white font-bold text-lg">Chỉnh sửa video</h2>
               <button onClick={() => setEditingVideo(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
@@ -651,7 +651,7 @@ const VideoManagement = () => {
       {/* Delete Confirm */}
       {deletingId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#15171f] border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl p-6">
+          <div className="bg-bg-[#0F0F0F] border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-2xl mx-auto mb-5">
               <Trash2 className="w-7 h-7 text-red-500" />
             </div>

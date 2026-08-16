@@ -53,9 +53,9 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f111a] text-white flex font-sans">
+    <div className="min-h-screen bg-[#0F0F0F] text-white flex font-sans">
       {/* Admin Sidebar */}
-      <aside className="w-[220px] h-screen bg-[#0b0c13] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
+      <aside className="w-[220px] h-screen bg-[#0F0F0F] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
         {/* Logo */}
         <div className="py-1 px-4 flex items-center justify-center w-full shrink-0">
           <Link to="/admin" className="flex items-center justify-center">
@@ -109,7 +109,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-[#0b0c13] h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[#0F0F0F] h-screen overflow-hidden">
         {/* Top Header */}
         <header className="h-[80px] px-8 flex items-center justify-between shrink-0">
           <div>

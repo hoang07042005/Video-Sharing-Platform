@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ListVideo, Lock, Globe, PlayCircle, Film, Plus, Trash2,
   Clock, Eye, ChevronRight, X, CheckCircle, MoreVertical,
-  LayoutGrid, List, SlidersHorizontal, Loader2, Activity, Pencil
+  LayoutGrid, List, SlidersHorizontal, Loader2, Activity, Pencil, ChevronLeft
 } from 'lucide-react';
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -383,38 +383,37 @@ export default function Playlists() {
         </div>
       )}
 
-      {/* ── Detail Panel ── */}
+      {/* ── Detail View ── */}
       {selected && (
-        <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-6">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelected(null)} />
-          <div className="relative z-50 w-full md:max-w-xl max-h-[90vh] bg-[#111] border border-white/10 rounded-t-3xl md:rounded-2xl overflow-hidden flex flex-col shadow-2xl">
-            <div className="flex items-start justify-between p-5 border-b border-white/5 shrink-0">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-white font-bold text-lg leading-snug line-clamp-1">{selected.title}</h2>
-                {selected.description && <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{selected.description}</p>}
-                <p className="text-gray-600 text-xs mt-0.5">{selected.totalVideos || selected.videoCount} video</p>
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 mt-8 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center gap-4 mb-6">
+            <button onClick={() => setSelected(null)} className="p-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] rounded-full text-white transition-colors cursor-pointer">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{selected.title}</h2>
+              {selected.description && <p className="text-gray-400 text-sm mt-1">{selected.description}</p>}
+              <p className="text-gray-500 text-xs mt-1">{selected.totalVideos || selected.videoCount} video</p>
+            </div>
+          </div>
+          
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-4 md:p-6">
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#FF5722]" />
               </div>
-              <button onClick={() => setSelected(null)}
-                className="shrink-0 ml-3 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 p-3">
-              {detailLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#FF5722]" />
-                </div>
-              ) : selected.videos && selected.videos.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Film className="w-9 h-9 text-gray-600" />
-                  <p className="text-gray-500 text-sm">Danh sách này chưa có video nào</p>
-                </div>
-              ) : (
-                selected.videos?.map((v, i) => (
+            ) : selected.videos && selected.videos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Film className="w-12 h-12 text-gray-600" />
+                <p className="text-gray-500 text-base">Danh sách này chưa có video nào</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {selected.videos?.map((v, i) => (
                   <VideoItem key={v.id} video={v} index={i} onNavigate={(videoObj) => { setSelected(null); navigate(videoObj.isShort ? `/shorts?id=${videoObj.id}` : `/watch/${videoObj.id}`); }} />
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -540,8 +539,10 @@ export default function Playlists() {
         </div>
       )}
 
-      {/* ── HERO BANNER ── */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#1a0533 0%,#0d1a3a 50%,#1a0533 100%)' }}>
+      {!selected && (
+        <>
+          {/* ── HERO BANNER ── */}
+          <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#1a0533 0%,#0d1a3a 50%,#1a0533 100%)' }}>
         {/* Decorative blobs */}
         <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle,#9C27B0,transparent)' }} />
         <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle,#FF5722,transparent)' }} />
@@ -736,6 +737,8 @@ export default function Playlists() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
     </div>

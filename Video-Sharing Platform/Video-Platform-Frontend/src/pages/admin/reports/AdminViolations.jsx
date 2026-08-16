@@ -52,10 +52,10 @@ export default function AdminViolations() {
             <input 
               type="text" 
               placeholder="Tìm kiếm vi phạm..." 
-              className="w-full bg-[#15171f] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
             />
           </div>
-          <button className="p-2 bg-[#15171f] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
+          <button className="p-2 bg-[#0F0F0F] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
             <Filter className="w-5 h-5" />
           </button>
         </div>
@@ -63,7 +63,7 @@ export default function AdminViolations() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#15171f] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
+        <div className="bg-[#0F0F0F] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
             <Video className="w-6 h-6" />
           </div>
@@ -72,7 +72,7 @@ export default function AdminViolations() {
             <p className="text-2xl font-bold text-white mt-1">{violations.filter(v => v.targetType === 'Video').length}</p>
           </div>
         </div>
-        <div className="bg-[#15171f] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
+        <div className="bg-[#0F0F0F] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
             <MessageSquare className="w-6 h-6" />
           </div>
@@ -81,7 +81,7 @@ export default function AdminViolations() {
             <p className="text-2xl font-bold text-white mt-1">{violations.filter(v => v.targetType === 'Comment').length}</p>
           </div>
         </div>
-        <div className="bg-[#15171f] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
+        <div className="bg-[#0F0F0F] border border-white/5 p-4 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
             <UserX className="w-6 h-6" />
           </div>
@@ -93,7 +93,7 @@ export default function AdminViolations() {
       </div>
 
       {/* Violations Table */}
-      <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5">
+      <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5">
         <div className="w-full">
           <table className="w-full text-left">
             <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5">

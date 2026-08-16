@@ -163,7 +163,7 @@ export default function AdminSettings() {
                 <label className="text-[12px] text-gray-400">Email liên hệ</label>
                 <input 
                   type="text" value={settings.contactEmail} onChange={e => handleChange('contactEmail', e.target.value)}
-                  className="w-2/3 bg-[#0B0F19] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-transparent focus:border-slate-700 outline-none" 
+                  className="w-2/3 bg-[#0F0F0F] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-white/8 focus:border-slate-700 outline-none" 
                 />
               </div>
             </div>
@@ -278,17 +278,17 @@ export default function AdminSettings() {
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <label className="text-[12px] text-gray-400 w-12">Host</label>
-                    <input type="text" value={settings.smtpHost} onChange={e => handleChange('smtpHost', e.target.value)} className="bg-[#0B0F19] px-2 py-1.5 text-[12px] rounded border border-transparent flex-1 outline-none focus:border-slate-700" />
+                    <input type="text" value={settings.smtpHost} onChange={e => handleChange('smtpHost', e.target.value)} className="bg-[#0F0F0F] px-2 py-1.5 text-[12px] rounded border border-white/8 flex-1 outline-none focus:border-slate-700" />
                     <label className="text-[12px] text-gray-400">Port</label>
-                    <input type="text" value={settings.smtpPort} onChange={e => handleChange('smtpPort', e.target.value)} className="bg-[#0B0F19] px-2 py-1.5 text-[12px] rounded border border-transparent w-16 text-center outline-none focus:border-slate-700" />
+                    <input type="text" value={settings.smtpPort} onChange={e => handleChange('smtpPort', e.target.value)} className="bg-[#0F0F0F] px-2 py-1.5 text-[12px] rounded border border-white/8 w-16 text-center outline-none focus:border-slate-700" />
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-[12px] text-gray-400 w-12">Username</label>
-                    <input type="text" value={settings.smtpUser} onChange={e => handleChange('smtpUser', e.target.value)} className="bg-[#0B0F19] px-2 py-1.5 text-[12px] rounded border border-transparent flex-1 outline-none focus:border-slate-700" />
+                    <input type="text" value={settings.smtpUser} onChange={e => handleChange('smtpUser', e.target.value)} className="bg-[#0F0F0F] px-2 py-1.5 text-[12px] rounded border border-white/8 flex-1 outline-none focus:border-slate-700" />
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-[12px] text-gray-400 w-12">Password</label>
-                    <input type="password" value={settings.smtpPass} onChange={e => handleChange('smtpPass', e.target.value)} className="bg-[#0B0F19] px-2 py-1.5 text-[12px] rounded border border-transparent flex-1 outline-none focus:border-slate-700" />
+                    <input type="password" value={settings.smtpPass} onChange={e => handleChange('smtpPass', e.target.value)} className="bg-[#0F0F0F] px-2 py-1.5 text-[12px] rounded border border-white/8 flex-1 outline-none focus:border-slate-700" />
                   </div>
                 </div>
               </div>
@@ -311,7 +311,7 @@ export default function AdminSettings() {
 
 function Card({ icon, iconBg, title, subtitle, children }) {
   return (
-    <div className="bg-[#131722] rounded-xl border border-white/5 p-6 shadow-md flex flex-col h-full">
+    <div className="bg-[#0F0F0F] rounded-xl border border-white/5 p-6 shadow-md flex flex-col h-full">
       <div className="flex items-center gap-4 mb-6">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
           {icon}
@@ -332,7 +332,7 @@ function InputGroup({ label, value, onChange, type = "text" }) {
       <label className="text-[12px] text-gray-400">{label}</label>
       <input 
         type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-[#0B0F19] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-transparent focus:border-slate-700 outline-none transition-colors"
+        className="w-full bg-[#0F0F0F] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-white/8 focus:border-slate-700 outline-none transition-colors"
       />
     </div>
   );
@@ -344,7 +344,7 @@ function SelectGroup({ label, value, onChange, options }) {
       <label className="text-[12px] text-gray-400">{label}</label>
       <select 
         value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-[#0B0F19] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-transparent focus:border-slate-700 outline-none transition-colors cursor-pointer appearance-none"
+        className="w-full bg-[#0F0F0F] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-white/8 focus:border-slate-700 outline-none transition-colors cursor-pointer appearance-none"
       >
         {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
       </select>
@@ -359,7 +359,7 @@ function InlineInput({ label, value, onChange, width = 'w-24', suffix = '' }) {
       <div className="flex items-center gap-2">
         <input 
           type="text" value={value} onChange={(e) => onChange(e.target.value)}
-          className={`${width} bg-[#0B0F19] rounded-md px-3 py-1.5 text-[13px] text-gray-200 text-center border border-transparent focus:border-slate-700 outline-none`}
+          className={`${width} bg-[#0F0F0F] rounded-md px-3 py-1.5 text-[13px] text-gray-200 text-center border border-white/8 focus:border-slate-700 outline-none`}
         />
         {suffix && <span className="text-[13px] text-gray-400">{suffix}</span>}
       </div>

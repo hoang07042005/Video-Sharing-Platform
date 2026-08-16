@@ -65,10 +65,10 @@ export default function AdminComplaints() {
             <input 
               type="text" 
               placeholder="Tìm theo ID báo cáo, người dùng..." 
-              className="w-full bg-[#15171f] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
             />
           </div>
-          <button className="p-2 bg-[#15171f] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
+          <button className="p-2 bg-[#0F0F0F] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
             <Filter className="w-5 h-5" />
           </button>
         </div>
@@ -100,7 +100,7 @@ export default function AdminComplaints() {
       </div>
 
       {/* Reports Table */}
-      <div className="bg-[#15171f] p-5 rounded-2xl border border-white/5">
+      <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5">
         <div className="w-full">
           <table className="w-full text-left">
             <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5">
