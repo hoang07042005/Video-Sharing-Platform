@@ -222,6 +222,11 @@ export default function Header({ toggleSidebar }) {
               )}
             </div>
 
+            {/* Direct Live Button */}
+            <Link to="/studio/live" className="p-2 text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer ml-2 hidden md:inline-flex items-center" onClick={() => setActiveDropdown(null)}>
+              <Radio className="w-5 h-5 text-[#FF8A65]" />
+            </Link>
+
             <div className="flex flex-col items-center gap-1.5 group cursor-pointer relative">
               <div className="w-[52px] h-[48px] rounded-[18px] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5 relative">
                 <Bell className="w-[22px] h-[22px] text-[#FF8A65]" />

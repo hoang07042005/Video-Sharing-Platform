@@ -6,13 +6,26 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    host: 'videoplatform.com',
-    port: 80,
+    host: 'localhost',
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5139',
         changeOrigin: true,
         secure: false,
+      },
+      '/hubs': {
+        target: 'http://localhost:5139',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      '/hls': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/hls/, ''),
       }
     }
   }

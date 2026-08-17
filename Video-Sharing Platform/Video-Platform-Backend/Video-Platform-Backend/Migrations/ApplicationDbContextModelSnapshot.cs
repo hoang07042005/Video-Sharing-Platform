@@ -106,6 +106,9 @@ namespace Video_Platform_Backend.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("(newid())");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BannerUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -373,6 +376,54 @@ namespace Video_Platform_Backend.Migrations
                     b.ToTable("CopyrightClaims");
                 });
 
+            modelBuilder.Entity("Video_Platform_Backend.Models.Donation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DonorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsSuperChat")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("LivestreamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LivestreamId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Donations");
+                });
+
             modelBuilder.Entity("Video_Platform_Backend.Models.Follower", b =>
                 {
                     b.Property<Guid>("Id")
@@ -445,15 +496,24 @@ namespace Video_Platform_Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("LivestreamId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MessageType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("SentAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id")
@@ -484,8 +544,14 @@ namespace Video_Platform_Backend.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime");
+
+                    b.Property<string>("HlsUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ScheduledStartTime")
                         .HasColumnType("datetime");
@@ -501,10 +567,22 @@ namespace Video_Platform_Backend.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("Tags")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<long?>("TotalViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("VodUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
                         .HasName("PK__Livestre__3214EC076652396D");
@@ -569,6 +647,9 @@ namespace Video_Platform_Backend.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("IsRead")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -577,6 +658,9 @@ namespace Video_Platform_Backend.Migrations
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("RelatedId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("TargetUrl")
                         .HasMaxLength(500)
@@ -596,6 +680,46 @@ namespace Video_Platform_Backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("EnableCommentNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableDonationNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableEmailNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableFollowNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnablePushNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableStreamNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PushSubscriptionJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("NotificationPreferences");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Payment", b =>
@@ -913,6 +1037,28 @@ namespace Video_Platform_Backend.Migrations
                         .IsUnique();
 
                     b.ToTable("Settings");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.StreamStatistic", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("LivestreamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ViewerCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LivestreamId");
+
+                    b.ToTable("StreamStatistics");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Subscription", b =>
@@ -1256,6 +1402,42 @@ namespace Video_Platform_Backend.Migrations
                     b.ToTable("VideoFiles");
                 });
 
+            modelBuilder.Entity("Video_Platform_Backend.Models.VideoQuality", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Bitrate")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HlsUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("LivestreamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("QualityLabel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LivestreamId");
+
+                    b.ToTable("VideoQualities");
+                });
+
             modelBuilder.Entity("Video_Platform_Backend.Models.VideoResolution", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1531,6 +1713,23 @@ namespace Video_Platform_Backend.Migrations
                     b.Navigation("Video");
                 });
 
+            modelBuilder.Entity("Video_Platform_Backend.Models.Donation", b =>
+                {
+                    b.HasOne("Video_Platform_Backend.Models.Livestream", "Livestream")
+                        .WithMany("Donations")
+                        .HasForeignKey("LivestreamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Video_Platform_Backend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Livestream");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Video_Platform_Backend.Models.Follower", b =>
                 {
                     b.HasOne("Video_Platform_Backend.Models.Channel", "Channel")
@@ -1581,7 +1780,6 @@ namespace Video_Platform_Backend.Migrations
                     b.HasOne("Video_Platform_Backend.Models.User", "User")
                         .WithMany("LiveMessages")
                         .HasForeignKey("UserId")
-                        .IsRequired()
                         .HasConstraintName("FK__LiveMessa__UserI__58D1301D");
 
                     b.Navigation("Livestream");
@@ -1629,6 +1827,17 @@ namespace Video_Platform_Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK__Notificat__UserI__40058253");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.NotificationPreference", b =>
+                {
+                    b.HasOne("Video_Platform_Backend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1709,6 +1918,17 @@ namespace Video_Platform_Backend.Migrations
                         .HasConstraintName("FK__Settings__UserId__52593CB8");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.StreamStatistic", b =>
+                {
+                    b.HasOne("Video_Platform_Backend.Models.Livestream", "Livestream")
+                        .WithMany("StreamStatistics")
+                        .HasForeignKey("LivestreamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Livestream");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Subscription", b =>
@@ -1794,6 +2014,17 @@ namespace Video_Platform_Backend.Migrations
                         .HasConstraintName("FK__VideoFile__Video__66603565");
 
                     b.Navigation("Video");
+                });
+
+            modelBuilder.Entity("Video_Platform_Backend.Models.VideoQuality", b =>
+                {
+                    b.HasOne("Video_Platform_Backend.Models.Livestream", "Livestream")
+                        .WithMany("VideoQualities")
+                        .HasForeignKey("LivestreamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Livestream");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.VideoResolution", b =>
@@ -1894,7 +2125,13 @@ namespace Video_Platform_Backend.Migrations
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Livestream", b =>
                 {
+                    b.Navigation("Donations");
+
                     b.Navigation("LiveMessages");
+
+                    b.Navigation("StreamStatistics");
+
+                    b.Navigation("VideoQualities");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.Payment", b =>

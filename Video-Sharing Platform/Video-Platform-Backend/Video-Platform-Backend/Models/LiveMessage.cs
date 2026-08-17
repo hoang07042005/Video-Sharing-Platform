@@ -9,11 +9,18 @@ public partial class LiveMessage
 
     public Guid LivestreamId { get; set; }
 
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     public string Content { get; set; } = null!;
 
     public DateTime? SentAt { get; set; }
+
+    // Moderation / metadata
+    public bool IsDeleted { get; set; }
+    
+    public bool IsPinned { get; set; }
+    // MessageType: "Normal", "Donation", "System", etc.
+    public string? MessageType { get; set; }
 
     public virtual Livestream Livestream { get; set; } = null!;
 

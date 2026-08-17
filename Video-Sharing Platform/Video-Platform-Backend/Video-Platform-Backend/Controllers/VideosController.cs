@@ -1131,5 +1131,53 @@ namespace Video_Platform_Backend.Controllers
 
             return Ok(new { message = "Cảm ơn bạn. Báo cáo của bạn đã được gửi và sẽ được xem xét." });
         }
+
+        // GET: api/videos/vod/{filename}
+        [HttpGet("vod/{filename}")]
+        public IActionResult GetVod(string filename)
+        {
+            try
+            {
+                var vodPath = Path.Combine(AppContext.BaseDirectory, "vod", filename);
+                
+                // Security: Prevent path traversal
+                var fullPath = Path.GetFullPath(vodPath);
+                var vodDirPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "vod"));
+                
+                if (!fullPath.StartsWith(vodDirPath))
+                {
+                    return BadRequest("Invalid file path");
+                }
+
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    return NotFound("Video not found");
+                }
+
+                var stream = System.IO.File.OpenRead(fullPath);
+                return File(stream, "video/mp4", enableRangeProcessing: true);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error serving video: {ex.Message}");
+            }
+        }
+
+        // GET: api/videos/livestream/{livestreamId}/vod-status
+        [HttpGet("livestream/{livestreamId}/vod-status")]
+        public async Task<IActionResult> GetVodStatus(Guid livestreamId)
+        {
+            var livestream = await _context.Livestreams.FindAsync(livestreamId);
+            if (livestream == null)
+                return NotFound("Livestream not found");
+
+            return Ok(new
+            {
+                livestreamId,
+                status = livestream.Status,
+                vodUrl = livestream.VodUrl,
+                hasVod = !string.IsNullOrEmpty(livestream.VodUrl)
+            });
+        }
     }
 }

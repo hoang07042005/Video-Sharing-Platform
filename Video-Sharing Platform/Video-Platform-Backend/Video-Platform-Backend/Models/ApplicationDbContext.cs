@@ -31,6 +31,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<CopyrightClaim> CopyrightClaims { get; set; }
 
+    public virtual DbSet<Donation> Donations { get; set; }
+
     public virtual DbSet<Follower> Followers { get; set; }
 
     public virtual DbSet<Like> Likes { get; set; }
@@ -39,9 +41,13 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Livestream> Livestreams { get; set; }
 
+    public virtual DbSet<StreamStatistic> StreamStatistics { get; set; }
+
     public virtual DbSet<Message> Messages { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
+
+    public virtual DbSet<NotificationPreference> NotificationPreferences { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
 
@@ -76,6 +82,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<View> Views { get; set; }
 
     public virtual DbSet<VideoResolution> VideoResolutions { get; set; }
+
+    public virtual DbSet<VideoQuality> VideoQualities { get; set; }
 
     public virtual DbSet<WatchHistory> WatchHistories { get; set; }
 

@@ -13,17 +13,34 @@ public partial class Livestream
 
     public string StreamKey { get; set; } = null!;
 
+    // Optional metadata for frontend and VOD/HLS playback
+    public string? Description { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public string? HlsUrl { get; set; }
+    public string? VodUrl { get; set; }
+    public long? TotalViews { get; set; }
+    public string? Tags { get; set; }
+
+    // Status: "scheduled", "live", "ended"
     public string? Status { get; set; }
 
     public DateTime? ScheduledStartTime { get; set; }
 
+    // ActualStartTime used to track when stream went live
     public DateTime? ActualStartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
 
+    // Current concurrent viewers (editable by backend processes)
     public int? CurrentViewers { get; set; }
 
-    public virtual Channel Channel { get; set; } = null!;
+    public virtual Channel? Channel { get; set; }
 
     public virtual ICollection<LiveMessage> LiveMessages { get; set; } = new List<LiveMessage>();
+
+    public virtual ICollection<StreamStatistic> StreamStatistics { get; set; } = new List<StreamStatistic>();
+
+    public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
+
+    public virtual ICollection<VideoQuality> VideoQualities { get; set; } = new List<VideoQuality>();
 }

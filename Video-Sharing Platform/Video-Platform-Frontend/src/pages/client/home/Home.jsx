@@ -7,12 +7,6 @@ import {
   TrendingUp,
   Play,
   ChevronRight,
-  Music,
-  Monitor,
-  Gamepad2,
-  Tv,
-  BookOpen,
-  Dumbbell,
   Bell,
   Star,
   MoreVertical,
@@ -21,7 +15,6 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import CategoryFilter from "../../../components/home/CategoryFilter";
 import FeaturedHero from "../../../components/home/FeaturedHero";
-import VideoCard from "../../../components/home/VideoCard";
 import { getIconColor } from '../../../utils/iconHelpers';
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -236,12 +229,56 @@ function ShortVideoCard({ short }) {
   );
 }
 
+const normalizeId = (value) => String(value ?? '').trim().toLowerCase();
+
+function LiveStreamCard({ stream, channel }) {
+  const navigate = useNavigate();
+  const viewers = stream.currentViewers ?? stream.totalViews ?? 0;
+
+  return (
+    <div
+      onClick={() => navigate(`/live/${stream.id}`)}
+      className="group cursor-pointer flex flex-col gap-2"
+    >
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] border border-red-500/30">
+        <img
+          src={stream.thumbnailUrl || "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80"}
+          alt={stream.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <span className="absolute left-2 top-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">
+          LIVE
+        </span>
+        <span className="absolute right-2 bottom-2 bg-black/75 text-white text-[11px] px-1.5 py-0.5 rounded">
+          {formatViews(viewers)} đang xem
+        </span>
+      </div>
+      <div className="flex gap-2">
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0">
+          <img
+            src={channel?.avatarUrl || channel?.avatarUrl || "https://via.placeholder.com/40"}
+            alt={channel?.channelName || "Kênh"}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-white text-sm font-semibold line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
+            {stream.title}
+          </h3>
+          <p className="text-gray-400 text-xs mt-1">{channel?.channelName || "Kênh trực tiếp"}</p>
+          <p className="text-gray-500 text-[11px] mt-0.5">{stream.tags || "Livestream"}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Featured Channel Card (Kênh nổi bật) ────────────────────
 function FeaturedChannelCard({ channel, initialSubbed }) {
-  const [subbed, setSubbed] = useState(initialSubbed || false);
+  const [subbed, setSubbed] = useState(initialSubbed ?? false);
 
   useEffect(() => {
-    setSubbed(initialSubbed || false);
+    setSubbed(initialSubbed ?? false);
   }, [initialSubbed]);
 
   return (
@@ -451,6 +488,7 @@ export default function Home() {
   const [videos, setVideos] = useState([]);
   const [channels, setChannels] = useState([]);
   const [shorts, setShorts] = useState([]);
+  const [liveStreams, setLiveStreams] = useState([]);
   const [subscribedChannelIds, setSubscribedChannelIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState(0);
@@ -464,8 +502,9 @@ export default function Home() {
           axios.get("/api/videos"),
           axios.get("/api/channels"),
           axios.get("/api/videos/shorts"),
+          axios.get("/api/livestreams/active"),
         ];
-        
+
         let subPromiseIndex = -1;
         if (token) {
           subPromiseIndex = promises.length;
@@ -477,6 +516,7 @@ export default function Home() {
         if (results[0].status === "fulfilled") setVideos(results[0].value.data);
         if (results[1].status === "fulfilled") setChannels(results[1].value.data);
         if (results[2].status === "fulfilled") setShorts(results[2].value.data);
+        if (results[3].status === "fulfilled") setLiveStreams(results[3].value.data);
         
         if (subPromiseIndex !== -1 && results[subPromiseIndex].status === "fulfilled") {
           const subIds = results[subPromiseIndex].value.data.map(c => c.id);
@@ -498,6 +538,7 @@ export default function Home() {
   ).filter((v) => !v.isShort);
 
   const featuredVideos = filteredVideos.slice(0, 4);
+  const liveNow = liveStreams.filter((stream) => normalizeId(stream.status) === 'live');
 
   // Auto-slide cho FeaturedHero
   useEffect(() => {
@@ -622,6 +663,24 @@ export default function Home() {
         
         {/* ── Full-width sections bên dưới ── */}
         <div className="flex flex-col gap-8 mt-10">
+          {liveNow.length > 0 && (
+            <section>
+              <SectionHeader icon={Play} title="Đang phát trực tiếp" linkTo="/" />
+              <div className="grid grid-cols-4 gap-4">
+                {liveNow.slice(0, 4).map((stream) => {
+                  const channel = channels.find((item) => normalizeId(item.id) === normalizeId(stream.channelId)) || null;
+                  return (
+                    <LiveStreamCard
+                      key={stream.id}
+                      stream={stream}
+                      channel={channel}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Thịnh hành */}
           <section>
             <SectionHeader icon={Flame} title="Thịnh hành" linkTo="/trending" />

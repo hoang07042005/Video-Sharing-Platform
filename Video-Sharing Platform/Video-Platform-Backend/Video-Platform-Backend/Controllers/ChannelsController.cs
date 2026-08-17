@@ -44,6 +44,57 @@ namespace Video_Platform_Backend.Controllers
             return Ok(channels);
         }
 
+        [HttpGet("by-id")]
+        public async Task<IActionResult> GetChannelByIdQuery([FromQuery] Guid channelId)
+        {
+            return await GetChannelByIdInternal(channelId);
+        }
+
+        [HttpGet("by-id/{channelId:guid}")]
+        public async Task<IActionResult> GetChannelById(Guid channelId)
+        {
+            return await GetChannelByIdInternal(channelId);
+        }
+
+        private async Task<IActionResult> GetChannelByIdInternal(Guid channelId)
+        {
+            var channel = await _context.Channels
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .FirstOrDefaultAsync(c => c.Id == channelId);
+
+            if (channel == null)
+            {
+                return NotFound(new { message = "Không tìm thấy kênh này" });
+            }
+
+            var followersCount = await _context.Followers.CountAsync(f => f.ChannelId == channel.Id);
+            var followingCount = await _context.Followers.CountAsync(f => f.FollowerId == channel.UserId);
+            var actualTotalViews = await _context.Videos
+                .Where(v => v.ChannelId == channel.Id)
+                .SumAsync(v => v.ViewsCount ?? 0);
+
+            var profileDto = new ChannelProfileDTO
+            {
+                Id = channel.Id,
+                ChannelName = channel.ChannelName,
+                Handle = channel.Handle,
+                Description = channel.Description ?? "",
+                BannerUrl = channel.BannerUrl ?? "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=1920&h=400",
+                AvatarUrl = channel.User.Profile?.AvatarUrl ?? "https://via.placeholder.com/150",
+                SubscriberCount = followersCount,
+                FollowingCount = followingCount,
+                TotalViews = actualTotalViews,
+                ContactEmail = channel.ContactEmail,
+                Country = channel.Country,
+                SocialLinks = channel.SocialLinks,
+                MembershipFee = channel.MembershipFee,
+                CreatedAt = channel.CreatedAt ?? DateTime.UtcNow
+            };
+
+            return Ok(profileDto);
+        }
+
         // GET: api/channels/{handle}
         [HttpGet("{handle}")]
         public async Task<IActionResult> GetChannelProfile(string handle)
@@ -72,6 +123,48 @@ namespace Video_Platform_Backend.Controllers
                 Description = channel.Description ?? "",
                 BannerUrl = channel.BannerUrl ?? "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=1920&h=400", // Fallback banner
                 AvatarUrl = channel.User.Profile?.AvatarUrl ?? "https://via.placeholder.com/150", // Fallback avatar
+                SubscriberCount = followersCount,
+                FollowingCount = followingCount,
+                TotalViews = actualTotalViews,
+                ContactEmail = channel.ContactEmail,
+                Country = channel.Country,
+                SocialLinks = channel.SocialLinks,
+                MembershipFee = channel.MembershipFee,
+                CreatedAt = channel.CreatedAt ?? DateTime.UtcNow
+            };
+
+            return Ok(profileDto);
+        }
+
+        // GET: api/channels/me
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyChannel()
+        {
+            var userIdString = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var channel = await _context.Channels
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (channel == null) return NotFound(new { message = "Bạn chưa có kênh." });
+
+            var followersCount = await _context.Followers.CountAsync(f => f.ChannelId == channel.Id);
+            var followingCount = await _context.Followers.CountAsync(f => f.FollowerId == channel.UserId);
+            var actualTotalViews = await _context.Videos
+                .Where(v => v.ChannelId == channel.Id)
+                .SumAsync(v => v.ViewsCount ?? 0);
+
+            var profileDto = new ChannelProfileDTO
+            {
+                Id = channel.Id,
+                ChannelName = channel.ChannelName,
+                Handle = channel.Handle,
+                Description = channel.Description ?? "",
+                BannerUrl = channel.BannerUrl ?? "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=1920&h=400",
+                AvatarUrl = channel.User.Profile?.AvatarUrl ?? "https://via.placeholder.com/150",
                 SubscriberCount = followersCount,
                 FollowingCount = followingCount,
                 TotalViews = actualTotalViews,

@@ -20,7 +20,9 @@ import Playlists from './pages/client/video/Playlists';
 import Premium from './pages/client/premium/Premium';
 import PaymentResult from './pages/client/premium/PaymentResult';
 import StudioUpload from './pages/client/studio/StudioUpload';
+import StudioLive from './pages/client/studio/StudioLive';
 import SearchResults from './pages/client/search/SearchResults';
+import LiveWatch from './pages/client/live/LiveWatch';
 import VideoManagement from './pages/admin/video/VideoManagement';
 import MembershipPage from './pages/client/channel/MembershipPage';
 
@@ -46,12 +48,13 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
+
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/c/:handle" element={<ChannelProfile />} />
           <Route path="/c/:handle/membership" element={<MembershipPage />} />
           <Route path="/watch/:id" element={<VideoDetail />} />
+          <Route path="/live/:id" element={<LiveWatch />} />
           <Route path="/history" element={<WatchHistory />} />
           <Route path="/saved" element={<SavedVideos />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
@@ -67,8 +70,9 @@ function App() {
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
+          <Route path="/studio/live" element={<StudioLive />} />
           <Route path="/results" element={<SearchResults />} />
-          
+
           {/* 404 Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Route>

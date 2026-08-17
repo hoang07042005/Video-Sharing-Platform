@@ -35,6 +35,10 @@ var secretKey = jwtSettings["Secret"];
 
 builder.Services.AddScoped<Video_Platform_Backend.Services.VideoProcessingService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddScoped<IContentModerationService, ContentModerationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<IVideoRecordingService, VideoRecordingService>();
+builder.Services.AddHostedService<VideoRecordingBackgroundService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -56,6 +60,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -80,5 +87,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hubs
+app.MapHub<Video_Platform_Backend.Hubs.LivestreamHub>("/hubs/livestream");
 
 app.Run();
