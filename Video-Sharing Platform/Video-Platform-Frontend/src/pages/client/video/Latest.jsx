@@ -144,12 +144,51 @@ function NormalVideoCard({ video }) {
   );
 }
 
+function NewChannelCard({ channel, initialSubbed }) {
+  const navigate = useNavigate();
+  const [subbed, setSubbed] = useState(initialSubbed || false);
+
+  useEffect(() => {
+    setSubbed(initialSubbed || false);
+  }, [initialSubbed]);
+
+  return (
+    <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => navigate(`/c/${channel.handle}`)}>
+      <div className="w-[96px] h-[96px] rounded-full p-[2px] bg-gradient-to-tr from-[#FF5722] via-[#E91E63] to-[#9C27B0] group-hover:scale-105 transition-transform shadow-[0_0_20px_rgba(233,30,99,0.2)]">
+        <img
+          src={channel.avatarUrl || `https://ui-avatars.com/api/?name=${channel.channelName}&background=random`}
+          alt={channel.channelName}
+          className="w-full h-full rounded-full object-cover border-4 border-[#13111C]"
+        />
+      </div>
+      <div className="text-center mt-1">
+        <h3 className="text-white text-[15px] font-bold group-hover:text-purple-400 transition-colors line-clamp-1">{channel.channelName}</h3>
+        <p className="text-gray-500 text-[11px] mt-0.5">{formatViews(channel.subscriberCount)} người đăng ký</p>
+      </div>
+      <button
+        className={`mt-1 px-5 py-2 rounded-full border text-[12px] font-bold transition-colors ${
+          subbed
+            ? "bg-[#2A2A2A] border-[#2A2A2A] text-gray-300 hover:bg-[#333]"
+            : "border-white/20 text-gray-300 hover:bg-white hover:text-black hover:border-white"
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setSubbed(!subbed);
+        }}
+      >
+        {subbed ? "Đã đăng ký" : "Đăng ký"}
+      </button>
+    </div>
+  );
+}
+
 export default function Latest() {
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [channels, setChannels] = useState([]);
   const [categories, setCategories] = useState([]);
   const [shorts, setShorts] = useState([]);
+  const [subscribedChannelIds, setSubscribedChannelIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState(0);
   const [visibleVideos, setVisibleVideos] = useState(8);
@@ -157,12 +196,22 @@ export default function Latest() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.allSettled([
+    const token = localStorage.getItem('token');
+    const promises = [
       axios.get('/api/videos'),
       axios.get('/api/channels'),
       axios.get('/api/videos/categories'),
       axios.get('/api/videos/shorts'),
-    ]).then(([videosRes, channelsRes, categoriesRes, shortsRes]) => {
+    ];
+    
+    let subPromiseIndex = -1;
+    if (token) {
+      subPromiseIndex = promises.length;
+      promises.push(axios.get("/api/channels/subscribed", { headers: { Authorization: `Bearer ${token}` } }));
+    }
+
+    Promise.allSettled(promises).then((results) => {
+      const [videosRes, channelsRes, categoriesRes, shortsRes] = results;
       if (videosRes.status === 'fulfilled') {
         const vids = videosRes.value.data.filter((v) => !v.isShort).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setVideos(vids);
@@ -172,6 +221,10 @@ export default function Latest() {
       if (shortsRes.status === 'fulfilled') {
         setShorts(shortsRes.value.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       }
+      if (subPromiseIndex !== -1 && results[subPromiseIndex].status === "fulfilled") {
+        const subIds = results[subPromiseIndex].value.data.map(c => c.id);
+        setSubscribedChannelIds(subIds);
+      }
       setLoading(false);
     });
   }, []);
@@ -180,7 +233,13 @@ export default function Latest() {
   const featured = filteredVideos.slice(0, 3);
   const rest = filteredVideos.slice(3, 3 + visibleVideos);
 
-  const newChannels = channels.slice(0, 5);
+  let newChannelsRaw = channels;
+  const currentUserHandle = localStorage.getItem('handle');
+  if (currentUserHandle) {
+    const handleCheck = currentUserHandle.startsWith('@') ? currentUserHandle : `@${currentUserHandle}`;
+    newChannelsRaw = newChannelsRaw.filter(c => c.handle !== handleCheck && c.handle !== currentUserHandle);
+  }
+  const newChannels = newChannelsRaw.slice(0, 5);
   const trendingCategories = categories.slice(0, 6);
 
   if (loading) {
@@ -309,31 +368,9 @@ export default function Latest() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
-              {newChannels.map((channel) => {
-                return (
-                  <div key={channel.id} className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => navigate(`/c/${channel.handle}`)}>
-                    <div className="w-[96px] h-[96px] rounded-full p-[2px] bg-gradient-to-tr from-[#FF5722] via-[#E91E63] to-[#9C27B0] group-hover:scale-105 transition-transform shadow-[0_0_20px_rgba(233,30,99,0.2)]">
-                      <img
-                        src={channel.avatarUrl || `https://ui-avatars.com/api/?name=${channel.channelName}&background=random`}
-                        alt={channel.channelName}
-                        className="w-full h-full rounded-full object-cover border-4 border-[#13111C]"
-                      />
-                    </div>
-                    <div className="text-center mt-1">
-                      <h3 className="text-white text-[15px] font-bold group-hover:text-purple-400 transition-colors line-clamp-1">{channel.channelName}</h3>
-                      <p className="text-gray-500 text-[11px] mt-0.5">{formatViews(channel.subscriberCount)} người đăng ký</p>
-                    </div>
-                    <button
-                      className="mt-1 px-5 py-2 rounded-full border border-white/20 text-gray-300 text-[12px] font-bold hover:bg-white hover:text-black hover:border-white transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      Đăng ký
-                    </button>
-                  </div>
-                );
-              })}
+              {newChannels.map((channel) => (
+                <NewChannelCard key={channel.id} channel={channel} initialSubbed={subscribedChannelIds.includes(channel.id)} />
+              ))}
             </div>
           </div>
         )}
