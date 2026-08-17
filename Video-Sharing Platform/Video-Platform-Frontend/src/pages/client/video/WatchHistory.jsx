@@ -190,24 +190,26 @@ function ShortThumb({ video }) {
 export default function WatchHistory() {
   const navigate = useNavigate();
   const [allVideos, setAllVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [notLoggedIn, setNotLoggedIn] = useState(false);
+  const token = localStorage.getItem('token');
+  const [loading, setLoading] = useState(Boolean(token));
+  const [notLoggedIn, setNotLoggedIn] = useState(!token);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'long' | 'shorts'
   const [paused, setPaused] = useState(localStorage.getItem('pauseHistory') === 'true');
   const [showCount, setShowCount] = useState(10);
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
-    if (!token) { setNotLoggedIn(true); setLoading(false); return; }
+    if (!token) return;
+    let mounted = true;
     axios.get('/api/videos/history', { headers: { Authorization: 'Bearer ' + token } })
-      .then(r => { setAllVideos(r.data); setLoading(false); })
+      .then(r => { if (!mounted) return; setAllVideos(r.data); setLoading(false); })
       .catch(err => {
+        if (!mounted) return;
         if (err.response?.status === 401) setNotLoggedIn(true);
         setLoading(false);
       });
-  }, []);
+    return () => { mounted = false; };
+  }, [token]);
 
   const removeVideo = (id) => setAllVideos(prev => prev.filter(v => v.id !== id));
   const clearAll = async () => {
@@ -216,7 +218,7 @@ export default function WatchHistory() {
         await axios.delete('/api/videos/history', { headers: { Authorization: 'Bearer ' + token } });
         setAllVideos([]);
         toast.success('Đã xoá toàn bộ lịch sử xem');
-      } catch (err) {
+      } catch {
         toast.error('Lỗi khi xoá lịch sử xem');
       }
     }
@@ -396,11 +398,11 @@ export default function WatchHistory() {
                         <Zap className="w-4 h-4 text-[#FF5722] fill-[#FF5722]" />
                         <span className="text-white text-[15px] font-bold">Shorts đã xem</span>
                       </div>
-                      <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                      <div className="flex items-center gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
                         {group.videos.filter(v => v.isShort).map(v => (
                           <ShortThumb key={v.id} video={v} />
                         ))}
-                        <button className="shrink-0 w-10 h-10 mt-auto mb-[50%] translate-y-1/2 rounded-full bg-[#1A1A1A] hover:bg-[#2A2A2A] flex items-center justify-center text-white transition-colors cursor-pointer">
+                        <button className="shrink-0 w-10 h-10 rounded-full bg-[#1A1A1A] hover:bg-[#2A2A2A] flex items-center justify-center text-white transition-colors cursor-pointer">
                           <ChevronRight className="w-5 h-5" />
                         </button>
                       </div>

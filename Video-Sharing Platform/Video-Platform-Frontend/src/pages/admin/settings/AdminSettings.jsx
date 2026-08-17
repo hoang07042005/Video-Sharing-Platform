@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Globe, Shield, Users, Lock, HardDrive, Code, 
   Save, CheckCircle2, Loader2, Upload, PlaySquare
@@ -20,26 +20,28 @@ export default function AdminSettings() {
   };
 
   const [settings, setSettings] = useState(defaultSettings);
-
   useEffect(() => {
-    fetchSettings();
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await axios.get('/api/admin/settings');
+        if (!mounted) return;
+        if (res.data && Object.keys(res.data).length > 0) {
+          setSettings((prev) => ({ ...prev, ...res.data }));
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải cấu hình:', error);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const logoInputRef = useRef(null);
   const faviconInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
-
-  const fetchSettings = async () => {
-    try {
-      const res = await axios.get('/api/admin/settings');
-      if (res.data && Object.keys(res.data).length > 0) {
-        setSettings(prev => ({ ...prev, ...res.data }));
-      }
-    } catch (error) {
-      console.error('Lỗi khi tải cấu hình:', error);
-    }
-  };
 
   const handleFileUpload = async (event, key, setUploadingState) => {
     const file = event.target.files?.[0];
@@ -311,7 +313,7 @@ export default function AdminSettings() {
 
 function Card({ icon, iconBg, title, subtitle, children }) {
   return (
-    <div className="bg-[#0F0F0F] rounded-xl border border-white/5 p-6 shadow-md flex flex-col h-full">
+    <div className="bg-[#0F0F0F]  p-6 shadow-md flex flex-col h-full">
       <div className="flex items-center gap-4 mb-6">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
           {icon}

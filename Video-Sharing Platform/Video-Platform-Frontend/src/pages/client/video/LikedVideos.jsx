@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, ThumbsUp, Play, Shuffle, Zap } from 'lucide-react';
+import { Loader2, ThumbsUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LikedVideos = () => {
@@ -8,6 +8,7 @@ const LikedVideos = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'videos' | 'shorts'
+  const [visibleShorts, setVisibleShorts] = useState(5);
 
   useEffect(() => {
     const fetchLikedVideos = async () => {
@@ -37,17 +38,7 @@ const LikedVideos = () => {
     fetchLikedVideos();
   }, []);
 
-  const formatTimeAgo = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
-    if (diff < 60) return `${diff} giây trước`;
-    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-    if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
-    if (diff < 31536000) return `${Math.floor(diff / 2592000)} tháng trước`;
-    return `${Math.floor(diff / 31536000)} năm trước`;
-  };
+  
 
   const formatViews = (views) => {
     if (!views) return '0';
@@ -64,14 +55,8 @@ const LikedVideos = () => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const filteredVideos =
-    activeTab === 'videos' ? videos.filter(v => !v.isShort) :
-    activeTab === 'shorts' ? videos.filter(v => v.isShort) :
-    videos;
-
-  const normalCount = videos.filter(v => !v.isShort).length;
   const shortsCount = videos.filter(v => v.isShort).length;
-  const coverVideo = videos[0];
+
 
   if (loading) {
     return (
@@ -81,205 +66,148 @@ const LikedVideos = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#0F0F0F] text-gray-400 p-6">
+        <ThumbsUp className="w-16 h-16 opacity-20 mb-4" />
+        <p className="text-base">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
-      <div className="max-w-[1200px] mx-auto p-6 flex flex-col lg:flex-row gap-6">
+      <div className="max-w-[1500px] mx-auto p-6">
 
-        {/* Sidebar */}
-        <div className="w-full lg:w-[340px] shrink-0">
-          <div className="sticky top-6 bg-gradient-to-b from-[#FF4E00]/15 via-[#1A1A1A] to-[#1A1A1A] rounded-2xl p-6 border border-white/5">
-            {/* Cover Art */}
-            <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-6 bg-[#212121]">
-              {coverVideo ? (
-                <>
-                  <img
-                    src={coverVideo.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500'}
-                    alt="Cover"
-                    className="w-full h-full object-cover opacity-40 blur-sm scale-110"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <img
-                      src={coverVideo.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500'}
-                      alt="Cover"
-                      className="h-full aspect-video object-cover rounded-xl shadow-2xl"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ThumbsUp className="w-12 h-12 text-gray-500" />
-                </div>
-              )}
-              <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[#FF4E00] text-white text-[11px] font-bold px-2 py-1 rounded-full shadow-lg">
-                <ThumbsUp className="w-3 h-3 fill-white" /> Video đã thích
+        {/* Header / Hero */}
+        <div className="relative w-full h-[400px] rounded-2xl overflow-hidden mb-8 p-6 md:p-8 flex items-center">
+          <img
+            src="banner-trending.png"
+            alt="Banner trending"
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
+          <div className="relative z-10 w-full">
+            <div className="flex items-center gap-4 mb-4">
+              <div 
+                className="w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 shadow-lg" 
+                style={{ background: 'linear-gradient(135deg,#9C27B0,#FF4E00)' }}
+              >
+                <ThumbsUp className="w-10 h-10 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-extrabold text-white">Video đã thích</h1>
+                <p className="text-gray-300 w-[650px] text-[18px] mt-1">Nơi lưu giữ toàn bộ video dài và Shorts bạn từng yêu thích. Dễ dàng xem lại các nội dung tâm đắc, chia sẻ với bạn bè hoặc khám phá thêm các gợi ý tương tự dựa trên gu của bạn.</p>
               </div>
             </div>
-
-            <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <ThumbsUp className="w-5 h-5 text-[#FF4E00] fill-[#FF4E00] shrink-0" />
-              Video đã thích
-            </h1>
-
-            {/* Stats */}
-            {videos.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                {[
-                  { label: 'Tổng', value: videos.length, color: 'text-white' },
-                  { label: 'Video', value: normalCount, color: 'text-white' },
-                  { label: 'Shorts', value: shortsCount, color: 'text-[#FF4E00]' },
-                ].map(stat => (
-                  <div key={stat.label} className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
-                    <div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div>
-                    <div className="text-[11px] text-gray-400 mt-0.5">{stat.label}</div>
-                  </div>
-                ))}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="px-5 py-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[16px] text-white font-semibold shadow-sm">
+                {videos.length} Video
               </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <button
-                disabled={videos.length === 0}
-                className="flex-1 bg-white text-black py-2.5 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-current" /> Phát tất cả
-              </button>
-              <button
-                disabled={videos.length === 0}
-                className="flex-1 bg-white/10 text-white py-2.5 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <Shuffle className="w-4 h-4" /> Trộn bài
-              </button>
+              <div className="px-5 py-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[16px] text-white font-semibold shadow-sm">
+                {shortsCount} Shorts
+              </div>
+              <div className="px-5 py-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[16px] text-gray-300 shadow-sm">
+                Danh sách phát liên quan
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Video List */}
-        <div className="flex-1 min-w-0">
-          {/* Filter Tabs */}
-          {!error && videos.length > 0 && (
-            <div className="flex gap-2 mb-5">
-              {[
-                { key: 'all', label: 'Tất cả', count: videos.length },
-                { key: 'videos', label: 'Video', count: normalCount },
-                { key: 'shorts', label: 'Shorts', count: shortsCount },
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${
-                    activeTab === tab.key
-                      ? 'bg-[#FF4E00] text-white'
-                      : 'bg-[#272727] text-gray-300 hover:bg-[#3F3F3F]'
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === tab.key ? 'bg-white/20' : 'bg-white/10'}`}>
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            {[
+              { key: 'all', label: 'Video (Like)', count: videos.length },
+              { key: 'shorts', label: 'Video ngắn (Tim)', count: shortsCount },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                  activeTab === tab.key ? 'bg-[#FF4E00] text-white' : 'bg-[#272727] text-gray-300 hover:bg-[#3F3F3F]'
+                }`}
+              >
+                {tab.label} <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button className="px-3 py-2 bg-[#161616] rounded-full text-sm text-gray-300">Mới nhất</button>
+            <div className="px-3 py-2 bg-[#161616] rounded-full text-sm text-gray-300">Danh sách lưới</div>
+          </div>
+        </div>
+
+        {/* Content: Videos grid and Shorts strip */}
+        <div className="space-y-6">
+          {/* Videos grid */}
+          {(activeTab === 'all' || activeTab === 'all' || activeTab === 'videos' || activeTab === 'all') && videos.filter(v => !v.isShort).length > 0 && (activeTab !== 'shorts') && (
+            <div>
+              <h2 className="text-white font-bold mb-4">Video</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {videos.filter(v => !v.isShort).map(video => (
+                  <Link key={video.id} to={`/watch/${video.id}`} className="group block rounded-xl overflow-hidden">
+                    <div className="relative aspect-video">
+                      <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">{formatDuration(video.duration)}</div>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="text-white text-sm font-semibold line-clamp-2 mb-1">{video.title}</h3>
+                      <div className="flex items-center justify-between text-gray-400 text-xs">
+                         <div className="flex items-center gap-2 min-w-0">
+                          {video.channelAvatarUrl ? (
+                            <img src={video.channelAvatarUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white shrink-0">{(video.channelName || ' ')[0]}</div>
+                          )}
+                          <div className="truncate max-w-[100%]">{video.channelName}</div>
+                        </div>
+                        <div>{formatViews(video.viewsCount)}</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
 
-          {error ? (
-            <div className="text-gray-400 text-center py-16 flex flex-col items-center gap-4">
-              <ThumbsUp className="w-16 h-16 opacity-20" />
-              <p className="text-base">{error}</p>
-            </div>
-          ) : filteredVideos.length === 0 ? (
-            <div className="text-gray-400 py-16 flex flex-col items-center gap-3">
-              {activeTab === 'shorts'
-                ? <Zap className="w-16 h-16 mb-1 opacity-20" />
-                : <ThumbsUp className="w-16 h-16 mb-1 opacity-20" />
-              }
-              <p className="text-base">Chưa có video nào trong danh mục này.</p>
-              <p className="text-sm text-gray-500">Hãy thích video để thêm vào đây!</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {filteredVideos.map((video, index) => {
-                const isShort = video.isShort;
-                return (
-                  <div
-                    key={video.id}
-                    className="flex gap-4 group p-2.5 hover:bg-white/5 rounded-xl transition-all items-center border border-transparent hover:border-white/5"
+          {/* Shorts strip */}
+          {(activeTab === 'all' || activeTab === 'shorts') && videos.filter(v => v.isShort).length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-white font-bold">Video ngắn</h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {videos.filter(v => v.isShort).slice(0, visibleShorts).map(v => (
+                  <Link key={v.id} to={`/shorts?id=${v.id}`} className="block w-full">
+                    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-[#0b0b0b]">
+                      <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">{formatDuration(v.duration)}</div>
+                    </div>
+                    <div className="text-xs text-gray-300 mt-2 line-clamp-2">{v.title}</div>
+                    <div className="flex items-center justify-between text-gray-400 text-xs mt-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {v.channelAvatarUrl ? (
+                          <img src={v.channelAvatarUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white shrink-0">{(v.channelName || ' ')[0]}</div>
+                        )}
+                        <div className="truncate max-w-[100%]">{v.channelName}</div>
+                      </div>
+                      <div className="text-xs shrink-0">{formatViews(v.viewsCount)}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              {videos.filter(v => v.isShort).length > visibleShorts && (
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => setVisibleShorts((prev) => prev + 5)}
+                    className="px-6 py-2.5 rounded-full border border-gray-700 text-gray-300 font-bold hover:bg-white hover:text-black transition-colors"
                   >
-                    {/* Index */}
-                    <div className="w-6 text-center text-gray-500 text-sm font-medium hidden md:block shrink-0">
-                      {index + 1}
-                    </div>
-
-                    {/* Thumbnail */}
-                    <Link
-                      to={isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}
-                      className="relative shrink-0 w-[130px] md:w-[170px] aspect-video rounded-xl overflow-hidden bg-[#0a0a0a]"
-                    >
-                      {isShort ? (
-                        <>
-                          {/* Blurred background layer */}
-                          <img
-                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop'}
-                            alt=""
-                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {/* Centered portrait image */}
-                          <img
-                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop'}
-                            alt={video.title}
-                            className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {/* ⚡ SHORTS badge - bottom left */}
-                          <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/80 text-[#FF4E00] text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
-                            <Zap className="w-2.5 h-2.5 fill-[#FF4E00]" /> SHORTS
-                          </div>
-                          {/* Duration - bottom right */}
-                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
-                            {formatDuration(video.duration)}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <img
-                            src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&auto=format&fit=crop&q=60'}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
-                            {formatDuration(video.duration)}
-                          </div>
-                        </>
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                        <Play className="w-7 h-7 text-white fill-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                      </div>
-                    </Link>
-
-                    {/* Info */}
-                    <div className="flex-1 py-1 min-w-0">
-                      <Link to={isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}>
-                        <h3 className="text-white font-medium text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[#FF4E00] transition-colors leading-snug">
-                          {video.title}
-                        </h3>
-                      </Link>
-                      <div className="flex flex-wrap items-center text-gray-400 text-xs md:text-sm gap-1 md:gap-1.5">
-                        <Link to={`/c/${video.channelHandle}`} className="hover:text-white transition-colors truncate max-w-[150px]">
-                          {video.channelName}
-                        </Link>
-                        <span className="text-[10px] shrink-0">•</span>
-                        <span className="shrink-0">{formatViews(video.viewsCount)} lượt xem</span>
-                        <span className="hidden md:inline text-[10px] shrink-0">•</span>
-                        <span className="hidden md:inline shrink-0">{formatTimeAgo(video.createdAt)}</span>
-                      </div>
-                    </div>
-
-                    {/* Like icon right */}
-                    <div className="hidden md:flex items-center shrink-0 pr-1">
-                      <ThumbsUp className="w-4 h-4 text-[#FF4E00] fill-[#FF4E00]" />
-                    </div>
-                  </div>
-                );
-              })}
+                    Xem thêm
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

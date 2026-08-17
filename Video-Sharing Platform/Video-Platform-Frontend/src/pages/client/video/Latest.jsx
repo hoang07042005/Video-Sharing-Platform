@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
   ChevronDown,
@@ -202,9 +202,7 @@ function NewChannelCard({ channel, initialSubbed }) {
   const navigate = useNavigate();
   const [subbed, setSubbed] = useState(initialSubbed || false);
 
-  useEffect(() => {
-    setSubbed(initialSubbed || false);
-  }, [initialSubbed]);
+  // Initialize `subbed` from `initialSubbed` and keep local state thereafter.
 
   return (
     <div
@@ -247,7 +245,6 @@ function NewChannelCard({ channel, initialSubbed }) {
 }
 
 export default function Latest() {
-  const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [channels, setChannels] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -259,7 +256,6 @@ export default function Latest() {
   const [visibleShorts, setVisibleShorts] = useState(6);
 
   useEffect(() => {
-    setLoading(true);
     const token = localStorage.getItem("token");
     const promises = [
       axios.get("/api/videos"),
@@ -521,7 +517,7 @@ export default function Latest() {
                       # {cat.name}
                     </h3>
                     <p className="text-gray-400 text-[11px] font-medium">
-                      {Math.floor(Math.random() * 900) + 100} N video
+                      {((cat.id * 137) % 900) + 100} N video
                     </p>
                   </div>
                 </div>

@@ -5,27 +5,16 @@ import {
   Flame,
   Eye,
   MoreVertical,
-  ChevronDown,
   CheckCircle,
-  Music,
-  Gamepad2,
-  Newspaper,
-  Film,
-  Trophy,
-  BookOpen,
-  Map,
-  Utensils,
   Play,
   Heart,
   ArrowUp,
   ArrowDown,
   TrendingUp,
-  ChevronLeft,
   ChevronRight,
-  LayoutGrid,
   ArrowRight,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { getIconColor } from "../../../utils/iconHelpers";
 
@@ -79,9 +68,7 @@ function SidebarChannelCard({ channel, initialSubbed }) {
   const [subbed, setSubbed] = useState(initialSubbed || false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setSubbed(initialSubbed || false);
-  }, [initialSubbed]);
+  // Initialize `subbed` from prop and keep local state thereafter.
 
   return (
     <div
