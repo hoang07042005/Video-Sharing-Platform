@@ -104,7 +104,7 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
               </div>
             )}
             <span className="text-white font-semibold text-[15px] ml-1">{video.channelName}</span>
-            <CheckCircle className="w-4 h-4 text-[#FF5722] fill-[#FF5722]" />
+             <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
           </Link>
           
           <span className="text-gray-600 text-xs mx-1.5">•</span>
