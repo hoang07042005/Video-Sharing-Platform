@@ -121,7 +121,7 @@ function VideoCard({ video }) {
           <Link to={'/c/' + video.channelHandle} onClick={e => e.stopPropagation()}
             className="flex items-center gap-1 text-gray-400 text-[10px] hover:text-white transition-colors truncate mb-1">
             {video.channelName}
-            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+            <CheckCircle className="w-3 h-3 text-[#FF5722] fill-[#FF5722] shrink-0" />
           </Link>
           <div className="flex items-center gap-1.5 text-gray-500 text-[9px]">
             <span>{formatViews(video.viewsCount)} lượt xem</span>

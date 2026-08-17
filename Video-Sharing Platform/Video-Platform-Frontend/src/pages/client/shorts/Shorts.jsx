@@ -363,7 +363,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
 
   return (
     <div className={`w-full h-full flex items-center justify-center select-none relative overflow-hidden transition-all duration-300 ease-in-out ${showComments ? 'pr-[340px]' : 'pr-0'}`}>
-      <div className="flex items-end gap-5 w-full max-w-[1150px] justify-center px-2 sm:px-4">
+      <div className="flex items-end gap-5 w-full max-w-[1400px] justify-center px-2 sm:px-4">
         <div className="flex flex-col gap-3 flex-1 min-w-[150px] max-w-[360px] pb-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Link to={`/c/${short.channelHandle}`} className="flex items-center gap-2 group">
@@ -427,8 +427,8 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
 
         {/* ── CENTER: Video frame (clean — no info overlay) ── */}
         <div
-          className="relative rounded-xl overflow-hidden bg-[#111] shadow-[0_12px_60px_rgba(0,0,0,0.8)] flex-shrink-0 cursor-pointer"
-          style={{ height: 'min(calc(100vh - 100px), 620px)', aspectRatio: '9/16' }}
+          className="relative rounded-xl overflow-hidden bg-[#111] shadow-[0_12px_60px_rgba(0,0,0,0.8)] flex-shrink-0 cursor-pointer transition-all duration-300"
+          style={{ height: 'calc(100vh - 100px)', maxHeight: '900px', minHeight: '400px', aspectRatio: '9/16' }}
           onClick={togglePlay}
         >
           {/* Video element */}

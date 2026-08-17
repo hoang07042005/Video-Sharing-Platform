@@ -194,7 +194,7 @@ export default function Header({ toggleSidebar }) {
       </div>
 
       {/* Right Icons */}
-      <div className="flex items-center gap-3 ml-8">
+      <div className="flex items-center gap-1 ml-4">
         {token ? (
           <>
             <div className="relative" ref={activeDropdown === 'create' ? headerRef : null}>
@@ -202,13 +202,13 @@ export default function Header({ toggleSidebar }) {
                 onClick={() => setActiveDropdown(activeDropdown === 'create' ? null : 'create')}
                 className="flex flex-col items-center gap-1.5 group cursor-pointer"
               >
-                <div className="w-[52px] h-[48px] rounded-[18px] bg-[#1A1A1A] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5">
+                <div className="w-[52px] h-[48px] rounded-[18px] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5">
                   <Video className="w-[22px] h-[22px] text-[#FF8A65]" />
                 </div>
               </div>
 
               {activeDropdown === 'create' && (
-                <div className="absolute right-0 top-full mt-4 w-56 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">
+                <div className="absolute right-0 top-full mt-4 w-56 border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">
                   <Link to="/studio/upload" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-gray-200 transition-colors">
                     <Upload className="w-5 h-5" /> Tải video lên
                   </Link>
@@ -223,7 +223,7 @@ export default function Header({ toggleSidebar }) {
             </div>
 
             <div className="flex flex-col items-center gap-1.5 group cursor-pointer relative">
-              <div className="w-[52px] h-[48px] rounded-[18px] bg-[#1A1A1A] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5 relative">
+              <div className="w-[52px] h-[48px] rounded-[18px] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5 relative">
                 <Bell className="w-[22px] h-[22px] text-[#FF8A65]" />
                 <span className="absolute top-1 right-2 w-[18px] h-[18px] bg-[#FF1E46] rounded-full flex items-center justify-center text-[10px] font-bold text-white translate-x-1/2 -translate-y-1/2 border-2 border-[#1A1A1A]">3</span>
               </div>
@@ -232,26 +232,26 @@ export default function Header({ toggleSidebar }) {
             <div className="w-[1px] h-10 bg-white/10 mx-1"></div>
 
             {currentPlan && (
-              <Link to="/premium" className={`hidden md:flex items-center justify-between gap-3 px-4 py-1.5 rounded-full border ${currentPlan === 'Premium' ? 'border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]' : currentPlan === 'Family' ? 'border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]' : 'border-white/10 bg-[#1A1A1A] hover:bg-[#222]'} transition-colors cursor-pointer mx-1`}>
+              <Link to="/premium" className={`hidden md:flex items-center justify-between gap-3 px-4 py-1 rounded-full border ${currentPlan === 'Premium' ? 'border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]' : currentPlan === 'Family' ? 'border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]' : 'border-white/10 bg-[#1A1A1A] hover:bg-[#222]'} transition-colors cursor-pointer mx-1`}>
                 <div className="flex items-center justify-center">
                   {currentPlan === 'Premium' ? (
-                     <Crown className="w-[22px] h-[22px] text-[#9C27B0]" fill="currentColor" />
+                     <Crown className="w-[20px] h-[20px] text-[#9C27B0]" fill="currentColor" />
                   ) : currentPlan === 'Family' ? (
-                     <Users className="w-[22px] h-[22px] text-[#7E57C2]" fill="currentColor" />
+                     <Users className="w-[20px] h-[20px] text-[#7E57C2]" fill="currentColor" />
                   ) : (
                      <User className="w-5 h-5 text-gray-400" />
                   )}
                 </div>
                 <div className="flex flex-col pt-0.5">
-                   <span className="text-[14px] font-bold text-white leading-none">
+                   <span className="text-[12px] font-bold text-white leading-none">
                      {currentPlan === 'Premium' ? 'Premium' : currentPlan === 'Family' ? 'Gia đình' : 'Miễn phí'}
                    </span>
                    {currentPlan !== 'Free' && premiumUntil ? (
-                     <span className="text-[10px] text-gray-400 mt-[5px] leading-none">
+                     <span className="text-[8px] text-gray-400 mt-[5px] leading-none">
                        HSD: {premiumUntil.toLocaleDateString('vi-VN')}
                      </span>
                    ) : (
-                     <span className="text-[10px] text-gray-400 mt-[5px] leading-none">{currentPlan === 'Free' ? 'HSD: Không giới hạn' : 'Gói bạn đang dùng'}</span>
+                     <span className="text-[8px] text-gray-400 mt-[5px] leading-none">{currentPlan === 'Free' ? 'HSD: Không giới hạn' : 'Gói bạn đang dùng'}</span>
                    )}
                 </div>
                 {currentPlan !== 'Free' && (
