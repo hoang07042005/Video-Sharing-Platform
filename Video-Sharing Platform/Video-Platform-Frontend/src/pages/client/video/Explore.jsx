@@ -72,7 +72,7 @@ function CatIcon({ cat, active, onClick }) {
           : 'bg-transparent text-gray-200 hover:bg-white/5 border border-gray-600/50'
       }`}
     >
-      <IconComponent className={`w-4 h-4 ${active ? 'text-white' : cat.color}`} />
+      <IconComponent className={`w-4 h-4 ${cat.color}`} />
       {cat.label}
     </button>
   );
@@ -107,9 +107,9 @@ function VideoCard({ video }) {
       <div className="flex gap-3 px-1">
         <Link to={'/c/' + video.channelHandle} onClick={e => e.stopPropagation()} className="shrink-0 pt-0.5">
           {video.channelAvatarUrl ? (
-            <img src={video.channelAvatarUrl} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-[#FF5722] transition-all" />
+            <img src={video.channelAvatarUrl} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-transparent hover:ring-[#FF5722] transition-all" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF5722] to-[#E91E63] flex items-center justify-center text-white text-[12px] font-bold">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5722] to-[#E91E63] flex items-center justify-center text-white text-[12px] font-bold">
               {(video.channelName || 'C')[0].toUpperCase()}
             </div>
           )}
@@ -119,9 +119,9 @@ function VideoCard({ video }) {
             {video.title}
           </h3>
           <Link to={'/c/' + video.channelHandle} onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1 text-gray-400 text-[12px] hover:text-white transition-colors truncate mb-1">
+            className="flex items-center gap-1 text-gray-400 text-[10px] hover:text-white transition-colors truncate mb-1">
             {video.channelName}
-            <CheckCircle className="w-3 h-3 text-[#FF5722] fill-[#FF5722] shrink-0" />
+            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
           </Link>
           <div className="flex items-center gap-1.5 text-gray-500 text-[9px]">
             <span>{formatViews(video.viewsCount)} lượt xem</span>
@@ -153,10 +153,10 @@ export default function Explore() {
   // Fetch trending + latest + categories on mount
   useEffect(() => {
     axios.get('/api/videos/explore?sort=views&limit=8')
-      .then(res => setTrending(res.data.slice(0, 4)))
+      .then(res => setTrending(res.data.slice(0, 8)))
       .catch(console.error);
     axios.get('/api/videos/explore?sort=newest&limit=8')
-      .then(res => setLatest(res.data.slice(0, 4)))
+      .then(res => setLatest(res.data.slice(0, 8)))
       .catch(console.error);
     axios.get('/api/channels?limit=5')
       .then(res => setFeaturedChannels(res.data))
@@ -269,7 +269,7 @@ export default function Explore() {
         </div>
       </div>
 
-      <div className="max-w-[1500px] mx-auto px-6 md:px-10 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-10">
+      <div className="max-w-[1500px] mx-auto px-6 md:px-10 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
         
         {/* LEFT COLUMN: Main Content */}
         <div className="min-w-0 flex flex-col gap-12">
@@ -386,7 +386,7 @@ export default function Explore() {
         <div className="space-y-6">
           
           {/* Xu Hướng Tìm Kiếm */}
-          <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 shadow-xl">
+          <div className="p-6 border-b border-white/8 shadow-xl">
             <h3 className="text-[15px] font-bold text-white flex items-center gap-2 mb-5">
               <TrendingUp className="w-4 h-4 text-[#E91E63]" /> Xu hướng tìm kiếm
             </h3>
@@ -406,7 +406,7 @@ export default function Explore() {
           </div>
 
           {/* Kênh Nổi Bật */}
-          <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 shadow-xl">
+          <div className="border-b border-white/8 p-6 shadow-xl">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold text-white flex items-center gap-2">
                 <Users className="w-4 h-4 text-teal-400" /> Kênh nổi bật
@@ -449,7 +449,7 @@ export default function Explore() {
           </div>
 
           {/* Chủ Đề Thịnh Hành */}
-          <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 shadow-xl">
+          <div className="border-b border-white/8 p-6 shadow-xl">
             <h3 className="text-[15px] font-bold text-white flex items-center gap-2 mb-5">
               <Compass className="w-4 h-4 text-green-400" /> Chủ đề thịnh hành
             </h3>

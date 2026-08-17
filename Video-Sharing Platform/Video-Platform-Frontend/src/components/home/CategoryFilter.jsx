@@ -38,10 +38,10 @@ export default function CategoryFilter({ onSelect }) {
   return (
     <div>
       {/* Header */}
-      <h3 className="text-white font-bold text-sm mb-3">Khám phá theo danh mục</h3>
+      {/* <h3 className="text-white font-bold text-sm mb-3">Khám phá theo danh mục</h3> */}
 
       {/* Scrollable row + arrow */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center pt-5">
         <div
           ref={scrollRef}
           className="flex items-center gap-2 overflow-x-auto scrollbar-hide pr-10"
@@ -50,7 +50,7 @@ export default function CategoryFilter({ onSelect }) {
             const isActive = activeCategory === category.id;
             const IconComponent = LucideIcons[category.icon] || LucideIcons.LayoutGrid;
             
-            const iconColor = getIconColor(category.icon, isActive);
+            const iconColor = getIconColor(category.icon);
 
             return (
               <button

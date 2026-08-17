@@ -237,8 +237,13 @@ function ShortVideoCard({ short }) {
 }
 
 // ─── Featured Channel Card (Kênh nổi bật) ────────────────────
-function FeaturedChannelCard({ channel }) {
-  const [subbed, setSubbed] = useState(false);
+function FeaturedChannelCard({ channel, initialSubbed }) {
+  const [subbed, setSubbed] = useState(initialSubbed || false);
+
+  useEffect(() => {
+    setSubbed(initialSubbed || false);
+  }, [initialSubbed]);
+
   return (
     <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[#161616] border border-white/5 hover:border-white/10 hover:bg-[#1A1A1A] transition-all group">
       {/* Top: Avatar + Info */}
@@ -446,6 +451,7 @@ export default function Home() {
   const [videos, setVideos] = useState([]);
   const [channels, setChannels] = useState([]);
   const [shorts, setShorts] = useState([]);
+  const [subscribedChannelIds, setSubscribedChannelIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState(0);
   const [featuredSlide, setFeaturedSlide] = useState(0);
@@ -453,15 +459,29 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [videosRes, channelsRes, shortsRes] = await Promise.allSettled([
+        const token = localStorage.getItem('token');
+        const promises = [
           axios.get("/api/videos"),
           axios.get("/api/channels"),
           axios.get("/api/videos/shorts"),
-        ]);
-        if (videosRes.status === "fulfilled") setVideos(videosRes.value.data);
-        if (channelsRes.status === "fulfilled")
-          setChannels(channelsRes.value.data);
-        if (shortsRes.status === "fulfilled") setShorts(shortsRes.value.data);
+        ];
+        
+        let subPromiseIndex = -1;
+        if (token) {
+          subPromiseIndex = promises.length;
+          promises.push(axios.get("/api/channels/subscribed", { headers: { Authorization: `Bearer ${token}` } }));
+        }
+
+        const results = await Promise.allSettled(promises);
+        
+        if (results[0].status === "fulfilled") setVideos(results[0].value.data);
+        if (results[1].status === "fulfilled") setChannels(results[1].value.data);
+        if (results[2].status === "fulfilled") setShorts(results[2].value.data);
+        
+        if (subPromiseIndex !== -1 && results[subPromiseIndex].status === "fulfilled") {
+          const subIds = results[subPromiseIndex].value.data.map(c => c.id);
+          setSubscribedChannelIds(subIds);
+        }
       } catch (err) {
         console.error("Failed to fetch home data:", err);
       } finally {
@@ -558,8 +578,14 @@ export default function Home() {
         "https://api.dicebear.com/7.x/initials/svg?seed=HH&backgroundColor=2196f3",
     },
   ];
-  const featuredChannels =
-    channels.length > 0 ? channels.slice(0, 5) : mockChannels;
+  
+  let featuredChannelsRaw = channels.length > 0 ? channels : mockChannels;
+  const currentUserHandle = localStorage.getItem('handle');
+  if (currentUserHandle) {
+    const handleCheck = currentUserHandle.startsWith('@') ? currentUserHandle : `@${currentUserHandle}`;
+    featuredChannelsRaw = featuredChannelsRaw.filter(c => c.handle !== handleCheck && c.handle !== currentUserHandle);
+  }
+  const featuredChannels = featuredChannelsRaw.slice(0, 5);
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F] min-h-screen">
@@ -579,22 +605,23 @@ export default function Home() {
               />
             )}
 
-            {/* Category Filter */}
-            <div>
-              <CategoryFilter onSelect={(id) => setActiveCategoryId(id)} />
-            </div>
           </div>
           {/* end left col */}
 
           {/* ── Right Sidebar ── */}
-          <div className="hidden xl:block sticky top-6">
+          <div className="hidden xl:block sticky top-0">
             <RightSidebar />
           </div>
         </div>
         {/* end 2-col */}
 
+        {/* Category Filter */}
+        <div>
+          <CategoryFilter onSelect={(id) => setActiveCategoryId(id)} />
+        </div>
+        
         {/* ── Full-width sections bên dưới ── */}
-        <div className="flex flex-col gap-8 mt-6">
+        <div className="flex flex-col gap-8 mt-10">
           {/* Thịnh hành */}
           <section>
             <SectionHeader icon={Flame} title="Thịnh hành" linkTo="/trending" />
@@ -690,7 +717,11 @@ export default function Home() {
             />
             <div className="grid grid-cols-5 gap-4">
               {featuredChannels.map((ch) => (
-                <FeaturedChannelCard key={ch.id} channel={ch} />
+                <FeaturedChannelCard 
+                  key={ch.id} 
+                  channel={ch} 
+                  initialSubbed={subscribedChannelIds.includes(ch.id)}
+                />
               ))}
             </div>
           </section>
