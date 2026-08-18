@@ -213,6 +213,52 @@ wss.on('connection', (ws, req) => {
     } catch (e) {
       console.error(`[Webhook] Failed:`, e.message);
     }
+
+    // ── VOD Conversion: HLS segments → MP4 ─────────────────────────────────
+    // Wait for FFmpeg to finish writing last segments
+    setTimeout(async () => {
+      const vodPath = path.join(outDir, 'vod.mp4');
+      const m3u8Path = path.join(outDir, 'index.m3u8');
+
+      // Check if m3u8 exists
+      if (!fs.existsSync(m3u8Path)) {
+        console.log(`[VOD] No m3u8 found for ${streamKey}, skipping conversion`);
+        return;
+      }
+
+      console.log(`[VOD] Converting HLS → MP4 for stream ${streamKey}...`);
+
+      const vodFfmpeg = spawn(ffmpegPath, [
+        '-y',
+        '-protocol_whitelist', 'file,http,crypto,tcp,tls',
+        '-allowed_extensions', 'ALL',
+        '-i', m3u8Path,
+        '-c', 'copy',
+        vodPath
+      ]);
+
+      vodFfmpeg.stderr.on('data', (d) => {
+        const msg = d.toString();
+        if (msg.includes('Error') || msg.includes('error')) {
+          console.error('[VOD FFmpeg]', msg.trim());
+        }
+      });
+
+      vodFfmpeg.on('close', async (code) => {
+        if (code === 0 && fs.existsSync(vodPath)) {
+          console.log(`[VOD] MP4 created: ${vodPath}`);
+          const vodUrl = `http://localhost:8001/live/${streamKey}/vod.mp4`;
+          try {
+            await axios.post(`${BACKEND_API_URL}/livestreams/webhook/vod`, { streamKey, vodUrl });
+            console.log(`[VOD] Backend notified with vodUrl: ${vodUrl}`);
+          } catch (e) {
+            console.error(`[VOD] Failed to notify backend:`, e.message);
+          }
+        } else {
+          console.error(`[VOD] Conversion failed with code ${code}`);
+        }
+      });
+    }, 5000); // Wait 5s for last HLS segments to flush
   });
 });
 

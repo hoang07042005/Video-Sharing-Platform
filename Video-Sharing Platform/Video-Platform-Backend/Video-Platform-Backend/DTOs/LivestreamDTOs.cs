@@ -34,6 +34,12 @@ public class NmsWebhookDto
     public string StreamKey { get; set; } = string.Empty;
 }
 
+public class VodWebhookDto
+{
+    public string StreamKey { get; set; } = string.Empty;
+    public string VodUrl { get; set; } = string.Empty;
+}
+
 
 public class LiveMessageDTO
 {
@@ -49,6 +55,9 @@ public class LiveMessageDTO
     // User info
     public string? UserName { get; set; }
     public string? UserAvatar { get; set; }
+    
+    // Membership info
+    public bool IsMember { get; set; } = false;
 }
 
 public class LiveMessageResponseDTO

@@ -175,4 +175,18 @@ public class LivestreamsController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(new { success = true });
     }
+
+    [HttpPost("webhook/vod")]
+    public async Task<IActionResult> WebhookVod([FromBody] VodWebhookDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.StreamKey) || string.IsNullOrWhiteSpace(dto.VodUrl))
+            return BadRequest();
+
+        var item = await _db.Livestreams.FirstOrDefaultAsync(l => l.StreamKey == dto.StreamKey);
+        if (item == null) return NotFound("StreamKey not found");
+
+        item.VodUrl = dto.VodUrl;
+        await _db.SaveChangesAsync();
+        return Ok(new { success = true });
+    }
 }

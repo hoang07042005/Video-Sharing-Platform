@@ -552,6 +552,121 @@ function DeleteVideoModal({ video, onClose, onSuccess }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LivestreamsTab Component
+// ─────────────────────────────────────────────────────────────────────────────
+function LivestreamsTab({ channelId }) {
+  const [livestreams, setLivestreams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!channelId) return;
+    (async () => {
+      try {
+        const res = await axios.get(`/api/livestreams/channel/${channelId}`);
+        const all = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+        // Sort: live first, then ended by date
+        const sorted = [...all].sort((a, b) => {
+          if (a.status === 'live' && b.status !== 'live') return -1;
+          if (a.status !== 'live' && b.status === 'live') return 1;
+          return new Date(b.actualStartTime || b.scheduledStartTime || 0) - new Date(a.actualStartTime || a.scheduledStartTime || 0);
+        });
+        setLivestreams(sorted);
+      } catch (err) {
+        console.error('Failed to fetch livestreams', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [channelId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-[#FF4E00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (livestreams.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <MonitorPlay className="w-16 h-16 text-white/10" />
+        <p className="text-white/40 text-lg">Kênh chưa có buổi phát trực tiếp nào.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {livestreams.map((ls) => (
+        <Link
+          key={ls.id}
+          to={`/live/${ls.id}`}
+          className="group bg-[#141414] border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+        >
+          {/* Thumbnail */}
+          <div className="relative aspect-video bg-black overflow-hidden">
+            {ls.thumbnailUrl ? (
+              <img
+                src={ls.thumbnailUrl}
+                alt={ls.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-900/40 to-black">
+                <MonitorPlay className="w-12 h-12 text-white/20" />
+              </div>
+            )}
+            {/* Status badge */}
+            <div className="absolute top-2 left-2">
+              {ls.status === 'live' ? (
+                <span className="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                  LIVE
+                </span>
+              ) : ls.vodUrl ? (
+                <span className="bg-black/70 text-white text-[10px] font-semibold px-2 py-1 rounded-full">
+                  📼 VOD
+                </span>
+              ) : (
+                <span className="bg-black/70 text-white/60 text-[10px] font-semibold px-2 py-1 rounded-full">
+                  Đã kết thúc
+                </span>
+              )}
+            </div>
+            {/* Viewer count */}
+            {ls.status === 'live' && ls.currentViewers > 0 && (
+              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-full">
+                👁 {ls.currentViewers.toLocaleString()}
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="p-3">
+            <h3 className="text-white text-sm font-semibold line-clamp-2 mb-1 group-hover:text-[#FF4E00] transition-colors">
+              {ls.title || 'Livestream không có tiêu đề'}
+            </h3>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              {ls.totalViews > 0 && <span>{ls.totalViews.toLocaleString()} lượt xem</span>}
+              {ls.actualStartTime && (
+                <>
+                  {ls.totalViews > 0 && <span>•</span>}
+                  <span>{new Date(ls.actualStartTime).toLocaleDateString('vi-VN')}</span>
+                </>
+              )}
+            </div>
+            {ls.tags && (
+              <p className="text-xs text-gray-500 mt-1 truncate">{ls.tags}</p>
+            )}
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 export default function ChannelProfile() {
   const { handle } = useParams();
   const navigate = useNavigate();
@@ -931,6 +1046,13 @@ export default function ChannelProfile() {
                 className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'playlists' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
               >
                 Danh sách phát
+              </button>
+              <button
+                onClick={() => setActiveTab('livestreams')}
+                className={`flex items-center gap-1.5 pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'livestreams' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
+              >
+                <MonitorPlay className="w-4 h-4" />
+                Phát trực tiếp
               </button>
               <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Cộng đồng</button>
               {/* <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Kênh</button> */}
@@ -1761,6 +1883,11 @@ export default function ChannelProfile() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Livestreams Tab */}
+      {activeTab === 'livestreams' && (
+        <LivestreamsTab channelId={channel?.id} />
       )}
 
       <CustomizeChannelModal 

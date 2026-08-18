@@ -17,9 +17,10 @@ export default function Login() {
     setError('');
     try {
       const response = await axios.post('/api/auth/login', { emailOrPhone, password });
-      const { token, roles, handle, avatarUrl } = response.data;
+      const { token, roles, handle, avatarUrl, userId } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('roles', JSON.stringify(roles || []));
+      if (userId) localStorage.setItem('userId', userId);
       if (handle) localStorage.setItem('handle', handle);
       if (avatarUrl) localStorage.setItem('avatar', avatarUrl);
       
