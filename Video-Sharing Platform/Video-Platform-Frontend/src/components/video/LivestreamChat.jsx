@@ -275,6 +275,8 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
       const normalizedId = String(livestreamId || '').toLowerCase();
       const msgId = String(msg.livestreamId || '').toLowerCase();
       if (msgId !== normalizedId) return;
+      // Filter out deleted messages
+      if (msg.isDeleted) return;
       setMessages(prev => [...prev, { ...msg, isMember: msg.isMember || false }]);
     };
 
@@ -296,11 +298,18 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
       }]);
     };
 
+    const onMessageDeleted = (data) => {
+      // Remove deleted message from display
+      setMessages(prev => prev.filter(msg => msg.id !== data.messageId));
+    };
+
     conn.on('ReceiveMessage', onMessage);
     conn.on('ReceiveSuperChat', onSuperChat);
+    conn.on('MessageDeleted', onMessageDeleted);
     return () => {
       conn.off('ReceiveMessage', onMessage);
       conn.off('ReceiveSuperChat', onSuperChat);
+      conn.off('MessageDeleted', onMessageDeleted);
     };
   }, [connRef, livestreamId]);
 
@@ -402,39 +411,59 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
       </div>
 
       {/* Input area */}
-      <div className="mt-2 shrink-0 space-y-2">
-        <div className="flex gap-2">
+      <div className="mt-2 shrink-0 border-t border-white/5 pt-3">
+        <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-2 text-white">
           <input
             ref={inputRef}
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={!userId || disabled}
-            placeholder={disabled ? '🚫 Bạn đã bị cấm bình luận' : userId ? 'Nhập bình luận...' : 'Đăng nhập để chat'}
+            placeholder={disabled ? '🚫 Bị cấm chat' : userId ? 'Nhập tin nhắn...' : 'Đăng nhập để chat'}
             maxLength={300}
-            className="flex-1 rounded-xl px-3 py-2 bg-white/5 border border-white/10 text-white text-sm
-              placeholder-white/30 focus:outline-none focus:border-blue-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 disabled:opacity-50"
           />
-          <button
-            onClick={send}
-            disabled={sending || !text.trim() || !userId || disabled}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-semibold transition"
-          >
-            {sending ? '...' : 'Gửi'}
-          </button>
+          <div className="flex items-center gap-3 ml-2 text-gray-500">
+            <button className="hover:text-white transition">😀</button>
+            <button
+              onClick={send}
+              disabled={sending || !text.trim() || !userId || disabled}
+              className={`transition ${text.trim() ? 'text-white hover:text-blue-400' : 'opacity-50'}`}
+            >
+              <svg xmlns="http://www.-org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </div>
         </div>
 
-        {/* Donate button */}
-        {userId && (
-          <button
-            onClick={() => setShowDonate(true)}
-            className="w-full py-2 rounded-xl text-sm font-semibold text-white/90
-              bg-gradient-to-r from-pink-600/40 to-rose-600/40 hover:from-pink-600/60 hover:to-rose-600/60
-              border border-pink-500/30 hover:border-pink-500/60 transition"
-          >
-            💝 Quyên góp (Super Chat)
+        {/* Gift quick actions */}
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center gap-4">
+            <button onClick={() => { setAmount(100); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">🌹</span>
+              <span className="text-[10px] text-gray-400">Hoa hồng</span>
+              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 100</span>
+            </button>
+            <button onClick={() => { setAmount(50); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">❤️</span>
+              <span className="text-[10px] text-gray-400">Tim</span>
+              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 50</span>
+            </button>
+            <button onClick={() => { setAmount(200); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">🍦</span>
+              <span className="text-[10px] text-gray-400">Kem</span>
+              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 200</span>
+            </button>
+            <button onClick={() => { setAmount(500); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">🧸</span>
+              <span className="text-[10px] text-gray-400">Gấu bông</span>
+              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 500</span>
+            </button>
+          </div>
+          
+          <button className="bg-[#7B1FA2] hover:bg-[#6A1B9A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0">
+            Nạp xu
           </button>
-        )}
+        </div>
       </div>
 
       {/* Modals */}

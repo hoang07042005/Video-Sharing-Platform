@@ -1,13 +1,48 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Video, LogOut, List, MessageSquare, DollarSign, CreditCard, FileText, AlertTriangle, ShieldAlert, Settings as SettingsIcon, Shield, Search, Bell, ShieldBan, BarChart2, PlaySquare } from 'lucide-react';
+import { LayoutDashboard, Users, Video, LogOut, List, MessageSquare, DollarSign, CreditCard, AlertTriangle, ShieldAlert, Settings as SettingsIcon, Shield, Search, Bell, BarChart2, HomeIcon } from 'lucide-react';
+import axios from 'axios';
+import { useState, useEffect } from 'react';
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+  const currentHandle = localStorage.getItem('handle') || 'Admin';
+  const currentAvatar = localStorage.getItem('avatar') || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentHandle)}`;
+  const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+  const roleLabel = roles.includes('Admin') ? 'Quản trị viên' : roles.includes('Moderator') ? 'Moderator' : 'Người dùng';
+
+
+  useEffect(() => {
+    const fetchPublicSettings = async () => {
+      try {
+        const res = await axios.get('/api/admin/settings/public');
+        if (res.data) {
+          if (res.data.logoUrl) {
+            setLogoUrl(res.data.logoUrl);
+          }
+          if (res.data.faviconUrl) {
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            link.href = res.data.faviconUrl;
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải cấu hình public:", err);
+      }
+    };
+    fetchPublicSettings();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('roles');
+    localStorage.removeItem('handle');
+    localStorage.removeItem('avatar');
     navigate('/login');
   };
 
@@ -50,17 +85,23 @@ export default function AdminLayout() {
         { name: 'Cài đặt', path: '/admin/settings', icon: SettingsIcon },
       ]
     },
+    {
+      label: 'Client',
+      items: [
+        { name: 'Tổng quan khách hàng', path: '/', icon: HomeIcon },
+      ]
+    }
   ];
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white flex font-sans">
       {/* Admin Sidebar */}
-      <aside className="w-[220px] h-screen bg-[#0F0F0F] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
+      <aside className="w-[190px] h-screen bg-[#0F0F0F] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
         {/* Logo */}
         <div className="py-1 px-4 flex items-center justify-center w-full shrink-0">
           <Link to="/admin" className="flex items-center justify-center">
             <div className="h-16 w-28">
-              <img src="/logotrang.png" alt="Logo" className="h-full w-full object-contain" />
+              <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
             </div>
           </Link>
         </div>
@@ -70,7 +111,7 @@ export default function AdminLayout() {
           <nav className="px-3 py-2 space-y-4">
             {navGroups.map((group) => (
               <div key={group.label}>
-                 <p className="px-5 pt-5 border-t border-white/8 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</p>
+                 <p className="px-2 pt-5 border-t border-white/8 pb-1 text-[9px] font-bold text-gray-700 uppercase tracking-widest">{group.label}</p>
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const isActive = location.pathname === item.path;
@@ -81,12 +122,12 @@ export default function AdminLayout() {
                         to={item.path}
                         className={`flex items-center gap-2 px-2 py-2.5 rounded-lg transition-all duration-200 ${
                           isActive
-                            ? 'bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white font-semibold shadow-lg shadow-[#FF5722]/20'
+                            ? 'bg-gradient-to-r from-[#FF5722] to-[#9C27B0] text-white font-semibold shadow-lg shadow-[#FF5722]/20'
                             : 'text-gray-400 hover:text-white hover:bg-[#1F1F1F]'
                         }`}
                       >
                         <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
-                        <span className="text-sm font-medium">{item.name}</span>
+                        <span className="text-xs font-medium">{item.name}</span>
                       </Link>
                     );
                   })}
@@ -118,27 +159,25 @@ export default function AdminLayout() {
             </h2>
             <p className="text-xs text-gray-400 mt-1">Đây là tổng quan hoạt động của hệ thống hôm nay.</p> */}
           </div>
-          
           <div className="flex items-center gap-6">
             <div className="relative">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input 
-                type="text" 
-                placeholder="Tìm kiếm..." 
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
                 className="bg-[#1a1c23] border border-white/10 text-white text-sm rounded-full pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
-            
             <div className="flex items-center gap-4 border-l border-white/10 pl-6">
               <button className="relative text-gray-400 hover:text-white transition-colors">
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0f111a]"></span>
               </button>
               <div className="flex items-center gap-3 cursor-pointer">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Admin" className="w-9 h-9 rounded-full bg-white/10 object-cover" />
+                <img src={currentAvatar} alt={currentHandle} className="w-9 h-9 rounded-full bg-white/10 object-cover" />
                 <div className="hidden md:block text-sm">
-                  <p className="font-semibold text-white leading-tight">Admin</p>
-                  <p className="text-[11px] text-gray-400">Quản trị viên</p>
+                  <p className="font-semibold text-white leading-tight">{currentHandle}</p>
+                  <p className="text-[11px] text-gray-400">{roleLabel}</p>
                 </div>
               </div>
             </div>

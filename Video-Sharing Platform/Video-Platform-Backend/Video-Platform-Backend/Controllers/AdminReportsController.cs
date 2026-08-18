@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Video_Platform_Backend.DTOs;
+using Video_Platform_Backend.Hubs;
 using Video_Platform_Backend.Models;
 
 namespace Video_Platform_Backend.Controllers
@@ -16,10 +18,12 @@ namespace Video_Platform_Backend.Controllers
     public class AdminReportsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<LivestreamHub> _hubContext;
 
-        public AdminReportsController(ApplicationDbContext context)
+        public AdminReportsController(ApplicationDbContext context, IHubContext<LivestreamHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: api/admin/reports/stats
@@ -141,6 +145,111 @@ namespace Video_Platform_Backend.Controllers
             return NoContent();
         }
 
+        [HttpPost("handle-violation")]
+        public async Task<IActionResult> HandleViolationAction([FromBody] AdminViolationActionRequest request)
+        {
+            if (request.TargetId == Guid.Empty || string.IsNullOrWhiteSpace(request.TargetType))
+            {
+                return BadRequest(new { message = "Thiếu thông tin đối tượng vi phạm." });
+            }
+
+            var action = request.Action?.Trim().ToLowerInvariant();
+            var normalizedTargetType = request.TargetType.Trim();
+
+            switch (normalizedTargetType)
+            {
+                case "Comment":
+                    var comment = await _context.Comments
+                        .Include(c => c.Video)
+                        .FirstOrDefaultAsync(c => c.Id == request.TargetId);
+
+                    if (comment == null)
+                    {
+                        return NotFound(new { message = "Bình luận không tồn tại." });
+                    }
+
+                    if (action == "delete")
+                    {
+                        _context.Comments.Remove(comment);
+                        if (comment.Video != null && (comment.Video.CommentsCount ?? 0) > 0)
+                        {
+                            comment.Video.CommentsCount -= 1;
+                        }
+                    }
+                    else
+                    {
+                        comment.FilterStatus = "Blocked";
+                        comment.IsFiltered = true;
+                        comment.DisplayContent = "Nội dung này đã bị ẩn do vi phạm quy định cộng đồng.";
+                        comment.MatchedKeywords ??= "Moderation";
+                    }
+                    break;
+
+                case "Video":
+                    var video = await _context.Videos.FirstOrDefaultAsync(v => v.Id == request.TargetId);
+                    if (video == null)
+                    {
+                        return NotFound(new { message = "Video không tồn tại." });
+                    }
+
+                    if (action == "delete")
+                    {
+                        _context.Videos.Remove(video);
+                    }
+                    else
+                    {
+                        video.Visibility = "Private";
+                    }
+                    break;
+
+                case "LiveMessage":
+                    var liveMessage = await _context.LiveMessages
+                        .Include(m => m.Livestream)
+                        .FirstOrDefaultAsync(m => m.Id == request.TargetId);
+                    if (liveMessage == null)
+                    {
+                        return NotFound(new { message = "Tin nhắn live không tồn tại." });
+                    }
+
+                    liveMessage.IsDeleted = true;
+                    liveMessage.Content = "[Tin nhắn đã bị ẩn do vi phạm quy định cộng đồng.]";
+                    
+                    // Notify clients to remove this message from display
+                    if (liveMessage.Livestream != null)
+                    {
+                        await _hubContext.Clients
+                            .Group(liveMessage.LivestreamId.ToString())
+                            .SendAsync("MessageDeleted", new { messageId = liveMessage.Id });
+                    }
+                    break;
+
+                case "User":
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.TargetId);
+                    if (user == null)
+                    {
+                        return NotFound(new { message = "Người dùng không tồn tại." });
+                    }
+
+                    user.IsBanned = true;
+                    user.IsActive = false;
+                    break;
+
+                default:
+                    return BadRequest(new { message = "Loại đối tượng không được hỗ trợ." });
+            }
+
+            var relatedReport = await _context.Reports
+                .FirstOrDefaultAsync(r => r.TargetId == request.TargetId && r.TargetType == normalizedTargetType);
+
+            if (relatedReport != null)
+            {
+                relatedReport.Status = action == "ignore" ? "Ignored" : "Resolved";
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã xử lý vi phạm thành công.", action = action ?? "hide" });
+        }
+
         // GET: api/admin/violations
         [HttpGet("/api/admin/violations")]
         public async Task<ActionResult<IEnumerable<AdminReportDTO>>> GetViolations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -210,6 +319,14 @@ namespace Video_Platform_Backend.Controllers
         public class UpdateReportStatusRequest
         {
             public string Status { get; set; } = null!;
+        }
+
+        public class AdminViolationActionRequest
+        {
+            public Guid TargetId { get; set; }
+            public string TargetType { get; set; } = string.Empty;
+            public string Action { get; set; } = "hide";
+            public string? Reason { get; set; }
         }
 
         // Helper Methods

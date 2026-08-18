@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  BarChart2, Calendar, Download, AlertTriangle, Flag, ShieldAlert, 
-  ShieldCheck, Filter, CheckCircle2, XCircle, Eye, MoreVertical,
-  Search, ChevronLeft, ChevronRight, Activity, ArrowUpRight, ArrowDownRight, Loader2
+  Calendar, Download, AlertTriangle, Flag, ShieldAlert, 
+  ShieldCheck, CheckCircle2, Eye, MoreVertical,
+  ChevronLeft, ChevronRight, Activity, ArrowUpRight, ArrowDownRight, Loader2
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -16,6 +16,9 @@ export default function AdminReports() {
   const [reports, setReports] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -78,6 +81,38 @@ export default function AdminReports() {
   
   const totalPriority = stats.severePriority + stats.warningPriority + stats.reviewPriority || 1;
   const recentReports = reports;
+
+  const openReportDetail = (report) => {
+    setSelectedReport(report);
+    setIsDetailOpen(true);
+  };
+
+  const closeReportDetail = () => {
+    setSelectedReport(null);
+    setIsDetailOpen(false);
+  };
+
+  const handleQuickAction = async (report, newStatus) => {
+    try {
+      setActionLoadingId(report.originalId || report.id);
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/admin/reports/${report.originalId || report.id.replace('#BC-', '')}/status`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      closeReportDetail();
+      const [statsRes, reportsRes] = await Promise.all([
+        axios.get('/api/admin/reports/stats', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`/api/admin/reports?page=${page}&pageSize=5`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setStats(statsRes.data);
+      setReports(reportsRes.data);
+    } catch (error) {
+      console.error('Error updating report status:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   return (
     <div className="pb-20 max-w-[1600px] mx-auto text-white">
@@ -406,7 +441,7 @@ export default function AdminReports() {
                   </td>
                   <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-gray-500 hover:text-white rounded-lg transition-colors cursor-pointer" title="Chi tiết">
+                      <button onClick={() => openReportDetail(report)} className="p-1.5 text-gray-500 hover:text-white rounded-lg transition-colors cursor-pointer" title="Chi tiết">
                         <Eye className="w-4 h-4" />
                       </button>
                       <div className="relative group/menu">
@@ -431,6 +466,87 @@ export default function AdminReports() {
             </tbody>
           </table>
         </div>
+
+        {isDetailOpen && selectedReport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onClick={closeReportDetail}>
+            <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#111111] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-red-400">Chi tiết báo cáo</p>
+                  <h3 className="mt-2 text-2xl font-bold text-white">{selectedReport.id}</h3>
+                </div>
+                <button onClick={closeReportDetail} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-300 hover:text-white">Đóng</button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-gray-400">Người báo cáo</p>
+                  <div className="mt-2 flex items-center gap-3">
+                    {selectedReport.avatar?.startsWith('http') ? (
+                      <img src={selectedReport.avatar} alt={selectedReport.user} className="h-9 w-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-bold text-white">
+                        {selectedReport.avatar}
+                      </div>
+                    )}
+                    <span className="font-medium text-white">{selectedReport.user}</span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-gray-400">Đối tượng</p>
+                  <p className="mt-2 font-semibold text-white">{selectedReport.targetType || 'Video'}</p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-gray-400">Mức độ ưu tiên</p>
+                  <span className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${selectedReport.pColor}`}>
+                    <AlertTriangle className="w-3 h-3" />
+                    {selectedReport.priority}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-gray-400">Trạng thái</p>
+                  <p className="mt-2 font-semibold text-white">{selectedReport.status}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-gray-400">Lý do</p>
+                <p className="mt-2 text-base font-semibold text-white">{selectedReport.reason}</p>
+              </div>
+
+              {selectedReport.description && (
+                <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-gray-400">Mô tả chi tiết</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-200">{selectedReport.description}</p>
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-wrap justify-end gap-3">
+                {selectedReport.status !== 'Đã giải quyết' && (
+                  <>
+                    <button
+                      onClick={() => handleQuickAction(selectedReport, 'Resolved')}
+                      disabled={actionLoadingId === (selectedReport.originalId || selectedReport.id)}
+                      className="rounded-xl bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-60"
+                    >
+                      {actionLoadingId === (selectedReport.originalId || selectedReport.id) ? 'Đang xử lý...' : 'Đánh dấu đã giải quyết'}
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction(selectedReport, 'Ignored')}
+                      disabled={actionLoadingId === (selectedReport.originalId || selectedReport.id)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-gray-300 hover:text-white disabled:opacity-60"
+                    >
+                      Bỏ qua
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5 relative">

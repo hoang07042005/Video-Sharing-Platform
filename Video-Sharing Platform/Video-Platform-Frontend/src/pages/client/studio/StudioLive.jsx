@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import LivestreamPlayer from '../../../components/video/LivestreamPlayer';
@@ -6,6 +6,7 @@ import LivestreamChat from '../../../components/video/LivestreamChat';
 import LivestreamReactions from '../../../components/video/LivestreamReactions';
 import DonationPanel from '../../../components/DonationPanel';
 import { useSignalRConnection } from '../../../hooks/useSignalRConnection';
+import * as LucideIcons from 'lucide-react';
 
 const StudioLive = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const StudioLive = () => {
   const [tags, setTags] = useState('');
   const [isLive, setIsLive] = useState(false);
   const [streamTime, setStreamTime] = useState(0);
+  const [showStreamKey, setShowStreamKey] = useState(false);
+  const [copied, setCopied] = useState(false);
   const screenStreamRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const videoRef = useRef(null);
@@ -64,6 +67,12 @@ const StudioLive = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text || '');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const startScreenShare = async () => {
@@ -163,13 +172,11 @@ const StudioLive = () => {
   const stopScreenShare = async () => {
     if (!livestream || !livestream.id) return;
     try {
-      // Dừng tất cả tracks
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((track) => track.stop());
         screenStreamRef.current = null;
       }
 
-      // Dừng timer
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
@@ -185,7 +192,6 @@ const StudioLive = () => {
         wsRef.current = null;
       }
 
-      // We still call /end manually just in case webhook fails
       await axios.post(`${apiBase}/api/livestreams/${livestream.id}/end`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -226,7 +232,6 @@ const StudioLive = () => {
       })();
     }
 
-    // Cleanup: dừng stream khi component unmount
     return () => {
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -298,139 +303,457 @@ const StudioLive = () => {
 
   const hasPlayableSource = Boolean(livestream?.hlsUrl || livestream?.vodUrl || livestream?.streamUrl || livestream?.playbackUrl);
 
+  // ── CREATION FORM ──
   if (!idParam && !livestream) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Bắt đầu phát trực tiếp</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Tiêu đề</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nhập tiêu đề livestream" className="w-full p-2 rounded bg-[#111] border border-white/10 text-white placeholder-gray-500" />
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto min-h-full">
+        
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-pink-500/10 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-[0_0_15px_rgba(236,72,153,0.15)] relative overflow-hidden">
+             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
+             <LucideIcons.Radio className="w-7 h-7 md:w-8 md:h-8 text-pink-400 relative z-10" />
+          </div>
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-1">Bắt đầu phát trực tiếp</h2>
+            <p className="text-gray-400 text-xs md:text-sm">Tạo livestream mới để kết nối với khán giả của bạn</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6">
+          {/* Left Column — Form */}
+          <div className="flex flex-col gap-6">
+            
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-5 md:p-6 flex flex-col gap-5">
+              
+              <div className="flex gap-4">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-purple-500/10 items-center justify-center shrink-0 border border-purple-500/20 mt-1">
+                  <LucideIcons.Type className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Tiêu đề livestream</label>
+                  <div className="relative">
+                    <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nhập tiêu đề livestream hấp dẫn..." className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors pr-16" />
+                    <span className="absolute right-3 top-3.5 text-xs text-gray-500">{title.length}/100</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-purple-500/10 items-center justify-center shrink-0 border border-purple-500/20 mt-1">
+                  <LucideIcons.FileText className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Mô tả (không bắt buộc)</label>
+                  <div className="relative">
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nhập mô tả chi tiết về nội dung livestream..." className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors h-28 resize-none pr-4 pb-8" />
+                    <span className="absolute right-3 bottom-3 text-xs text-gray-500">{description.length}/500</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-purple-500/10 items-center justify-center shrink-0 border border-purple-500/20 mt-1">
+                  <LucideIcons.LayoutGrid className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Danh mục</label>
+                  <div className="relative">
+                    <select className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors appearance-none cursor-pointer">
+                      <option value="">Chọn danh mục phù hợp</option>
+                      <option value="gaming">Gaming</option>
+                      <option value="music">Âm nhạc</option>
+                      <option value="chat">Trò chuyện</option>
+                      <option value="education">Giáo dục</option>
+                    </select>
+                    <LucideIcons.ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-3.5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-purple-500/10 items-center justify-center shrink-0 border border-purple-500/20 mt-1">
+                  <LucideIcons.Tag className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Tags (phân cách bằng dấu phẩy)</label>
+                  <div className="relative">
+                    <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Ví dụ: game, giải trí, hướng dẫn" className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors pr-16" />
+                    <span className="absolute right-3 top-3.5 text-xs text-gray-500">{tags.length}/100</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5 mt-2">
+                <button onClick={() => navigate(-1)} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-300 text-sm font-medium transition-colors cursor-pointer">Hủy bỏ</button>
+                <button onClick={createStream} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FF5722] to-[#CE1414] hover:shadow-lg hover:shadow-[#FF5722]/20 rounded-xl text-white text-sm font-semibold transition-all cursor-pointer">
+                  <LucideIcons.Radio className="w-4 h-4" /> Tạo và bắt đầu livestream
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Mô tả</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nhập mô tả livestream (không bắt buộc)" className="w-full p-2 rounded bg-[#111] border border-white/10 text-white placeholder-gray-500 h-20 resize-none" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Tags (phân cách bằng dấu phẩy)</label>
-              <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="tag1, tag2, tag3" className="w-full p-2 rounded bg-[#111] border border-white/10 text-white placeholder-gray-500" />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={createStream} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-semibold">Tạo và bắt đầu</button>
-              <button onClick={() => navigate(-1)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded text-white">Hủy</button>
+
+            {/* Stats cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-[#141418] border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+                  <LucideIcons.Video className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-semibold mb-1">Chất lượng</h4>
+                  <p className="text-[10px] text-gray-400">Tối đa 1080p</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Khuyến nghị 720p</p>
+                </div>
+              </div>
+              <div className="bg-[#141418] border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                  <LucideIcons.Wifi className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-semibold mb-1">Kết nối</h4>
+                  <p className="text-[10px] text-gray-400">Tối thiểu 5 Mbps</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Khuyến nghị 10 Mbps</p>
+                </div>
+              </div>
+              <div className="bg-[#141418] border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
+                  <LucideIcons.Clock className="w-4 h-4 text-orange-400" />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-semibold mb-1">Thời lượng</h4>
+                  <p className="text-[10px] text-gray-400">Không giới hạn</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Livestream thoải mái</p>
+                </div>
+              </div>
+              <div className="bg-[#141418] border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+                  <LucideIcons.Users className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-semibold mb-1">Khán giả</h4>
+                  <p className="text-[10px] text-gray-400">Không giới hạn</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Tiếp cận mọi người</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-[#0F0F0F] p-4 rounded">
-              <label className="block text-sm text-gray-300 mb-2">Hình thumbnail</label>
-              <div className="mb-3">
-                <label className="block w-full p-4 border-2 border-dashed border-white/20 rounded cursor-pointer hover:border-white/40 transition text-center">
-                  <div className="text-gray-400 text-sm">Chọn hình ảnh từ máy</div>
-                  <input type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
-                </label>
+          {/* Right Column */}
+          <div className="flex flex-col gap-6">
+            
+            {/* Thumbnail upload */}
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <LucideIcons.Sparkles className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-semibold text-white">Hình thu nhỏ livestream</h3>
               </div>
-              {thumbnailPreview && (
-                <div className="w-full h-40 rounded overflow-hidden bg-black/50 flex items-center justify-center">
+              <div className="relative group rounded-xl border-2 border-dashed border-white/10 hover:border-purple-500/50 bg-[#0F0F0F] transition-all overflow-hidden h-[200px] flex items-center justify-center cursor-pointer">
+                <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
+                {thumbnailPreview ? (
                   <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              )}
-              {!thumbnailPreview && (
-                <div className="w-full h-40 rounded bg-white/5 flex items-center justify-center text-gray-500 text-sm">
-                  Chưa có hình preview
-                </div>
-              )}
+                ) : (
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <LucideIcons.UploadCloud className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-300 mb-1">Tải lên hình thu nhỏ</p>
+                    <p className="text-[10px] text-gray-500">JPG, PNG • Tối đa 5MB • 1280x720px</p>
+                  </div>
+                )}
+                {thumbnailPreview && (
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-10">
+                    <p className="text-white text-sm font-medium flex items-center gap-2"><LucideIcons.RefreshCw className="w-4 h-4" /> Đổi hình khác</p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Preview Card */}
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <LucideIcons.Eye className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-semibold text-white">Xem trước</h3>
+              </div>
+              <div className="w-full aspect-video bg-[#0A0A0A] rounded-xl border border-white/5 relative overflow-hidden mb-4">
+                {thumbnailPreview ? (
+                  <img src={thumbnailPreview} alt="Live Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <LucideIcons.Image className="w-8 h-8 text-white/10" />
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shadow-lg z-10">
+                  LIVE
+                </div>
+              </div>
+              <div className="flex gap-3 items-start">
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 shrink-0 flex items-center justify-center border border-purple-500/30">
+                  <LucideIcons.User className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1 flex flex-col">
+                  {title ? (
+                    <h4 className="text-sm font-semibold text-white line-clamp-2 leading-snug">{title}</h4>
+                  ) : (
+                    <div className="h-3 bg-white/10 rounded w-3/4 mb-1.5 mt-1"></div>
+                  )}
+                  <span className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
+                    Kênh của bạn <LucideIcons.CheckCircle2 className="w-3 h-3 text-gray-500" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tips Card */}
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <LucideIcons.Lightbulb className="w-4 h-4 text-orange-400" />
+                <h3 className="text-sm font-semibold text-white">Mẹo để có livestream thành công</h3>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  'Tiêu đề hấp dẫn và mô tả rõ ràng',
+                  'Chọn hình thu nhỏ chất lượng cao',
+                  'Kiểm tra kết nối internet ổn định',
+                  'Tương tác với khán giả thường xuyên'
+                ].map((tip, idx) => (
+                  <li key={idx} className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full bg-pink-500/20 flex items-center justify-center shrink-0">
+                      <LucideIcons.Check className="w-2.5 h-2.5 text-pink-400" />
+                    </div>
+                    <span className="text-[11px] text-gray-400">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
         </div>
       </div>
     );
   }
 
+  // ── ACTIVE LIVESTREAM DASHBOARD ──
   return (
-    <div className="p-6">
-      {livestream && (
-        <div className="mb-6 flex justify-between items-center bg-white/5 p-4 rounded">
+    <div className="p-4 md:p-6">
+
+      {/* Stats Bar */}
+      <div className="px-5 py-4 mb-5 flex items-center gap-0 flex-wrap">
+        <div className="flex items-center gap-3 flex-1 min-w-[120px]">
+          <LucideIcons.Signal className="w-5 h-5 text-gray-500 shrink-0" />
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">{livestream.title}</h2>
-            <p className="text-sm text-gray-400">Trạng thái: {livestream.status}</p>
-            {isLive && <p className="text-lg font-bold text-red-500 mt-2">🔴 LIVE {formatTime(streamTime)}</p>}
+            <p className="text-[11px] text-gray-500 mb-0.5">Trạng thái</p>
+            <p className={`text-base font-bold leading-tight ${isLive ? 'text-red-400' : 'text-white'}`}>{isLive ? 'Đang LIVE' : 'Offline'}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">{isLive ? 'Đang phát trực tiếp' : 'Chưa phát trực tiếp'}</p>
           </div>
-          {!isLive && (
-            <button
-              onClick={startScreenShare}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white font-semibold"
-            >
-              Bắt đầu chia sẻ màn hình
+        </div>
+        <div className="w-px h-10 bg-white/5 mx-4 hidden md:block"></div>
+        <div className="flex items-center gap-3 flex-1 min-w-[130px]">
+          <LucideIcons.Clock className="w-5 h-5 text-gray-400 shrink-0" />
+          <div>
+            <p className="text-[11px] text-gray-500 mb-0.5">Thời lượng</p>
+            <p className="text-base font-bold text-white leading-tight font-mono">{formatTime(streamTime)}</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">Sẽ bắt đầu khi bạn phát</p>
+          </div>
+        </div>
+        <div className="w-px h-10 bg-white/5 mx-4 hidden md:block"></div>
+        <div className="flex items-center gap-3 flex-1 min-w-[130px]">
+          <LucideIcons.Users className="w-5 h-5 text-gray-400 shrink-0" />
+          <div>
+            <p className="text-[11px] text-gray-500 mb-0.5">Người xem đồng thời</p>
+            <p className="text-base font-bold text-white leading-tight">0</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">Tối đa hiện tại</p>
+          </div>
+        </div>
+        <div className="w-px h-10 bg-white/5 mx-4 hidden md:block"></div>
+        <div className="flex items-center gap-3 flex-1 min-w-[100px]">
+          <LucideIcons.Heart className="w-5 h-5 text-gray-400 shrink-0" />
+          <div>
+            <p className="text-[11px] text-gray-500 mb-0.5">Lượt thích</p>
+            <p className="text-base font-bold text-white leading-tight">0</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">Tổng lượt thích</p>
+          </div>
+        </div>
+        <div className="w-px h-10 bg-white/5 mx-4 hidden md:block"></div>
+        <div className="flex items-center gap-3 flex-1 min-w-[100px]">
+          <LucideIcons.MessageSquare className="w-5 h-5 text-gray-400 shrink-0" />
+          <div>
+            <p className="text-[11px] text-gray-500 mb-0.5">Tỷ lệ chat</p>
+            <p className="text-base font-bold text-white leading-tight">0</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">tin nhắn/phút</p>
+          </div>
+        </div>
+        <div className="w-px h-10 bg-white/5 mx-4 hidden lg:block"></div>
+        <div className="ml-auto shrink-0">
+          {!isLive ? (
+            <button onClick={startScreenShare} className="flex flex-col items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-white transition-all cursor-pointer min-w-[180px] shadow-lg shadow-red-600/20">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <LucideIcons.Radio className="w-4 h-4" /> Bắt đầu phát trực tiếp
+              </div>
+              <span className="text-[10px] text-red-200 mt-0.5">Khi đã sẵn sàng</span>
             </button>
-          )}
-          {isLive && (
-            <button
-              onClick={stopScreenShare}
-              className="px-4 py-2 bg-red-700 hover:bg-red-800 rounded text-white font-semibold animate-pulse"
-            >
-              Kết thúc phát trực tiếp
+          ) : (
+            <button onClick={stopScreenShare} className="flex items-center gap-2 px-6 py-3 bg-red-900/40 border border-red-500/40 hover:bg-red-900/60 rounded-xl text-red-400 text-sm font-bold transition-all animate-pulse cursor-pointer">
+              <LucideIcons.Square className="w-4 h-4" /> Kết thúc livestream
             </button>
           )}
         </div>
-      )}
+      </div>
 
-      {livestream && !isLive && (
-        <div className="mb-6 bg-[#141414] p-4 rounded border border-white/10">
-          <h3 className="text-lg font-semibold text-white mb-3">Thông tin kết nối (Dùng cho OBS Studio)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Máy chủ tĩnh (RTMP URL)</label>
-              <input readOnly value="rtmp://localhost:1935/live" className="w-full p-2 rounded bg-black border border-white/10 text-white font-mono text-sm" />
+      {/* Main 2-col grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
+
+        {/* Left column */}
+        <div className="flex flex-col gap-5">
+
+          {/* Video preview */}
+          <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
+              <h3 className="text-sm font-semibold text-white">Xem trước livestream</h3>
+              <button className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-white transition-colors cursor-pointer">
+                <LucideIcons.RefreshCw className="w-3.5 h-3.5" /> Làm mới
+              </button>
             </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Khóa luồng (Stream Key)</label>
-              <div className="flex gap-2">
-                <input readOnly type="password" value={livestream.streamKey || ''} className="flex-1 p-2 rounded bg-black border border-white/10 text-white font-mono text-sm" />
-                <button onClick={() => navigator.clipboard.writeText(livestream.streamKey)} className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm">Copy</button>
+            <div className="relative bg-[#080808]">
+              {isLive && livestream ? (
+                <video ref={videoRef} autoPlay playsInline muted className="w-full aspect-video object-contain" />
+              ) : livestream && hasPlayableSource ? (
+                <LivestreamPlayer hlsUrl={livestream.hlsUrl || livestream.vodUrl || livestream.streamUrl || livestream.playbackUrl || ''} poster={livestream.thumbnailUrl} />
+              ) : (
+                <div className="relative w-full aspect-video flex flex-col items-center justify-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center">
+                    <LucideIcons.Radio className="w-8 h-8 text-white/15" />
+                  </div>
+                  <p className="text-gray-400 text-sm font-medium">Chưa có tín hiệu</p>
+                  <p className="text-gray-600 text-xs text-center max-w-xs">Vui lòng bắt đầu phát từ phần mềm OBS Studio.</p>
+                  <div className="absolute bottom-3 left-3 text-[10px] text-gray-600 bg-black/40 border border-white/5 px-2 py-0.5 rounded">16:9</div>
+                </div>
+              )}
+              {isLive && (
+                <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse inline-block"></span> LIVE · {formatTime(streamTime)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* OBS Connection Info */}
+          <div className="bg-[#141418] rounded-2xl border border-white/5 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white">Thông tin kết nối (Dùng cho OBS Studio)</h3>
+              <a href="#" className="flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
+                Hướng dẫn kết nối <LucideIcons.ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-[11px] text-gray-500 mb-2">Máy chủ (RTMP URL)</label>
+                <div className="flex items-center gap-2 bg-[#0F0F0F] border border-white/10 rounded-xl px-3 py-2.5">
+                  <span className="flex-1 text-white text-xs font-mono truncate">rtmp://localhost:1935/live</span>
+                  <button onClick={() => handleCopy('rtmp://localhost:1935/live')} className="text-gray-500 hover:text-white transition-colors cursor-pointer shrink-0 p-1 rounded hover:bg-white/5">
+                    <LucideIcons.Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] text-gray-500 mb-2">Khóa luồng (Stream Key)</label>
+                <div className="flex items-center gap-2 bg-[#0F0F0F] border border-white/10 rounded-xl px-3 py-2.5">
+                  <span className="flex-1 text-white text-xs font-mono truncate">{showStreamKey ? (livestream?.streamKey || '—') : '•'.repeat(16)}</span>
+                  <button onClick={() => setShowStreamKey(v => !v)} className="text-gray-500 hover:text-white transition-colors cursor-pointer shrink-0 p-1 rounded hover:bg-white/5">
+                    {showStreamKey ? <LucideIcons.EyeOff className="w-3.5 h-3.5" /> : <LucideIcons.Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button onClick={() => handleCopy(livestream?.streamKey)} className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors cursor-pointer shrink-0 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}>
+                    {copied ? 'Đã sao!' : 'Sao chép'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5 bg-amber-500/[0.06] border border-amber-500/20 rounded-xl px-4 py-2.5">
+              <LucideIcons.AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-amber-300/70 leading-relaxed">Giữ bí mật khóa luồng của bạn. Bất kỳ ai có khóa này đều có thể phát trực tiếp lên kênh của bạn.</p>
+            </div>
+          </div>
+
+          {/* Thumbnail */}
+          <div className="bg-[#141418] rounded-2xl border border-white/5 p-5">
+            <h3 className="text-sm font-semibold text-white mb-4">Hình thu nhỏ (Thumbnail)</h3>
+            <div className="flex gap-4">
+              <div className="relative group flex-1 rounded-xl border-2 border-dashed border-white/10 hover:border-purple-500/40 bg-[#0F0F0F] transition-all overflow-hidden h-[120px] flex flex-col items-center justify-center cursor-pointer gap-2">
+                <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
+                <LucideIcons.UploadCloud className="w-6 h-6 text-gray-500 group-hover:text-purple-400 transition-colors" />
+                <p className="text-xs text-gray-500 text-center px-3">Tải lên hình thu nhỏ tùy chỉnh</p>
+                <p className="text-[9px] text-gray-600 text-center px-3">Định dạng: JPG, PNG — Kích thước đề xuất: 1280x720px (16:9) — Dưới 2MB</p>
+              </div>
+              <div className="flex gap-3">
+                {thumbnailPreview ? (
+                  <div className="h-[120px] aspect-video rounded-xl overflow-hidden border border-white/10 shrink-0 relative">
+                    <img src={thumbnailPreview} alt="Custom thumbnail" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-1.5 right-1.5 bg-black/60 text-[9px] text-white px-1.5 py-0.5 rounded">Tùy chỉnh</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-[120px] aspect-video rounded-xl overflow-hidden border border-white/10 shrink-0 bg-gradient-to-br from-blue-900/60 to-indigo-900/60 flex items-center justify-center relative">
+                      <LucideIcons.Image className="w-6 h-6 text-white/20" />
+                      <div className="absolute bottom-1.5 right-1.5 bg-black/60 text-[9px] text-white px-1.5 py-0.5 rounded">Ví dụ</div>
+                    </div>
+                    <div className="h-[120px] aspect-video rounded-xl overflow-hidden border border-white/10 shrink-0 bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center relative">
+                      <LucideIcons.Image className="w-6 h-6 text-white/20" />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 mt-3">
-            Bạn có thể dùng OBS Studio để phát trực tiếp thay vì trình duyệt. Nhập URL và Khóa luồng vào OBS, sau đó bấm "Start Streaming".
-          </p>
-        </div>
-      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          {isLive && livestream ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-80 bg-black rounded object-contain"
-            />
-          ) : livestream && hasPlayableSource ? (
-            <LivestreamPlayer hlsUrl={livestream.hlsUrl || livestream.vodUrl || livestream.streamUrl || livestream.playbackUrl || ''} poster={livestream.thumbnailUrl} />
-          ) : (
-            <div className="w-full h-80 bg-black/60 rounded flex items-center justify-center text-center text-white px-6">
-              {livestream ? 'Livestream chưa có luồng phát, đang chờ nguồn phát từ máy chủ.' : 'Đang tải...'}
+        </div>
+
+        {/* Right column — Chat */}
+        <div className="flex flex-col h-full">
+          <div className="flex flex-col overflow-hidden" style={{minHeight: '600px'}}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 shrink-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-white">Chat trực tiếp</h3>
+                <LucideIcons.ChevronDown className="w-4 h-4 text-gray-500" />
+              </div>
+              <button className="text-gray-500 hover:text-white transition-colors cursor-pointer">
+                <LucideIcons.MoreVertical className="w-4 h-4" />
+              </button>
             </div>
-          )}
-        </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-[#0F0F0F] p-4 rounded">
-            <h3 className="text-lg font-bold text-white mb-3">Chat trực tiếp</h3>
-            {livestream && livestream.id ? (
-              <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto" style={{minHeight: '600px'}}>
+              {livestream && livestream.id ? (
                 <LivestreamChat livestreamId={livestream.id} apiBaseUrl={apiBase} userId={localStorage.getItem('userId')} />
-                <LivestreamReactions livestreamId={livestream.id} connRef={connRef} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                    <LucideIcons.MessageSquare className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-gray-500 text-sm">Chưa có tin nhắn nào</p>
+                  <p className="text-gray-600 text-xs text-center px-8">Bắt đầu phát trực tiếp để nhận tin nhắn từ khán giả</p>
+                </div>
+              )}
+            </div>
+
+            {livestream && livestream.id && (
+              <div className="px-4 pb-3 shrink-0 bottom-0">
                 <DonationPanel livestreamId={livestream.id} connRef={connRef} />
               </div>
-            ) : (
-              <div className="text-gray-400 text-center py-8">Tạo livestream để bắt đầu chat</div>
+            )}
+
+            <div className="px-4 py-3 border-t border-white/5 shrink-0 flex items-center gap-3">
+              {['❤️','👍','😂','😮','😢','🔥','🎉','💯'].map((emoji, i) => (
+                <button key={i} className="text-base hover:scale-125 transition-transform cursor-pointer">
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            {livestream && livestream.id && (
+              <div className="px-4 pb-3 shrink-0">
+                <LivestreamReactions livestreamId={livestream.id} connRef={connRef} />
+              </div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

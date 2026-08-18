@@ -208,7 +208,7 @@ export default function Header({ toggleSidebar }) {
               </div>
 
               {activeDropdown === 'create' && (
-                <div className="absolute right-0 top-full mt-4 w-56 border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">
+                <div className="absolute right-0 top-full bg-[#0F0F0F] mt-4 w-56 border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">
                   <Link to="/studio/upload" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-gray-200 transition-colors">
                     <Upload className="w-5 h-5" /> Tải video lên
                   </Link>

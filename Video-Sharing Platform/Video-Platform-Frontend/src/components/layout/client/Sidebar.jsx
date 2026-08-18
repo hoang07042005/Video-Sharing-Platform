@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, TrendingUp, Library, Settings, HelpCircle,
-  MessageSquare, History, Bell, Compass, Zap, Film, ListVideo,
+  MessageSquare, Bell, Compass, Zap, Film, ListVideo,
   ThumbsUp, Clock, User, Crown,
 } from 'lucide-react';
 
@@ -28,6 +28,29 @@ const YoutubeIcon = () => (
     <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
     <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#0F0F0F" />
   </svg>
+);
+
+const NavItem = ({ item, location }) => {
+  const isActive = location.pathname === item.path;
+  return (
+    <Link
+      to={item.path}
+      className={`flex items-center gap-3 px-3 py-2 mx-2 rounded-lg transition-all duration-150 ${
+        isActive
+          ? 'bg-gradient-to-r from-[#FF5722] to-[#9C27B0] text-white font-semibold shadow-lg shadow-[#FF5722]/20'
+          : 'text-gray-400 hover:text-white hover:bg-[#1F1F1F]'
+      }`}
+    >
+      <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
+      <span className="text-sm">{item.name}</span>
+    </Link>
+  );
+};
+
+const SectionLabel = ({ label }) => (
+  <p className="px-5 pt-5 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+    {label}
+  </p>
 );
 
 export default function Sidebar({ isOpen }) {
@@ -75,29 +98,6 @@ export default function Sidebar({ isOpen }) {
     { icon: YoutubeIcon, href: '#', label: 'YouTube' },
   ];
 
-  const NavItem = ({ item }) => {
-    const isActive = location.pathname === item.path;
-    return (
-      <Link
-        to={item.path}
-        className={`flex items-center gap-3 px-3 py-2 mx-2 rounded-lg transition-all duration-150 ${
-          isActive
-            ? 'bg-gradient-to-r from-[#FF5722] to-[#9C27B0] text-white font-semibold shadow-lg shadow-[#FF5722]/20'
-            : 'text-gray-400 hover:text-white hover:bg-[#1F1F1F]'
-        }`}
-      >
-        <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
-        <span className="text-sm">{item.name}</span>
-      </Link>
-    );
-  };
-
-  const SectionLabel = ({ label }) => (
-    <p className="px-5 pt-5 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-      {label}
-    </p>
-  );
-
   return (
     <aside
       className={`fixed left-0 top-16 w-56 h-[calc(100vh-4rem)] bg-[#0F0F0F] flex flex-col z-40 transition-transform duration-300 border-r border-white/5 ${
@@ -113,7 +113,7 @@ export default function Sidebar({ isOpen }) {
             {group.label && <SectionLabel label={group.label} />}
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <NavItem key={item.name} item={item} />
+                <NavItem key={item.name} item={item} location={location} />
               ))}
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function Sidebar({ isOpen }) {
         <SectionLabel label="Kênh đăng ký" />
         <div className="space-y-0.5">
           {subscriptionLinks.map((item) => (
-            <NavItem key={item.name} item={item} />
+            <NavItem key={item.name} item={item} location={location} />
           ))}
         </div>
 
@@ -154,7 +154,7 @@ export default function Sidebar({ isOpen }) {
         <div className="mx-4 my-2 border-t border-white/8" />
         <div className="space-y-0.5 pb-2">
           {bottomLinks.map((item) => (
-            <NavItem key={item.name} item={item} />
+            <NavItem key={item.name} item={item} location={location} />
           ))}
         </div>
       </nav>

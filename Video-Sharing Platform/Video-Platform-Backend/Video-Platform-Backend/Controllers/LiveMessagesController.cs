@@ -56,8 +56,10 @@ public class LiveMessagesController : ControllerBase
                 m.IsDeleted,
                 m.IsPinned,
                 m.MessageType,
-                UserName = m.User != null ? m.User.Channel != null ? m.User.Channel.ChannelName : "Anonymous" : "Anonymous",
-                UserAvatar = m.User != null ? m.User.Channel != null ? m.User.Channel.AvatarUrl : null : null
+                UserName = m.User != null && m.User.Channel != null ? m.User.Channel.ChannelName : "Anonymous",
+                UserAvatar = m.User != null && m.User.Profile != null && !string.IsNullOrEmpty(m.User.Profile.AvatarUrl) 
+                                ? m.User.Profile.AvatarUrl 
+                                : (m.User != null && m.User.Channel != null ? m.User.Channel.AvatarUrl : null)
             })
             .ToListAsync();
 
@@ -79,7 +81,34 @@ public class LiveMessagesController : ControllerBase
         return Ok(new LiveMessageResponseDTO { Total = total, Page = page, PageSize = pageSize, Items = dtos });
     }
 
-    [HttpPost("{id}/pin")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var msg = await _db.LiveMessages
+            .Include(m => m.User)
+                .ThenInclude(u => u.Channel)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (msg == null)
+            return NotFound(new { message = "Bình luận live không tồn tại." });
+
+        var dto = new LiveMessageDTO
+        {
+            Id = msg.Id,
+            LivestreamId = msg.LivestreamId,
+            UserId = msg.UserId,
+            Content = msg.Content,
+            SentAt = msg.SentAt,
+            IsDeleted = msg.IsDeleted,
+            IsPinned = msg.IsPinned,
+            MessageType = msg.MessageType,
+            UserName = msg.User != null && msg.User.Channel != null ? msg.User.Channel.ChannelName : "Anonymous",
+            UserAvatar = msg.User?.Channel?.AvatarUrl,
+            IsMember = false // Not needed for admin detail view
+        };
+
+        return Ok(dto);
+    }
     public async Task<IActionResult> Pin(Guid id)
     {
         var msg = await _db.LiveMessages.FindAsync(id);

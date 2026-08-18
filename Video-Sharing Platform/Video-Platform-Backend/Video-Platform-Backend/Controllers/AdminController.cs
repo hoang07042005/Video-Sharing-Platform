@@ -4,6 +4,7 @@ using Video_Platform_Backend.Models;
 using Video_Platform_Backend.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using System.Globalization;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -19,94 +20,239 @@ namespace Video_Platform_Backend.Controllers
         }
 
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats()
+        public async Task<IActionResult> GetStats(
+            [FromQuery] string? startDate = null,
+            [FromQuery] string? endDate   = null,
+            [FromQuery] int days = 7)
         {
-            var totalUsers = await _context.Users.CountAsync();
-            var totalVideos = await _context.Videos.CountAsync();
-            var totalViews = await _context.Videos.SumAsync(v => (long)(v.ViewsCount ?? 0));
-            
-            // Tính tổng dung lượng (Byte -> GB)
-            var totalSizeBytes = await _context.VideoFiles.SumAsync(f => (long)(f.FileSize ?? 0));
-            var totalStorageGB = Math.Round((double)totalSizeBytes / (1024 * 1024 * 1024), 2);
+            // --- Xác định khoảng thời gian lọc ---
+            var now = DateTime.UtcNow.Date;
+            DateTime rangeStart, rangeEnd;
 
-            // Tương tác
-            var totalLikes = await _context.Videos.SumAsync(v => (long)(v.LikesCount ?? 0));
-            var totalComments = await _context.Videos.SumAsync(v => (long)(v.CommentsCount ?? 0));
+            if (DateTime.TryParseExact(startDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStart) &&
+                DateTime.TryParseExact(endDate,   "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEnd))
+            {
+                rangeStart = DateTime.SpecifyKind(parsedStart.Date, DateTimeKind.Utc);
+                rangeEnd   = DateTime.SpecifyKind(parsedEnd.Date.AddDays(1), DateTimeKind.Utc); // exclusive
+            }
+            else
+            {
+                rangeEnd   = now.Date.AddDays(1);
+                rangeStart = now.Date.AddDays(-(days - 1));
+            }
 
-            // Doanh thu Mock - Tháng này và phần trăm tăng trưởng
-            var monthlyRevenue = 12340; 
-            var revenueGrowth = 15.5; // +15.5%
+            var rangeLength = rangeEnd - rangeStart; // TimeSpan
+            var prevRangeStart = rangeStart - rangeLength;
+            var prevRangeEnd   = rangeStart; // exclusive
 
-            // Top 5 Videos (Thịnh hành)
-            var topVideos = await _context.Videos
-                .Include(v => v.Channel)
-                .Include(v => v.VideoThumbnails)
-                .OrderByDescending(v => v.ViewsCount)
-                .Take(5)
-                .Select(v => new {
-                    Id = v.Id,
-                    Title = v.Title,
-                    Views = v.ViewsCount ?? 0,
-                    ChannelName = v.Channel.ChannelName,
-                    ThumbnailUrl = v.VideoThumbnails.Select(t => t.ThumbnailUrl).FirstOrDefault() ?? ""
-                })
+            var startOfThisMonth   = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var startOfPrevMonth   = startOfThisMonth.AddMonths(-1);
+
+            // --- Tính toán số liệu theo range ---
+            var currentPeriodUsers   = await _context.Users.CountAsync(u => u.CreatedAt >= rangeStart && u.CreatedAt < rangeEnd);
+            var previousPeriodUsers  = await _context.Users.CountAsync(u => u.CreatedAt >= prevRangeStart && u.CreatedAt < prevRangeEnd);
+
+            var currentPeriodVideos  = await _context.Videos.CountAsync(v => v.CreatedAt >= rangeStart && v.CreatedAt < rangeEnd);
+            var previousPeriodVideos = await _context.Videos.CountAsync(v => v.CreatedAt >= prevRangeStart && v.CreatedAt < prevRangeEnd);
+
+            var currentPeriodViews   = await _context.Views.CountAsync(v => v.ViewedAt >= rangeStart && v.ViewedAt < rangeEnd);
+            var previousPeriodViews  = await _context.Views.CountAsync(v => v.ViewedAt >= prevRangeStart && v.ViewedAt < prevRangeEnd);
+
+            var currentPeriodLikes   = await _context.Likes.CountAsync(l => l.CreatedAt >= rangeStart && l.CreatedAt < rangeEnd && l.IsLike);
+            var previousPeriodLikes  = await _context.Likes.CountAsync(l => l.CreatedAt >= prevRangeStart && l.CreatedAt < prevRangeEnd && l.IsLike);
+
+            var currentPeriodStorageBytes  = await _context.VideoFiles.Where(f => f.CreatedAt >= rangeStart && f.CreatedAt < rangeEnd).SumAsync(f => (long?)(f.FileSize ?? 0)) ?? 0L;
+            var previousPeriodStorageBytes = await _context.VideoFiles.Where(f => f.CreatedAt >= prevRangeStart && f.CreatedAt < prevRangeEnd).SumAsync(f => (long?)(f.FileSize ?? 0)) ?? 0L;
+
+            var currentPeriodComments = await _context.Comments.CountAsync(c => c.CreatedAt >= rangeStart && c.CreatedAt < rangeEnd);
+
+            var usersGrowth   = CalculateGrowth(currentPeriodUsers,  previousPeriodUsers);
+            var videosGrowth  = CalculateGrowth(currentPeriodVideos, previousPeriodVideos);
+            var viewsGrowth   = CalculateGrowth(currentPeriodViews,  previousPeriodViews);
+            var likesGrowth   = CalculateGrowth(currentPeriodLikes,  previousPeriodLikes);
+            var currentStorageGB = Math.Round((double)currentPeriodStorageBytes / (1024 * 1024 * 1024), 2);
+            var previousStorageGB = Math.Round((double)previousPeriodStorageBytes / (1024 * 1024 * 1024), 2);
+            var storageGrowth = CalculateGrowth((long)currentStorageGB, (long)previousStorageGB);
+
+            // --- Doanh thu theo range ---
+            var monthlyRevenue = await _context.Transactions
+                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEnd)
+                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+
+            var previousRevenue = await _context.Transactions
+                .Where(t => t.CreatedAt >= prevRangeStart && t.CreatedAt < prevRangeEnd)
+                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+
+            var revenueGrowth = previousRevenue == 0
+                ? (monthlyRevenue > 0 ? 100m : 0m)
+                : ((monthlyRevenue - previousRevenue) / previousRevenue) * 100m;
+
+            // --- Top videos theo lượt xem trong range ---
+            var topVideos = await _context.Views
+                .Where(v => v.ViewedAt >= rangeStart && v.ViewedAt < rangeEnd)
+                .GroupBy(v => v.VideoId)
+                .Select(g => new { VideoId = g.Key, ViewCount = g.Count() })
+                .OrderByDescending(g => g.ViewCount)
+                .Take(8)
+                .Join(_context.Videos
+                    .Include(v => v.Channel)
+                    .Include(v => v.VideoThumbnails),
+                    g => g.VideoId, v => v.Id,
+                    (g, v) => new {
+                        Id = v.Id,
+                        Title = v.Title,
+                        Views = g.ViewCount,
+                        ChannelName = v.Channel.ChannelName,
+                        ThumbnailUrl = v.VideoThumbnails.Select(t => t.ThumbnailUrl).FirstOrDefault() ?? ""
+                    })
                 .ToListAsync();
 
-            // Top 5 Kênh (theo Subscriber)
-            var topChannels = await _context.Channels
-                .OrderByDescending(c => c.Followers.Count)
+            // Fallback: nếu không có lượt xem nào trong range, lấy top 5 all-time
+            if (!topVideos.Any())
+            {
+                topVideos = await _context.Videos
+                    .Where(v => v.CreatedAt >= rangeStart && v.CreatedAt < rangeEnd)
+                    .Include(v => v.Channel)
+                    .Include(v => v.VideoThumbnails)
+                    .OrderByDescending(v => v.ViewsCount)
+                    .Take(8)
+                    .Select(v => new {
+                        Id = v.Id,
+                        Title = v.Title,
+                        Views = (int)(v.ViewsCount ?? 0),
+                        ChannelName = v.Channel.ChannelName,
+                        ThumbnailUrl = v.VideoThumbnails.Select(t => t.ThumbnailUrl).FirstOrDefault() ?? ""
+                    })
+                    .ToListAsync();
+            }
+
+            // --- Top channels theo lượt xem video trong range ---
+            var topChannels = await _context.Views
+                .Where(v => v.ViewedAt >= rangeStart && v.ViewedAt < rangeEnd)
+                .Join(_context.Videos, view => view.VideoId, video => video.Id, (view, video) => video.ChannelId)
+                .GroupBy(channelId => channelId)
+                .Select(g => new { ChannelId = g.Key, ViewCount = g.Count() })
+                .OrderByDescending(g => g.ViewCount)
                 .Take(5)
-                .Select(c => new {
-                    Id = c.Id,
-                    ChannelName = c.ChannelName,
-                    AvatarUrl = c.User.Profile.AvatarUrl ?? "",
-                    Subscribers = c.Followers.Count,
-                    TotalViews = _context.Videos.Where(v => v.ChannelId == c.Id).Sum(v => v.ViewsCount ?? 0)
-                })
+                .Join(_context.Channels
+                    .Include(c => c.User).ThenInclude(u => u.Profile)
+                    .Include(c => c.Subscriptions),
+                    g => g.ChannelId, c => c.Id,
+                    (g, c) => new {
+                        Id = c.Id,
+                        ChannelName = c.ChannelName,
+                        AvatarUrl = c.User.Profile != null ? c.User.Profile.AvatarUrl ?? "" : "",
+                        Subscribers = c.Subscriptions.Count(s => s.Status == "Active" || s.Status == null),
+                        VideoCount = _context.Videos.Count(v => v.ChannelId == c.Id && v.CreatedAt >= rangeStart && v.CreatedAt < rangeEnd),
+                        TotalViews = g.ViewCount
+                    })
                 .ToListAsync();
 
-            // Phân bổ danh mục
+            // Fallback top channels
+            if (!topChannels.Any())
+            {
+                topChannels = await _context.Channels
+                    .Include(c => c.User).ThenInclude(u => u.Profile)
+                    .Include(c => c.Subscriptions)
+                    .OrderByDescending(c => c.Subscriptions.Count(s => s.Status == "Active" || s.Status == null))
+                    .Take(5)
+                    .Select(c => new {
+                        Id = c.Id,
+                        ChannelName = c.ChannelName,
+                        AvatarUrl = c.User.Profile != null ? c.User.Profile.AvatarUrl ?? "" : "",
+                        Subscribers = c.Subscriptions.Count(s => s.Status == "Active" || s.Status == null),
+                        VideoCount = _context.Videos.Count(v => v.ChannelId == c.Id),
+                        TotalViews = (int)_context.Videos.Where(v => v.ChannelId == c.Id).Sum(v => v.ViewsCount ?? 0)
+                    })
+                    .ToListAsync();
+            }
+
+            // --- Top danh mục theo video được tạo trong range ---
             var categories = await _context.VideoCategories
                 .Select(c => new {
                     Name = c.Name,
-                    Value = _context.Videos.Count(v => v.CategoryId == c.Id)
+                    Value = _context.Videos.Count(v => v.CategoryId == c.Id && v.CreatedAt >= rangeStart && v.CreatedAt < rangeEnd)
                 })
                 .Where(c => c.Value > 0)
                 .OrderByDescending(c => c.Value)
                 .Take(5)
                 .ToListAsync();
 
-            // Báo cáo gần đây (Mock data vì bảng Report có thể trống)
-            var recentReports = new[] {
-                new { Id = 1, User = "Nguyễn Văn A", Reason = "Nội dung phản cảm", Status = "Pending", Time = "10 phút trước" },
-                new { Id = 2, User = "Trần B", Reason = "Spam", Status = "Pending", Time = "2 giờ trước" },
-                new { Id = 3, User = "Lê C", Reason = "Vi phạm bản quyền", Status = "Resolved", Time = "5 giờ trước" }
-            };
+            // Fallback categories nếu không có video mới trong range
+            if (!categories.Any())
+            {
+                categories = await _context.VideoCategories
+                    .Select(c => new { Name = c.Name, Value = _context.Videos.Count(v => v.CategoryId == c.Id) })
+                    .Where(c => c.Value > 0)
+                    .OrderByDescending(c => c.Value)
+                    .Take(5)
+                    .ToListAsync();
+            }
 
-            // Hoạt động gần đây (Mock)
-            var recentActivities = new[] {
-                new { Id = 1, Action = "User X vừa đăng ký tài khoản mới", Time = "2 phút trước", Type = "user" },
-                new { Id = 2, Action = "Kênh Y vừa upload video Z", Time = "15 phút trước", Type = "video" },
-                new { Id = 3, Action = "User W vừa nâng cấp gói Premium", Time = "1 giờ trước", Type = "payment" }
-            };
+            // --- Báo cáo trong range (không fallback all-time) ---
+            var recentReports = await _context.Reports
+                .Include(r => r.Reporter)
+                    .ThenInclude(u => u.Profile)
+                .Where(r => r.CreatedAt >= rangeStart && r.CreatedAt < rangeEnd)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(5)
+                .Select(r => new {
+                    Id = r.Id,
+                    User = r.Reporter.Profile != null && !string.IsNullOrWhiteSpace(r.Reporter.Profile.FullName)
+                        ? r.Reporter.Profile.FullName
+                        : r.Reporter.Email,
+                    Reason = r.Reason,
+                    Status = string.IsNullOrWhiteSpace(r.Status) ? "Pending" : r.Status,
+                    Time = r.CreatedAt != null ? FormatRelativeTime(r.CreatedAt.Value) : "Mới đây"
+                })
+                .ToListAsync();
 
-            // Giao dịch gần đây (Mock)
-            var recentTransactions = new[] {
-                new { Id = 101, User = "Hoang Nguyen", Type = "Premium", Amount = 9.99, Status = "Thành công", Time = "10 phút trước" },
-                new { Id = 102, User = "Tran B", Type = "Donate", Amount = 5.00, Status = "Thành công", Time = "30 phút trước" },
-                new { Id = 103, User = "Le C", Type = "Premium", Amount = 9.99, Status = "Đang xử lý", Time = "1 giờ trước" }
-            };
+            var recentActivities = await _context.AuditLogs
+                .Where(a => a.CreatedAt >= rangeStart && a.CreatedAt < rangeEnd)
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(5)
+                .Select(a => new {
+                    Id = a.Id,
+                    Action = a.Action,
+                    Time = FormatRelativeTime(a.CreatedAt),
+                    Type = a.ActionType == "update" ? "video" : a.ActionType == "add" ? "user" : "payment"
+                })
+                .ToListAsync();
+
+            var recentTransactions = await _context.Transactions
+                .Include(t => t.Payment)
+                    .ThenInclude(p => p.User)
+                    .ThenInclude(u => u.Profile)
+                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEnd)
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(5)
+                .Select(t => new {
+                    Id = t.Id,
+                    User = t.Payment.User.Profile != null && !string.IsNullOrWhiteSpace(t.Payment.User.Profile.FullName)
+                        ? t.Payment.User.Profile.FullName
+                        : t.Payment.User.Email,
+                    Type = NormalizeTransactionType(t.TransactionType),
+                    Amount = t.Amount,
+                    Status = "Thành công",
+                    Time = t.CreatedAt != null ? FormatRelativeTime(t.CreatedAt.Value) : "Mới đây"
+                })
+                .ToListAsync();
 
             return Ok(new
             {
-                TotalUsers = totalUsers,
-                TotalVideos = totalVideos,
-                TotalViews = totalViews,
-                TotalStorageGB = totalStorageGB,
-                TotalLikes = totalLikes,
-                TotalComments = totalComments,
-                MonthlyRevenue = monthlyRevenue,
-                RevenueGrowth = revenueGrowth,
+                TotalUsers = currentPeriodUsers,
+                UserGrowth = usersGrowth,
+                TotalVideos = currentPeriodVideos,
+                VideoGrowth = videosGrowth,
+                TotalViews = currentPeriodViews,
+                ViewsGrowth = viewsGrowth,
+                TotalStorageGB = currentStorageGB,
+                StorageGrowth = storageGrowth,
+                TotalLikes = currentPeriodLikes,
+                LikesGrowth = likesGrowth,
+                TotalComments = currentPeriodComments,
+                MonthlyRevenue = decimal.ToDouble(monthlyRevenue),
+                RevenueGrowth = decimal.ToDouble(revenueGrowth),
                 TopVideos = topVideos,
                 TopChannels = topChannels,
                 CategoryDistribution = categories,
@@ -115,41 +261,183 @@ namespace Video_Platform_Backend.Controllers
                 RecentTransactions = recentTransactions
             });
         }
-        
-        [HttpGet("chart-data")]
-        public IActionResult GetChartData()
-        {
-            var trafficData = new[]
-            {
-                new { name = "T2", users = 400, videos = 240, views = 24000 },
-                new { name = "T3", users = 300, videos = 139, views = 22100 },
-                new { name = "T4", users = 200, videos = 980, views = 22900 },
-                new { name = "T5", users = 278, videos = 390, views = 20000 },
-                new { name = "T6", users = 189, videos = 480, views = 21810 },
-                new { name = "T7", users = 239, videos = 380, views = 25000 },
-                new { name = "CN", users = 349, videos = 430, views = 21000 }
-            };
 
-            var revenuePieData = new[]
+        [HttpGet("chart-data")]
+        public async Task<IActionResult> GetChartData(
+            [FromQuery] string? startDate = null,
+            [FromQuery] string? endDate   = null,
+            [FromQuery] int days = 7)
+        {
+            var now = DateTime.UtcNow.Date;
+            DateTime rangeStart, rangeEnd;
+
+            if (DateTime.TryParseExact(startDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStart) &&
+                DateTime.TryParseExact(endDate,   "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEnd))
             {
-                new { name = "Quảng cáo (Ads)", value = 5400 },
-                new { name = "Premium Sub", value = 3200 },
-                new { name = "Donate", value = 1500 },
-                new { name = "Tài trợ", value = 2240 }
-            };
+                rangeStart = DateTime.SpecifyKind(parsedStart.Date, DateTimeKind.Utc);
+                rangeEnd   = DateTime.SpecifyKind(parsedEnd.Date, DateTimeKind.Utc);
+            }
+            else
+            {
+                rangeStart = now.AddDays(-(days - 1));
+                rangeEnd   = now;
+            }
+
+            // Tạo danh sách ngày động theo range
+            int totalDays = (int)(rangeEnd - rangeStart).TotalDays + 1;
+            var dateList = Enumerable.Range(0, totalDays)
+                .Select(offset => rangeStart.AddDays(offset))
+                .ToList();
+
+            var rangeEndExclusive = rangeEnd.AddDays(1);
+
+            // --- Traffic (lượt xem) ---
+            var trafficRecords = await _context.Views
+                .Where(v => v.ViewedAt != null && v.ViewedAt >= rangeStart && v.ViewedAt < rangeEndExclusive)
+                .GroupBy(v => v.ViewedAt!.Value.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // Nhóm theo ngày hoặc tuần tùy độ dài range
+            List<object> trafficData;
+            if (totalDays <= 31)
+            {
+                trafficData = dateList.Select(day => (object)new {
+                    name = day.ToString("dd/MM"),
+                    users = 0,
+                    videos = 0,
+                    views = trafficRecords.FirstOrDefault(r => r.Date == day)?.Count ?? 0
+                }).ToList();
+            }
+            else
+            {
+                // Nhóm theo tuần khi range > 31 ngày
+                trafficData = dateList
+                    .GroupBy(d => $"T{(int)Math.Ceiling((d - rangeStart).TotalDays / 7.0 + 1)}")
+                    .Select(g => (object)new {
+                        name = g.Key,
+                        users = 0,
+                        videos = 0,
+                        views = trafficRecords.Where(r => g.Contains(r.Date)).Sum(r => r.Count)
+                    }).ToList();
+            }
+
+            // --- Revenue Pie (theo range) ---
+            var revenuePieData = await _context.Transactions
+                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEndExclusive)
+                .GroupBy(t => t.TransactionType ?? "Other")
+                .Select(g => new { Name = NormalizeTransactionType(g.Key), Value = g.Sum(x => x.Amount) })
+                .OrderByDescending(x => x.Value)
+                .ToListAsync();
+
+            // Fallback: nếu range không có revenue thì lấy tháng hiện tại
+            if (!revenuePieData.Any())
+            {
+                var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                revenuePieData = await _context.Transactions
+                    .Where(t => t.CreatedAt >= startOfMonth)
+                    .GroupBy(t => t.TransactionType ?? "Other")
+                    .Select(g => new { Name = NormalizeTransactionType(g.Key), Value = g.Sum(x => x.Amount) })
+                    .OrderByDescending(x => x.Value)
+                    .ToListAsync();
+            }
+
+            // --- Nâng cấp tài khoản vs Đăng kí hội viên ---
+            var upgradesRecords = await _context.Transactions
+                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEndExclusive
+                    && t.TransactionType != null && t.TransactionType.Contains("PremiumUpgrade"))
+                .GroupBy(t => t.CreatedAt!.Value.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var registrationsRecords = await _context.Transactions
+                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEndExclusive
+                    && t.TransactionType != null && t.TransactionType.Contains("ChannelMembership"))
+                .GroupBy(t => t.CreatedAt!.Value.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            List<object> accountUpgradesVsRegistrations;
+            if (totalDays <= 31)
+            {
+                accountUpgradesVsRegistrations = dateList.Select(day => (object)new {
+                    name = day.ToString("dd/MM"),
+                    upgrades      = upgradesRecords.FirstOrDefault(r => r.Date == day)?.Count ?? 0,
+                    registrations = registrationsRecords.FirstOrDefault(r => r.Date == day)?.Count ?? 0
+                }).ToList();
+            }
+            else
+            {
+                accountUpgradesVsRegistrations = dateList
+                    .GroupBy(d => $"T{(int)Math.Ceiling((d - rangeStart).TotalDays / 7.0 + 1)}")
+                    .Select(g => (object)new {
+                        name          = g.Key,
+                        upgrades      = upgradesRecords.Where(r => g.Contains(r.Date)).Sum(r => r.Count),
+                        registrations = registrationsRecords.Where(r => g.Contains(r.Date)).Sum(r => r.Count)
+                    }).ToList();
+            }
 
             var deviceData = new[]
             {
-                new { name = "Mobile", value = 65 },
+                new { name = "Mobile",  value = 65 },
                 new { name = "Desktop", value = 25 },
-                new { name = "Tablet", value = 10 }
+                new { name = "Tablet",  value = 10 }
             };
 
             return Ok(new {
                 Traffic = trafficData,
                 Revenue = revenuePieData,
-                Devices = deviceData
+                Devices = deviceData,
+                AccountUpgradesVsRegistrations = accountUpgradesVsRegistrations
             });
+        }
+
+        private static double CalculateGrowth(long currentValue, long previousValue)
+        {
+            if (previousValue == 0)
+                return currentValue > 0 ? 100d : 0d;
+
+            return ((double)(currentValue - previousValue) / previousValue) * 100d;
+        }
+
+        private static string NormalizeTransactionType(string? transactionType)
+        {
+            if (string.IsNullOrWhiteSpace(transactionType))
+                return "Other";
+
+            var normalized = transactionType.Trim();
+
+            if (normalized.StartsWith("ChannelMembership_", StringComparison.OrdinalIgnoreCase))
+                return "ChannelMembership_" + normalized["ChannelMembership_".Length..].Trim();
+
+            if (normalized.StartsWith("PremiumUpgrade_", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = normalized.Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (parts.Length >= 3)
+                {
+                    return $"Premium {parts[1]} {parts[2]}";
+                }
+
+                return "Premium";
+            }
+
+            if (normalized.Contains("donate", StringComparison.OrdinalIgnoreCase)) return "Donate";
+            if (normalized.Contains("ad", StringComparison.OrdinalIgnoreCase)) return "Quảng cáo (Ads)";
+            if (normalized.Contains("premium", StringComparison.OrdinalIgnoreCase)) return "Premium";
+            if (normalized.Contains("sub", StringComparison.OrdinalIgnoreCase)) return "Premium";
+
+            return normalized;
+        }
+
+        private static string FormatRelativeTime(DateTime date)
+        {
+            var span = DateTime.UtcNow - date;
+
+            if (span.TotalMinutes < 1) return "vừa xong";
+            if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} phút trước";
+            if (span.TotalHours < 24) return $"{(int)span.TotalHours} giờ trước";
+            if (span.TotalDays < 30) return $"{(int)span.TotalDays} ngày trước";
+            return date.ToString("dd/MM/yyyy");
         }
 
         [HttpGet("users")]

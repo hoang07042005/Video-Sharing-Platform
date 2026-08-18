@@ -43,6 +43,7 @@ const AdminVideoCategory = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     fetchCategories();
@@ -144,8 +145,18 @@ const AdminVideoCategory = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-[#0F0F0F] p-1 rounded-xl border border-white/5">
-            <button className="p-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA]  rounded-lg text-white"><LucideIcons.List className="w-4 h-4" /></button>
-            <button className="p-2 text-gray-400 hover:text-white transition-colors"><LucideIcons.LayoutGrid className="w-4 h-4" /></button>
+            <button 
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <LucideIcons.List className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <LucideIcons.LayoutGrid className="w-4 h-4" />
+            </button>
           </div>
           <button 
             onClick={openAddModal}
@@ -244,8 +255,9 @@ const AdminVideoCategory = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
+      {/* Content */}
+      {viewMode === 'list' ? (
+        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
         <div className="w-full">
           <table className="w-full text-left text-sm">
             <thead>
@@ -329,6 +341,54 @@ const AdminVideoCategory = () => {
         
         
       </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+          {loading ? (
+            <div className="col-span-full flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-500" /></div>
+          ) : currentItems.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-gray-500">Chưa có danh mục nào.</div>
+          ) : (
+            currentItems.map((c) => (
+              <div key={c.id} className="bg-[#141418] rounded-xl p-5 border border-white/5 flex flex-col hover:border-purple-500/50 transition-colors group relative">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-400">
+                    {renderIcon(c.icon, "w-6 h-6")}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {c.isActive ? (
+                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-medium">Hiển thị</span>
+                    ) : (
+                      <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-medium">Ẩn</span>
+                    )}
+                    <div className="relative group/menu z-10">
+                      <button className="text-gray-400 hover:text-white cursor-pointer"><MoreVertical className="w-4 h-4" /></button>
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-[#0F0F0F] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all py-1">
+                        <button onClick={() => openEditModal(c)} className="w-full text-left px-4 py-2 text-xs font-medium text-gray-300 hover:bg-white/5 flex items-center gap-2 cursor-pointer">
+                          <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
+                        </button>
+                        <button onClick={() => handleDelete(c.id)} className="w-full text-left px-4 py-2 text-xs font-medium text-red-400 hover:bg-white/5 flex items-center gap-2 cursor-pointer">
+                          <Trash2 className="w-3.5 h-3.5" /> Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-white font-bold text-lg truncate mb-1">{c.name}</h3>
+                <p className="text-gray-500 text-xs line-clamp-2 mb-4 flex-1">{c.description || <span className="italic">Chưa có mô tả</span>}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">Số Video</span>
+                    <span className="text-gray-300 font-semibold text-sm">{c.videoCount || 0}</span>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-white transition-colors cursor-pointer flex items-center gap-1">
+                    <Eye className="w-3.5 h-3.5" /> Xem
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
       {/* Pagination */}
         <div className="p-4 border-t border-white/5 flex items-center justify-between text-sm">
           <span className="text-gray-500">Hiển thị {filteredCategories.length === 0 ? 0 : startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredCategories.length)} trong tổng số {filteredCategories.length} danh mục</span>

@@ -54,10 +54,10 @@ export default function CustomizeChannelModal({ isOpen, onClose, channelData, on
     }
   };
 
-  const uploadFile = async (file) => {
+  const uploadFile = async (file, type = 'image') => {
     const fd = new FormData();
     fd.append('file', file);
-    const res = await axios.post('/api/upload', fd, {
+    const res = await axios.post(`/api/upload/${type}`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data.url;
@@ -74,10 +74,10 @@ export default function CustomizeChannelModal({ isOpen, onClose, channelData, on
 
       // Upload if there are new files
       if (avatarFile) {
-        finalAvatarUrl = await uploadFile(avatarFile);
+        finalAvatarUrl = await uploadFile(avatarFile, 'image');
       }
       if (bannerFile) {
-        finalBannerUrl = await uploadFile(bannerFile);
+        finalBannerUrl = await uploadFile(bannerFile, 'image');
       }
 
       const updatedData = {

@@ -46,8 +46,11 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
         console.log('[LivestreamPlayer] Manifest parsed, levels:', hls.levels.length);
         // Dùng setTimeout để tránh race condition với React Strict Mode double-invoke
         setTimeout(() => {
-          if (video.paused && video.readyState >= 2) {
-            video.play().catch(e => console.warn('[LivestreamPlayer] Play deferred:', e.message));
+          if (video.paused) {
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => console.warn('[LivestreamPlayer] Play deferred:', e.message));
+            }
           }
         }, 100);
       });

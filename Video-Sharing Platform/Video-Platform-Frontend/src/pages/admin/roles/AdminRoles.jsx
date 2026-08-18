@@ -1,25 +1,14 @@
-import React, { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import axios from 'axios';
 import * as LucideIcons from 'lucide-react';
-import { 
-  Crown, Shield, Users, Search, Plus, MoreHorizontal,
-  ChevronLeft, ChevronRight, Activity, Clock, Check, Minus, Video, ShieldAlert, Settings, PieChart, ShieldCheck, Edit3
+import {
+  Crown, Shield, Users, Plus,
+  ChevronLeft, ChevronRight, Activity, Check, Minus, Video, ShieldAlert, PieChart, ShieldCheck
 } from 'lucide-react';
 
 // === CONSTANTS & MOCK DATA ===
 
 // Dynamic permission grouping will be generated from DB data
-
-const ROLE_THEMES = [
-  { id: 'purple', name: 'Tím', textColor: 'text-purple-300', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/40', color: 'from-purple-500 to-purple-400', hex: '#d8b4fe' },
-  { id: 'blue', name: 'Xanh dương', textColor: 'text-blue-300', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/40', color: 'from-blue-500 to-blue-400', hex: '#93c5fd' },
-  { id: 'green', name: 'Xanh lá', textColor: 'text-emerald-300', bgColor: 'bg-emerald-500/20', borderColor: 'border-emerald-500/40', color: 'from-emerald-500 to-emerald-400', hex: '#6ee7b7' },
-  { id: 'red', name: 'Đỏ', textColor: 'text-red-300', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/40', color: 'from-red-500 to-red-400', hex: '#fca5a5' },
-  { id: 'orange', name: 'Cam', textColor: 'text-orange-300', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/40', color: 'from-orange-500 to-orange-400', hex: '#fdba74' },
-  { id: 'gray', name: 'Xám', textColor: 'text-gray-300', bgColor: 'bg-gray-500/20', borderColor: 'border-gray-500/40', color: 'from-gray-500 to-gray-400', hex: '#d1d5db' },
-  { id: 'pink', name: 'Hồng', textColor: 'text-pink-300', bgColor: 'bg-pink-500/20', borderColor: 'border-pink-500/40', color: 'from-pink-500 to-pink-400', hex: '#f9a8d4' },
-  { id: 'yellow', name: 'Vàng', textColor: 'text-yellow-300', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500/40', color: 'from-yellow-500 to-yellow-400', hex: '#fde047' },
-];
 
 export default function AdminRoles() {
   const getRoleCardStyle = (role) => {
@@ -42,18 +31,7 @@ export default function AdminRoles() {
     return { className: role.textColor || '', style: {} };
   };
 
-  const getRoleBadgeStyle = (role) => {
-    if (role.color?.startsWith('#')) {
-      return {
-        className: 'w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold shrink-0',
-        style: { backgroundColor: `${role.color}4D`, color: role.color } // 4D = 30%
-      };
-    }
-    return {
-      className: `w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${role.bgColor?.replace(/\/10|\/20/, '/40') || ''} ${role.textColor} shrink-0`,
-      style: {}
-    };
-  };
+
 
   const getRoleIconBoxStyle = (role) => {
     if (role.color?.startsWith('#')) {
@@ -91,7 +69,18 @@ export default function AdminRoles() {
   });
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
 
-  const fetchData = async () => {
+  const showNotification = useCallback((message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  }, []);
+
+  const normalizeRoleName = (value) => {
+    if (!value) return null;
+    const raw = typeof value === 'string' ? value : (value.name || value.Name || value.label || value.Label || '');
+    return String(raw).trim();
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [rolesRes, usersRes, logsRes] = await Promise.all([
@@ -125,11 +114,24 @@ export default function AdminRoles() {
 
       setRolesList(rolesData);
 
+      const canonicalRoleMap = new Map();
+      rolesData.forEach(role => {
+        const keys = [role.name, role.Name, role.label, role.Label].filter(Boolean).map(item => String(item).trim().toLowerCase());
+        keys.forEach(key => canonicalRoleMap.set(key, role.name || role.Name || role.label || role.Label));
+      });
+
       const countMap = {};
       usersRes.data.forEach(user => {
-        user.roles.forEach(roleName => {
-          countMap[roleName] = (countMap[roleName] || 0) + 1;
-        });
+        if (user.roles && Array.isArray(user.roles)) {
+          user.roles.forEach(roleItem => {
+            const rawRoleName = normalizeRoleName(roleItem);
+            if (!rawRoleName) return;
+
+            const key = rawRoleName.toLowerCase();
+            const canonicalName = canonicalRoleMap.get(key) || rawRoleName;
+            countMap[canonicalName] = (countMap[canonicalName] || 0) + 1;
+          });
+        }
       });
       setUsersCountMap(countMap);
       setAuditLogs(logsRes.data);
@@ -171,16 +173,15 @@ export default function AdminRoles() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void fetchData();
+    }, 0);
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
+    return () => window.clearTimeout(timer);
+  }, [fetchData]);
 
   const handleRoleChange = (userId, newRole) => {
     setRoleUpdates(prev => ({
@@ -461,28 +462,17 @@ export default function AdminRoles() {
             <div className="xl:w-[320px] lg:w-[400px] md:w-[480px] sm:w-[450px] shrink-0 flex flex-col gap-5 p-6 border-r border-white/5 bg-white/[0.01]">
               {rolesList.map(role => {
                 const Icon = role.Icon;
-                const count = getRoleCount(role.name);
                 return (
                   <div key={role.id} {...getRoleCardStyle(role)}>
-                    {/* Căn giữa tất cả theo chiều dọc: items-center */}
                     <div className="flex justify-between items-center">
                       <div className="flex gap-3.5 items-center">
-                        
-                        {/* Vùng chứa Icon hình tròn có background chìm */}
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 shrink-0">
                           <Icon className="w-6 h-6" {...getRoleTextStyle(role)} />
                         </div>
-
-                        {/* Thông tin Role */}
                         <div>
                           <h4 className="text-sm font-semibold text-white">{role.label}</h4>
                           <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{role.description}</p>
                         </div>
-                      </div>
-
-                      {/* Badge đếm số */}
-                      <div className="px-2.5 py-1 text-xs font-semibold rounded-xl flex items-center justify-center min-w-[28px]" {...getRoleBadgeStyle(role)}>
-                        {count}
                       </div>
                     </div>
                   </div>
@@ -571,9 +561,7 @@ export default function AdminRoles() {
                 Không có quyền
               </div>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 border border-purple-500/40 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
-              <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa quyền hàng loạt
-            </button>
+
           </div>
         </div>
       )}

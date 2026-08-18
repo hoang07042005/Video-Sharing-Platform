@@ -277,10 +277,6 @@ function LiveStreamCard({ stream, channel }) {
 function FeaturedChannelCard({ channel, initialSubbed }) {
   const [subbed, setSubbed] = useState(initialSubbed ?? false);
 
-  useEffect(() => {
-    setSubbed(initialSubbed ?? false);
-  }, [initialSubbed]);
-
   return (
     <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[#161616] border border-white/5 hover:border-white/10 hover:bg-[#1A1A1A] transition-all group">
       {/* Top: Avatar + Info */}
@@ -350,7 +346,6 @@ function SectionHeader({ icon: Icon, title, linkTo }) {
 
 // ─── Right Sidebar ──────────────────────────────────────────────
 import * as LucideIcons from "lucide-react";
-import { DEFAULT_CATEGORY_ICON } from "../../../components/home/CategoryFilter";
 
 function RightSidebar() {
   const [quickCategories, setQuickCategories] = useState([]);

@@ -199,6 +199,32 @@ public class LivestreamHub : Hub
         _db.LiveMessages.Add(msg);
         await _db.SaveChangesAsync();
 
+        // Resolve display name and avatar from the user's channel and profile
+        string? userName = "Anonymous";
+        string? userAvatar = null;
+        if (userId.HasValue)
+        {
+            var userDetails = await _db.Users
+                .Where(u => u.Id == userId.Value)
+                .Select(u => new 
+                { 
+                    ChannelName = u.Channel != null ? u.Channel.ChannelName : null, 
+                    AvatarUrl = (u.Profile != null && !string.IsNullOrEmpty(u.Profile.AvatarUrl)) 
+                                    ? u.Profile.AvatarUrl 
+                                    : (u.Channel != null ? u.Channel.AvatarUrl : null)
+                })
+                .FirstOrDefaultAsync();
+                
+            if (userDetails != null)
+            {
+                if (!string.IsNullOrEmpty(userDetails.ChannelName))
+                {
+                    userName = userDetails.ChannelName;
+                }
+                userAvatar = userDetails.AvatarUrl;
+            }
+        }
+
         await Clients.Group(lsId).SendAsync("ReceiveMessage", new
         {
             id = msg.Id,
@@ -208,7 +234,9 @@ public class LivestreamHub : Hub
             sentAt = msg.SentAt,
             isPinned = msg.IsPinned,
             messageType = msg.MessageType,
-            isMember = isMember
+            isMember = isMember,
+            userName = userName,
+            userAvatar = userAvatar
         });
     }
 

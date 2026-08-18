@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, Bell, CheckCircle2, Share2, Search, Star, Users, Link as LinkIcon, X, Mail, MonitorPlay, Globe, Info, PlaySquare, TrendingUp, Flag, Pencil, Home, Upload, Check, UploadCloud, ChevronDown, Play, Settings, Calendar, Clock, FileVideo, HardDrive, FileCode, Image as ImageIcon, Trash2, AlertTriangle, Smartphone } from 'lucide-react';
+import { Loader2, Bell, CheckCircle2, Share2, Search, Users, Link as LinkIcon, X, Mail, MonitorPlay, Globe, Info, PlaySquare, TrendingUp, Flag, Pencil, Home, Upload, Check, UploadCloud, ChevronDown, Settings, Clock, FileVideo, HardDrive, FileCode, Image as ImageIcon, Trash2, AlertTriangle, Smartphone } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import CustomizeChannelModal from '../../../components/channel/CustomizeChannelModal';
 
@@ -33,31 +33,9 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
 
   useEffect(() => {
     if (editingVideo) {
-      setTitle(editingVideo.title || '');
-      setDescription(editingVideo.description || '');
-      setVisibility(editingVideo.visibility || 'Public');
-      setThumbnailPreview(editingVideo.thumbnailUrl || '');
-      setDuration(editingVideo.duration || 0);
-      setCategoryId(editingVideo.categoryId || '');
-      setThumbnailFile(null);
-      setVideoFile(null);
-      setVideoPreview(null);
-      setError('');
-      setSuccessMsg('');
-      setIsShortVideo(editingVideo.isShort || false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setTitle('');
-      setDescription('');
-      setVisibility('Public');
-      setThumbnailPreview(null);
-      setDuration(0);
-      setThumbnailFile(null);
-      setVideoFile(null);
-      setVideoPreview(null);
-      setIsShortVideo(isShortType || false);
     }
-  }, [editingVideo, isShortType]);
+  }, [editingVideo]);
 
   const formatDurationStr = (s) => {
     if (!s) return '00:00';
@@ -76,13 +54,11 @@ function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit,
       setVideoFile(file);
       const url = URL.createObjectURL(file);
       setVideoPreview(url);
-      
       const videoElement = document.createElement('video');
       videoElement.src = url;
       videoElement.onloadedmetadata = () => {
         setDuration(Math.round(videoElement.duration));
       };
-
       setError('');
     }
   };
@@ -684,9 +660,6 @@ export default function ChannelProfile() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameContent, setEditNameContent] = useState('');
 
-  const [isEditingHandle, setIsEditingHandle] = useState(false);
-  const [editHandleContent, setEditHandleContent] = useState('');
-
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [editEmailContent, setEditEmailContent] = useState('');
 
@@ -707,7 +680,7 @@ export default function ChannelProfile() {
 
 
   // Đọc settings bật/tắt button từ localStorage
-  const [channelBtnSettings, setChannelBtnSettings] = useState(() => {
+  const [channelBtnSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('userSettings');
       return saved ? JSON.parse(saved) : { showJoinButton: true, showCommunityButton: true };
@@ -718,7 +691,7 @@ export default function ChannelProfile() {
 
   const isOwner = channel && localStorage.getItem('handle') === channel.handle;
 
-  const checkSubscription = async (channelId, token) => {
+  const checkSubscription = useCallback(async (channelId, token) => {
     try {
       const res = await axios.get('/api/channels/subscribed', {
         headers: { Authorization: `Bearer ${token}` }
@@ -727,9 +700,9 @@ export default function ChannelProfile() {
     } catch (err) {
       console.error("Lỗi kiểm tra đăng ký:", err);
     }
-  };
+  }, []);
 
-  const checkMembership = async (channelId, token) => {
+  const checkMembership = useCallback(async (channelId, token) => {
     try {
       const res = await axios.get(`/api/channels/${channelId}/membership`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -740,20 +713,19 @@ export default function ChannelProfile() {
     } catch (err) {
       console.error("Lỗi kiểm tra hội viên:", err);
     }
-  };
+  }, []);
 
-  const fetchChannelData = async (targetHandle) => {
+  const fetchChannelData = useCallback(async (targetHandle) => {
     setLoading(true);
     setError('');
     try {
-      // Fetch profile
       const profileRes = await axios.get(`/api/channels/${targetHandle}`);
       const channelData = profileRes.data;
       if (channelData && channelData.id) {
         if (channelData.socialLinks) {
           try {
             channelData.links = JSON.parse(channelData.socialLinks);
-          } catch(e) {
+          } catch {
             channelData.links = [];
           }
         } else {
@@ -768,7 +740,6 @@ export default function ChannelProfile() {
         checkMembership(channelData.id, token);
       }
 
-      // Fetch videos and playlists in parallel
       if (channelData && channelData.id) {
         const [videosRes, playlistsRes] = await Promise.all([
           axios.get(`/api/channels/${channelData.id}/videos`),
@@ -786,13 +757,17 @@ export default function ChannelProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [checkMembership, checkSubscription]);
 
   useEffect(() => {
-    if (handle) {
-      fetchChannelData(handle);
-    }
-  }, [handle]);
+    if (!handle) return;
+
+    const loadChannel = async () => {
+      await fetchChannelData(handle);
+    };
+
+    void loadChannel();
+  }, [handle, fetchChannelData]);
 
   const handleSaveSuccess = (newHandle) => {
     if (newHandle !== handle) {
@@ -1000,7 +975,7 @@ export default function ChannelProfile() {
             </div>
 
             {/* Right: Stats Card */}
-            <div className="bg-[#1a1a1a]/40 backdrop-blur-md border border-white/10 rounded-2xl p-5 lg:p-6 flex items-center justify-between gap-4 md:gap-8 shadow-2xl shrink-0 lg:ml-4 w-full lg:w-auto overflow-x-auto mt-6 lg:mt-0">
+            <div className="bg-[#1a1a1a]/10 backdrop-blur-md border border-white/8 rounded-2xl p-5 lg:p-4 flex items-center justify-between gap-4 md:gap-8 shadow-2xl shrink-0 lg:ml-4 w-full lg:w-auto overflow-x-auto mt-4 lg:mt-0">
               <div className="flex flex-col items-center min-w-[60px] md:min-w-[75px]">
                 <span className="text-white font-bold text-xl md:text-2xl">{videos.length}</span>
                 <span className="text-gray-400 text-xs mt-1">Video</span>
@@ -1042,20 +1017,18 @@ export default function ChannelProfile() {
                 Video ngắn
               </button>
               <button
-                onClick={() => setActiveTab('playlists')}
-                className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'playlists' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
-              >
-                Danh sách phát
-              </button>
-              <button
                 onClick={() => setActiveTab('livestreams')}
                 className={`flex items-center gap-1.5 pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'livestreams' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
               >
                 <MonitorPlay className="w-4 h-4" />
                 Phát trực tiếp
               </button>
-              <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Cộng đồng</button>
-              {/* <button className="pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold text-gray-400 hover:text-white">Kênh</button> */}
+              <button
+                onClick={() => setActiveTab('playlists')}
+                className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'playlists' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
+              >
+                Danh sách phát
+              </button>
               <button
                 onClick={() => setActiveTab('about')}
                 className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === 'about' ? 'text-[#FF4E00] border-b-[3px] border-[#FF4E00]' : 'text-gray-400 hover:text-white'}`}
@@ -1069,7 +1042,7 @@ export default function ChannelProfile() {
                 placeholder="Tìm kiếm video..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1A1A1A]/80 text-white text-sm rounded-full px-4 py-2 pl-10 border border-white/10 focus:border-[#FF5722] focus:outline-none transition-colors"
+                className="w-full text-white text-sm px-4 py-2 pl-10 border-b border-white/10 focus:outline-none transition-colors"
               />
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
             </div>
@@ -1382,7 +1355,15 @@ export default function ChannelProfile() {
             const filteredVideos = normalVideos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase()));
             return (
               <>
-                {isOwner && editingVideo && <UploadVideoForm onUploadSuccess={() => fetchChannelData(handle)} channel={channel} editingVideo={editingVideo} onCancelEdit={() => setEditingVideo(null)} />}
+                {isOwner && editingVideo && (
+                  <UploadVideoForm
+                    key={`${editingVideo.id ?? 'new'}-${editingVideo.isShort ? 'short' : 'video'}`}
+                    onUploadSuccess={() => fetchChannelData(handle)}
+                    channel={channel}
+                    editingVideo={editingVideo}
+                    onCancelEdit={() => setEditingVideo(null)}
+                  />
+                )}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4">
                     <h3 className="text-xl font-bold text-white">Tất cả video</h3>
@@ -1440,7 +1421,16 @@ export default function ChannelProfile() {
             const filteredShorts = shortVideos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase()));
             return (
               <>
-                {isOwner && editingVideo && <UploadVideoForm onUploadSuccess={() => fetchChannelData(handle)} channel={channel} editingVideo={editingVideo} onCancelEdit={() => setEditingVideo(null)} isShortType={true} />}
+                {isOwner && editingVideo && (
+                  <UploadVideoForm
+                    key={`${editingVideo.id ?? 'new'}-short`}
+                    onUploadSuccess={() => fetchChannelData(handle)}
+                    channel={channel}
+                    editingVideo={editingVideo}
+                    onCancelEdit={() => setEditingVideo(null)}
+                    isShortType={true}
+                  />
+                )}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4">
                     <h3 className="text-xl font-bold text-white">Tất cả video ngắn</h3>
@@ -1591,7 +1581,7 @@ export default function ChannelProfile() {
       <CustomizeChannelModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        channel={channel}
+        channelData={channel}
         onSaveSuccess={handleSaveSuccess}
       />
 
@@ -1889,13 +1879,6 @@ export default function ChannelProfile() {
       {activeTab === 'livestreams' && (
         <LivestreamsTab channelId={channel?.id} />
       )}
-
-      <CustomizeChannelModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        channel={channel} 
-        onUpdate={fetchChannelData}
-      />
 
     </div>
   );
