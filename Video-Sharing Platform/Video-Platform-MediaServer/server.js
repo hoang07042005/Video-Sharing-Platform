@@ -53,9 +53,8 @@ nms.on('prePublish', async (session) => {
     '-ar', '44100',
     '-b:a', '128k',
     '-f', 'hls',
-    '-hls_time', '2',
-    '-hls_list_size', '3',
-    '-hls_flags', 'delete_segments',
+    '-hls_time', '4',
+    '-hls_playlist_type', 'event',
     path.join(outDir, 'index.m3u8')
   ]);
 
@@ -145,9 +144,8 @@ wss.on('connection', (ws, req) => {
     '-ar', '44100',
     '-b:a', '128k',
     '-f', 'hls',
-    '-hls_time', '2',
-    '-hls_list_size', '3',
-    '-hls_flags', 'delete_segments+append_list',
+    '-hls_time', '4',
+    '-hls_playlist_type', 'event',
     '-hls_segment_filename', path.join(outDir, 'seg%03d.ts'),
     hlsOutput
   ]);

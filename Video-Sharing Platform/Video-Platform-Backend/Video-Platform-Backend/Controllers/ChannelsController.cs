@@ -217,6 +217,100 @@ namespace Video_Platform_Backend.Controllers
             return Ok(new { TotalRevenue = totalRevenue });
         }
 
+        // GET: api/channels/{channelId}/revenue-stats
+        [HttpGet("{channelId}/revenue-stats")]
+        [Authorize]
+        public async Task<IActionResult> GetChannelRevenueStats(Guid channelId)
+        {
+            var userIdString = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var channel = await _context.Channels.FirstOrDefaultAsync(c => c.Id == channelId);
+            if (channel == null) return NotFound(new { message = "Không tìm thấy kênh." });
+            if (channel.UserId != userId) return Unauthorized(new { message = "Bạn không có quyền truy cập." });
+
+            var channelLivestreamIds = await _context.Livestreams
+                .Where(l => l.ChannelId == channel.Id)
+                .Select(l => l.Id)
+                .ToListAsync();
+
+            // 1 & 3: Donate Revenue & History (VND)
+            var donateHistory = await _context.Donations
+                .Include(d => d.User).ThenInclude(u => u.Profile)
+                .Where(d => channelLivestreamIds.Contains(d.LivestreamId) && d.Currency == "VND" && d.Status == "completed")
+                .OrderByDescending(d => d.CreatedAt)
+                .Select(d => new
+                {
+                    d.Id,
+                    d.DonorName,
+                    d.Amount,
+                    d.Message,
+                    d.CreatedAt,
+                    AvatarUrl = d.User != null && d.User.Profile != null ? d.User.Profile.AvatarUrl : null
+                })
+                .ToListAsync();
+
+            var totalDonateVND = donateHistory.Sum(d => d.Amount);
+
+            // 2 & 4: Coin Received Revenue & History (Xu)
+            var coinReceivedHistory = await _context.Donations
+                .Include(d => d.User).ThenInclude(u => u.Profile)
+                .Where(d => channelLivestreamIds.Contains(d.LivestreamId) && d.Currency == "Xu" && d.Status == "completed")
+                .OrderByDescending(d => d.CreatedAt)
+                .Select(d => new
+                {
+                    d.Id,
+                    d.DonorName,
+                    d.Amount,
+                    d.Message,
+                    d.CreatedAt,
+                    AvatarUrl = d.User != null && d.User.Profile != null ? d.User.Profile.AvatarUrl : null
+                })
+                .ToListAsync();
+
+            var totalCoinReceived = coinReceivedHistory.Sum(d => d.Amount);
+
+            // 5: Coin Deposit History
+            var depositHistory = await _context.Transactions
+                .Include(t => t.Payment)
+                .Where(t => t.Payment.UserId == userId && t.TransactionType == "BuyCoins" && t.Payment.Status == "Success")
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Amount,
+                    t.CreatedAt,
+                    CoinsAdded = (int)(t.Amount / 100)
+                })
+                .ToListAsync();
+
+            // 6: Coin Spent History (Gift sent)
+            var coinSpentHistory = await _context.Donations
+                .Include(d => d.Livestream).ThenInclude(l => l.Channel)
+                .Where(d => d.UserId == userId && d.Currency == "Xu" && d.Status == "completed")
+                .OrderByDescending(d => d.CreatedAt)
+                .Select(d => new
+                {
+                    d.Id,
+                    d.Amount,
+                    d.CreatedAt,
+                    ChannelName = d.Livestream != null && d.Livestream.Channel != null ? d.Livestream.Channel.ChannelName : "Kênh ẩn",
+                    d.Message
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                TotalDonateVND = totalDonateVND,
+                TotalCoinReceived = totalCoinReceived,
+                DonateHistory = donateHistory,
+                CoinReceivedHistory = coinReceivedHistory,
+                DepositHistory = depositHistory,
+                CoinSpentHistory = coinSpentHistory
+            });
+        }
+
+
         // GET: api/channels/{channelId}/videos
         [HttpGet("{channelId}/videos")]
         public async Task<IActionResult> GetChannelVideos(Guid channelId)

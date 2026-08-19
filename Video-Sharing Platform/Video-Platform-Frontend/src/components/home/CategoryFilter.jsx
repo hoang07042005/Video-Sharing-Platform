@@ -56,10 +56,10 @@ export default function CategoryFilter({ onSelect }) {
               <button
                 key={category.id}
                 onClick={() => handleSelect(category.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl whitespace-nowrap text-sm font-medium transition-all cursor-pointer shrink-0 border ${
+                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all ${
                   isActive
-                    ? 'bg-[#FF5722]/15 border-[#FF5722]/40 text-white'
-                    : 'bg-transparent border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                     ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border border-transparent' 
+                    : 'bg-[#18181C] text-gray-400 border border-white/5 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 {/* Icon box */}

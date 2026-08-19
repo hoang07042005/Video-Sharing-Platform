@@ -16,4 +16,6 @@ public partial class VideoCategory
     public bool IsActive { get; set; } = true;
 
     public virtual ICollection<Video> Videos { get; set; } = new List<Video>();
+
+    public virtual ICollection<Livestream> Livestreams { get; set; } = new List<Livestream>();
 }

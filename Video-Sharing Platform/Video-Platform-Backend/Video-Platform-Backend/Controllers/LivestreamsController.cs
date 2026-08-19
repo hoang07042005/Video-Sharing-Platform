@@ -45,7 +45,10 @@ public class LivestreamsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var item = await _db.Livestreams.Include(l => l.Channel).FirstOrDefaultAsync(l => l.Id == id);
+        var item = await _db.Livestreams
+            .Include(l => l.Channel)
+            .Include(l => l.Category)
+            .FirstOrDefaultAsync(l => l.Id == id);
         if (item == null) return NotFound();
 
         bool isLiked = false;
@@ -73,6 +76,8 @@ public class LivestreamsController : ControllerBase
             item.EndTime,
             item.CurrentViewers,
             item.Likes,
+            item.CategoryId,
+            Category = item.Category != null ? new { item.Category.Id, item.Category.Name } : null,
             IsLiked = isLiked,
             Channel = item.Channel != null ? new { item.Channel.Id, item.Channel.ChannelName, item.Channel.AvatarUrl } : null
         });
@@ -197,6 +202,7 @@ public class LivestreamsController : ControllerBase
             HlsUrl = dto.HlsUrl ?? string.Empty,
             VodUrl = dto.VodUrl ?? string.Empty,
             Tags = dto.Tags ?? string.Empty,
+            CategoryId = dto.CategoryId,
             TotalViews = dto.TotalViews ?? 0L,
             Status = string.IsNullOrWhiteSpace(dto.Status) ? "scheduled" : dto.Status,
             ScheduledStartTime = dto.ScheduledStartTime ?? DateTime.UtcNow,
@@ -220,6 +226,26 @@ public class LivestreamsController : ControllerBase
         if (item == null) return NotFound();
         item.EndTime = DateTime.UtcNow;
         item.Status = "ended";
+        await _db.SaveChangesAsync();
+        return Ok(item);
+    }
+
+    [HttpPost("{id}/pause")]
+    public async Task<IActionResult> Pause(Guid id)
+    {
+        var item = await _db.Livestreams.FindAsync(id);
+        if (item == null) return NotFound();
+        item.Status = "paused";
+        await _db.SaveChangesAsync();
+        return Ok(item);
+    }
+
+    [HttpPost("{id}/resume")]
+    public async Task<IActionResult> Resume(Guid id)
+    {
+        var item = await _db.Livestreams.FindAsync(id);
+        if (item == null) return NotFound();
+        item.Status = "live";
         await _db.SaveChangesAsync();
         return Ok(item);
     }

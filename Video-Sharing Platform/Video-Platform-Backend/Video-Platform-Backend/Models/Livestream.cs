@@ -21,6 +21,8 @@ public partial class Livestream
     public long? TotalViews { get; set; }
     public string? Tags { get; set; }
 
+    public int? CategoryId { get; set; }
+
     // Status: "scheduled", "live", "ended"
     public string? Status { get; set; }
 
@@ -37,6 +39,8 @@ public partial class Livestream
     public int? CurrentViewers { get; set; }
 
     public virtual Channel? Channel { get; set; }
+
+    public virtual VideoCategory? Category { get; set; }
 
     public virtual ICollection<LiveMessage> LiveMessages { get; set; } = new List<LiveMessage>();
 

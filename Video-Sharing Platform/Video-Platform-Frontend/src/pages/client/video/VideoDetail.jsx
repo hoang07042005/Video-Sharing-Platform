@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock, Play } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
@@ -17,6 +17,7 @@ export default function VideoDetail() {
   const lastSavedTime = useRef(0);
   const [recommendedVideos, setRecommendedVideos] = useState([]);
   const [sameChannelVideos, setSameChannelVideos] = useState([]);
+  const [playlistData, setPlaylistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -44,6 +45,62 @@ export default function VideoDetail() {
   const [reportReason, setReportReason] = useState('Nội dung phản cảm');
   const [reportDescription, setReportDescription] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  // Up Next States
+  const [showUpNext, setShowUpNext] = useState(false);
+  const [upNextCountdown, setUpNextCountdown] = useState(10);
+  const [isUpNextCancelled, setIsUpNextCancelled] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const nextVideo = recommendedVideos.length > 0 ? recommendedVideos[0] : null;
+
+  useEffect(() => {
+    // Reset states when changing video
+    setShowUpNext(false);
+    setIsUpNextCancelled(false);
+    setUpNextCountdown(10);
+    setIsVideoReady(false);
+  }, [id]);
+
+  useEffect(() => {
+    let interval;
+    if (isVideoReady && videoRef.current && nextVideo && !isUpNextCancelled) {
+      interval = setInterval(() => {
+        const player = videoRef.current;
+        if (!player || player.isDisposed()) return;
+        const current = player.currentTime();
+        const duration = player.duration();
+        
+        if (duration > 0 && duration - current <= 15) {
+          if (!showUpNext) {
+            setShowUpNext(true);
+            setUpNextCountdown(10);
+          }
+        } else {
+          if (showUpNext) setShowUpNext(false);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [nextVideo, isUpNextCancelled, showUpNext, isVideoReady]);
+
+  useEffect(() => {
+    let countdownTimer;
+    if (showUpNext && !isUpNextCancelled) {
+      countdownTimer = setInterval(() => {
+        setUpNextCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownTimer);
+            if (nextVideo) {
+              navigate(`/watch/${nextVideo.id}`);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(countdownTimer);
+  }, [showUpNext, isUpNextCancelled, nextVideo, navigate]);
 
   const getCurrentUserId = () => {
     const token = localStorage.getItem('token');
@@ -110,6 +167,13 @@ export default function VideoDetail() {
       // Fetch recommended videos (all except current)
       const recRes = await axios.get('/api/videos');
       const allOthers = recRes.data.filter(v => v.id !== id);
+      
+      // Shuffle array to prevent infinite A -> B -> A -> B loop in Up Next
+      for (let i = allOthers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allOthers[i], allOthers[j]] = [allOthers[j], allOthers[i]];
+      }
+      
       setRecommendedVideos(allOthers);
 
       // Fetch same-channel videos for "Up Next" top 5
@@ -122,6 +186,19 @@ export default function VideoDetail() {
         } catch {
           setSameChannelVideos([]);
         }
+      }
+
+      // Fetch playlist if listId is present
+      const listId = searchParams.get('list');
+      if (listId) {
+        try {
+          const plRes = await axios.get(`/api/playlists/${listId}/videos`, { headers });
+          setPlaylistData(plRes.data);
+        } catch {
+          setPlaylistData(null);
+        }
+      } else {
+        setPlaylistData(null);
       }
       // If video loaded and ?t is present, we seek to it in onReady now
     } catch (err) {
@@ -522,6 +599,8 @@ export default function VideoDetail() {
               }}
               onReady={(player) => {
                 const t = searchParams.get('t');
+                videoRef.current = player;
+                setIsVideoReady(true);
                 
                 player.one('loadedmetadata', () => {
                   if (t) {
@@ -556,6 +635,41 @@ export default function VideoDetail() {
               currentResolutionUrl={currentResolutionUrl}
               onResolutionChange={(newUrl) => setCurrentResolutionUrl(newUrl)}
             />
+          )}
+
+          {/* UP NEXT OVERLAY */}
+          {showUpNext && nextVideo && !isUpNextCancelled && (
+            <div className="absolute bottom-16 right-4 z-50 bg-black/80 backdrop-blur-md rounded-xl p-4 w-[340px] border border-white/10 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white font-bold text-sm">Video phát tiếp theo</span>
+                <button onClick={() => setIsUpNextCancelled(true)} className="text-gray-400 hover:text-white transition-colors">
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex gap-3 mb-4 cursor-pointer group" onClick={() => navigate(`/watch/${nextVideo.id}`)}>
+                <div className="relative w-[120px] aspect-video rounded-lg overflow-hidden shrink-0">
+                  <img src={nextVideo.thumbnailUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80'} alt={nextVideo.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <h4 className="text-white text-sm font-semibold line-clamp-2 leading-snug group-hover:text-blue-400 transition-colors">{nextVideo.title}</h4>
+                  <p className="text-gray-400 text-xs mt-1 truncate">{nextVideo.channelName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsUpNextCancelled(true)}
+                  className="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-colors"
+                >
+                  Hủy
+                </button>
+                <button 
+                  onClick={() => navigate(`/watch/${nextVideo.id}`)}
+                  className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/30"
+                >
+                  <Play className="w-4 h-4 fill-white" /> Phát ngay ({upNextCountdown})
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -850,8 +964,37 @@ export default function VideoDetail() {
           </div>
         </div>
         <div className="border-t border-white/10 pt-5">
-          {/* Same Channel - Top 5 */}
-          {sameChannelVideos.length > 0 && (
+          {/* Playlist or Same Channel - Top 5 */}
+          {playlistData ? (
+            <div className="bg-[#1A1A1A] rounded-xl border border-white/10 mb-6 overflow-hidden flex flex-col">
+              <div className="p-4 bg-[#2A2A2A]">
+                <h3 className="text-white font-bold text-lg mb-1 line-clamp-1">{playlistData.title}</h3>
+                <p className="text-gray-400 text-xs">
+                  {video.channelName} - {playlistData.videos?.findIndex(v => v.id === id) + 1} / {playlistData.videos?.length}
+                </p>
+              </div>
+              <div className="flex flex-col gap-1 p-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                {playlistData.videos?.map((pv, idx) => (
+                  <Link 
+                    key={pv.id} 
+                    to={`/watch/${pv.id}?list=${playlistData.id}`}
+                    className={`flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors ${pv.id === id ? 'bg-white/10' : ''}`}
+                  >
+                    {pv.id === id ? (
+                      <Play className="w-4 h-4 text-white shrink-0 fill-white" />
+                    ) : (
+                      <span className="text-gray-500 text-xs w-4 text-center shrink-0">{idx + 1}</span>
+                    )}
+                    <img src={pv.thumbnailUrl} alt={pv.title} className="w-[100px] h-[56px] object-cover rounded bg-black shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-white text-xs font-semibold line-clamp-2 leading-tight mb-1">{pv.title}</span>
+                      <span className="text-gray-400 text-[10px]">{pv.channelName}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : sameChannelVideos.length > 0 && (
             <div className="flex flex-col gap-3 mb-6">
               {sameChannelVideos.map((recVideo) => (
                 <Link to={recVideo.isShort ? `/shorts?id=${recVideo.id}` : `/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-2 group">

@@ -382,10 +382,17 @@ export default function LiveWatch() {
             {/* Video Player Section */}
             <div className="bg-black rounded-2xl overflow-hidden shadow-2xl relative group border border-white/5">
               <div className="absolute top-4 left-4 z-10 flex gap-2 pointer-events-none">
-                <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                  LIVE
-                </div>
+                {stream.status === 'paused' ? (
+                  <div className="bg-amber-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+                    <LucideIcons.Pause className="w-3 h-3" />
+                    ĐÃ TẠM DỪNG
+                  </div>
+                ) : (
+                  <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                    LIVE
+                  </div>
+                )}
                 <div className="bg-black/50 backdrop-blur-md text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 pointer-events-auto">
                   <div className="w-4 h-3 flex justify-center items-end gap-[1px]">
                     <div className="w-[2px] h-2 bg-white rounded-full"></div>
@@ -409,12 +416,21 @@ export default function LiveWatch() {
               </div>
 
               {hlsSource ? (
-                <LivestreamPlayer
-                  key={hlsSource}
-                  hlsUrl={hlsSource}
-                  poster={stream.thumbnailUrl}
-                  className="relative z-0"
-                />
+                <>
+                  <LivestreamPlayer
+                    key={hlsSource}
+                    hlsUrl={hlsSource}
+                    poster={stream.thumbnailUrl}
+                    className="relative z-0"
+                  />
+                  {stream.status === 'paused' && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
+                      <LucideIcons.PauseCircle className="w-16 h-16 text-amber-500 mb-4 animate-pulse" />
+                      <h3 className="text-2xl font-bold text-white mb-2">Luồng phát đang tạm dừng</h3>
+                      <p className="text-gray-300 text-sm max-w-md text-center">Người phát đã tạm dừng luồng trực tiếp này. Video sẽ tự động tiếp tục khi họ quay lại.</p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="aspect-video w-full flex items-center justify-center text-white bg-[#111] px-6 text-center">
                   Livestream đang được khởi tạo hoặc chưa có luồng phát hợp lệ.
@@ -451,15 +467,27 @@ export default function LiveWatch() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 leading-none h-[18px]">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                      LIVE
-                    </span>
+                    {stream.status === 'paused' ? (
+                      <span className="bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 leading-none h-[18px]">
+                        <LucideIcons.Pause className="w-2.5 h-2.5" />
+                        ĐÃ TẠM DỪNG
+                      </span>
+                    ) : (
+                      <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 leading-none h-[18px]">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                        LIVE
+                      </span>
+                    )}
                     <h2 className="text-[15px] font-semibold text-white leading-none">
                       {stream.title}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
+                    {stream.category && (
+                      <span className="text-[11px] font-medium text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">
+                        {stream.category.name}
+                      </span>
+                    )}
                     {stream.tags
                       ? stream.tags
                           .split(",")
@@ -792,7 +820,8 @@ export default function LiveWatch() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowGiftModal(true)}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setShowGiftModal(true); }}
                   className="text-[#7B1FA2] hover:text-white transition-colors flex items-center gap-1 bg-[#7B1FA2]/20 px-2 py-1 rounded"
                 >
                   <Gift className="w-4 h-4" />{" "}
@@ -857,6 +886,12 @@ const DonateModal = ({ livestreamId, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      return toast.error("Vui lòng đăng nhập để thực hiện quyên góp qua VNPay");
+    }
     if (!formData.donorName.trim())
       return toast.error("Vui lòng nhập tên của bạn");
     if (formData.amount < 10000)
@@ -864,20 +899,34 @@ const DonateModal = ({ livestreamId, onClose }) => {
 
     setLoading(true);
     try {
-      await axios.post("/api/donations/create", {
+      // 1. Create Pending Donation
+      const res = await axios.post("/api/donations/create", {
         livestreamId,
         donorName: formData.donorName,
         message: formData.message,
         amount: formData.amount,
         currency: "VND",
         isSuperChat: formData.isSuperChat,
-        userId: localStorage.getItem("userId") || null,
+        userId: userId,
       });
 
-      toast.success("Cảm ơn bạn đã quyên góp!");
+      const donationId = res.data.id;
+
+      // 2. Get VNPay URL
+      const payRes = await axios.post("/api/payment/create-payment-url", {
+        plan: "Donation",
+        amount: formData.amount,
+        donationId: donationId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 3. Redirect to VNPay
+      toast.info("Đang chuyển hướng đến VNPay...");
+      window.open(payRes.data.url, '_blank');
       onClose();
     } catch (err) {
-      toast.error("Lỗi quyên góp: " + (err.response?.data || err.message));
+      toast.error("Lỗi tạo yêu cầu thanh toán: " + (err.response?.data || err.message));
     } finally {
       setLoading(false);
     }
@@ -1066,7 +1115,11 @@ const GiftModal = ({ onClose, onSendGift }) => {
             </span>
           </div>
           <button
-            onClick={handleRecharge}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              handleRecharge();
+            }}
             className="bg-[#7B1FA2] hover:bg-[#6A1B9A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-lg"
           >
             Nạp xu
@@ -1076,7 +1129,11 @@ const GiftModal = ({ onClose, onSendGift }) => {
           {gifts.map((g) => (
             <button
               key={g.id}
-              onClick={() => handleSend(g)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSend(g);
+              }}
               className="flex flex-col items-center p-3 rounded-xl hover:bg-white/10 border border-transparent hover:border-white/10 transition-colors group"
             >
               <span className="text-3xl group-hover:scale-110 transition-transform mb-1">

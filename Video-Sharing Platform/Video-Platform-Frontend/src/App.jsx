@@ -25,7 +25,8 @@ import SearchResults from './pages/client/search/SearchResults';
 import LiveWatch from './pages/client/live/LiveWatch';
 import VideoManagement from './pages/admin/video/VideoManagement';
 import MembershipPage from './pages/client/channel/MembershipPage';
-import BuyCoins from './pages/client/BuyCoins';
+import BuyCoins from './pages/client/Coins/BuyCoins';
+import LivePages from './pages/client/live/LivePage';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -73,6 +74,7 @@ function App() {
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
           <Route path="/studio/live" element={<StudioLive />} />
+          <Route path="/video/livestreams" element={<LivePages />} />
           <Route path="/results" element={<SearchResults />} />
 
           {/* 404 Catch-all */}

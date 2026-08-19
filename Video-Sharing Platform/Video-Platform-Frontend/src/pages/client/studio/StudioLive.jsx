@@ -16,7 +16,10 @@ const StudioLive = () => {
   const [description, setDescription] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [tags, setTags] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState([]);
   const [isLive, setIsLive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [streamTime, setStreamTime] = useState(0);
   const [showStreamKey, setShowStreamKey] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -200,6 +203,27 @@ const StudioLive = () => {
     }
   };
 
+  const togglePauseScreenShare = async () => {
+    if (!mediaRecorderRef.current || !livestream?.id) return;
+    try {
+      if (mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.pause();
+        setIsPaused(true);
+        await axios.post(`${apiBase}/api/livestreams/${livestream.id}/pause`, {}, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+      } else if (mediaRecorderRef.current.state === 'paused') {
+        mediaRecorderRef.current.resume();
+        setIsPaused(false);
+        await axios.post(`${apiBase}/api/livestreams/${livestream.id}/resume`, {}, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+      }
+    } catch (err) {
+      console.error('Error toggling pause:', err);
+    }
+  };
+
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -214,6 +238,12 @@ const StudioLive = () => {
       videoRef.current.play().catch(() => {});
     }
   }, [isLive, livestream?.id]);
+
+  useEffect(() => {
+    axios.get('/api/videos/categories')
+      .then(res => setCategories(res.data))
+      .catch(err => console.error("Failed to fetch categories:", err));
+  }, []);
 
   useEffect(() => {
     let pollInterval;
@@ -288,6 +318,7 @@ const StudioLive = () => {
         hlsUrl: '',
         vodUrl: '',
         tags: tags || '',
+        categoryId: categoryId ? Number(categoryId) : null,
         totalViews: 0,
         status: 'scheduled',
         scheduledStartTime: new Date().toISOString()
@@ -367,12 +398,15 @@ const StudioLive = () => {
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">Danh mục</label>
                   <div className="relative">
-                    <select className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors appearance-none cursor-pointer">
+                    <select
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:border-pink-500 focus:outline-none transition-colors appearance-none cursor-pointer"
+                    >
                       <option value="">Chọn danh mục phù hợp</option>
-                      <option value="gaming">Gaming</option>
-                      <option value="music">Âm nhạc</option>
-                      <option value="chat">Trò chuyện</option>
-                      <option value="education">Giáo dục</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
                     </select>
                     <LucideIcons.ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-3.5 pointer-events-none" />
                   </div>
@@ -599,9 +633,14 @@ const StudioLive = () => {
               <span className="text-[10px] text-red-200 mt-0.5">Khi đã sẵn sàng</span>
             </button>
           ) : (
-            <button onClick={stopScreenShare} className="flex items-center gap-2 px-6 py-3 bg-red-900/40 border border-red-500/40 hover:bg-red-900/60 rounded-xl text-red-400 text-sm font-bold transition-all animate-pulse cursor-pointer">
-              <LucideIcons.Square className="w-4 h-4" /> Kết thúc livestream
-            </button>
+            <div className="flex gap-3">
+              <button onClick={togglePauseScreenShare} className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer border ${isPaused ? 'bg-amber-600 border-amber-500 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20' : 'bg-[#1a1a20] border-white/10 hover:bg-[#252530] text-gray-300'}`}>
+                {isPaused ? <><LucideIcons.Play className="w-4 h-4" /> Tiếp tục phát</> : <><LucideIcons.Pause className="w-4 h-4" /> Tạm dừng</>}
+              </button>
+              <button onClick={stopScreenShare} className="flex items-center gap-2 px-6 py-3 bg-red-900/40 border border-red-500/40 hover:bg-red-900/60 rounded-xl text-red-400 text-sm font-bold transition-all animate-pulse cursor-pointer">
+                <LucideIcons.Square className="w-4 h-4" /> Kết thúc livestream
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -636,8 +675,9 @@ const StudioLive = () => {
                 </div>
               )}
               {isLive && (
-                <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse inline-block"></span> LIVE · {formatTime(streamTime)}
+                <div className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg ${isPaused ? 'bg-amber-600' : 'bg-red-600'}`}>
+                  {isPaused ? <LucideIcons.Pause className="w-3 h-3" /> : <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse inline-block"></span>} 
+                  {isPaused ? 'ĐÃ TẠM DỪNG' : 'LIVE'} · {formatTime(streamTime)}
                 </div>
               )}
             </div>

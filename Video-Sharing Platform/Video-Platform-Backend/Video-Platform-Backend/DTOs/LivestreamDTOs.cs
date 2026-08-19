@@ -22,6 +22,8 @@ public class CreateLivestreamDTO
 
     public string? Tags { get; set; }
 
+    public int? CategoryId { get; set; }
+
     public long? TotalViews { get; set; }
 
     public string? Status { get; set; }

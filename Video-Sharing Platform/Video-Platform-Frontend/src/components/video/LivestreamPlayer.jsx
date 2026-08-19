@@ -46,35 +46,59 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         console.log('[LivestreamPlayer] Manifest parsed, levels:', hls.levels.length);
-        // Dùng setTimeout để tránh race condition với React Strict Mode double-invoke
         setTimeout(() => {
           if (video.paused) {
+            console.log('[LivestreamPlayer] Video is paused, attempting play()...');
             const playPromise = video.play();
             if (playPromise !== undefined) {
-              playPromise.catch(e => console.warn('[LivestreamPlayer] Play deferred:', e.message));
+              playPromise.then(() => console.log('[LivestreamPlayer] Play successful'))
+                .catch(e => console.warn('[LivestreamPlayer] Play deferred:', e.message));
             }
           }
         }, 100);
       });
 
-      let retryCount = 0;
+      // Cố gắng phát ngay khi có thể
+      video.addEventListener('loadeddata', () => {
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      });
+
+      // Lắng nghe lỗi HLS
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('[LivestreamPlayer] HLS Error:', data.type, data.details, data.fatal);
+        console.warn('[LivestreamPlayer] HLS Error:', data.type, data.details, data.fatal);
+        
         if (data.fatal) {
-          setError(`Lỗi phát video: ${data.details}`);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              console.log('[LivestreamPlayer] Retrying after network error...');
-              retryCount++;
-              setTimeout(() => {
-                if (hlsRef.current) hlsRef.current.startLoad();
-              }, Math.min(1000 * retryCount, 5000));
+              if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR) {
+                // Manifest chưa có (FFmpeg chưa tạo xong) -> Thử tải lại toàn bộ
+                console.log('[LivestreamPlayer] Manifest not found, retrying in 3s...');
+                setError('Đang đợi luồng phát bắt đầu...');
+                setTimeout(() => {
+                  if (hlsRef.current) {
+                    setError(null);
+                    hlsRef.current.loadSource(hlsUrl);
+                  }
+                }, 3000);
+              } else {
+                console.log('[LivestreamPlayer] Network error, retrying...');
+                setError('Đang khôi phục kết nối mạng...');
+                setTimeout(() => {
+                  if (hlsRef.current) {
+                    setError(null);
+                    hlsRef.current.startLoad();
+                  }
+                }, 2000);
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               console.log('[LivestreamPlayer] Recovering from media error...');
               hls.recoverMediaError();
               break;
             default:
+              setError('Không thể phát video này.');
               hls.destroy();
               break;
           }
@@ -88,6 +112,11 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
     } else {
       console.warn('[LivestreamPlayer] HLS not supported, falling back to native src');
       video.src = hlsUrl;
+      video.addEventListener('loadeddata', () => {
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      });
     }
   }, [hlsUrl]);
 
@@ -116,10 +145,14 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
       />
 
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-center px-4 rounded-lg">
-          <div>
-            <div className="text-red-400 text-lg mb-2">⚠ {error}</div>
-            <div className="text-gray-400 text-sm">Đang thử kết nối lại...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-center px-4 rounded-lg z-10 backdrop-blur-sm">
+          <div className="flex flex-col items-center">
+            {error.includes('đợi') || error.includes('khôi phục') ? (
+               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            ) : (
+               <div className="text-red-400 text-3xl mb-2">⚠</div>
+            )}
+            <div className="text-gray-200 text-lg font-medium">{error}</div>
           </div>
         </div>
       )}

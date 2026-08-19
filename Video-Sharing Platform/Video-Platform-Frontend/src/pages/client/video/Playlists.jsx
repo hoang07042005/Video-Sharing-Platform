@@ -410,7 +410,7 @@ export default function Playlists() {
             ) : (
               <div className="flex flex-col gap-3">
                 {selected.videos?.map((v, i) => (
-                  <VideoItem key={v.id} video={v} index={i} onNavigate={(videoObj) => { setSelected(null); navigate(videoObj.isShort ? `/shorts?id=${videoObj.id}` : `/watch/${videoObj.id}`); }} />
+                  <VideoItem key={v.id} video={v} index={i} onNavigate={(videoObj) => { setSelected(null); navigate(videoObj.isShort ? `/shorts?id=${videoObj.id}` : `/watch/${videoObj.id}?list=${selected.id}`); }} />
                 ))}
               </div>
             )}

@@ -80,56 +80,12 @@ public class DonationsController : ControllerBase
             Amount = dto.Amount,
             Currency = dto.Currency ?? "VND",
             IsSuperChat = dto.IsSuperChat,
-            Status = "completed",
+            Status = "pending",
             CreatedAt = DateTime.UtcNow
         };
 
-        if (dto.UserId.HasValue)
-        {
-            var payment = new Payment
-            {
-                Id = Guid.NewGuid(),
-                UserId = dto.UserId.Value,
-                Amount = dto.Amount,
-                Currency = "VND",
-                PaymentMethod = "Direct",
-                Status = "Success",
-                CreatedAt = DateTime.UtcNow
-            };
-            _db.Payments.Add(payment);
-
-            var transaction = new Transaction
-            {
-                Id = Guid.NewGuid(),
-                PaymentId = payment.Id,
-                TransactionType = "Donation",
-                TargetChannelId = livestream.ChannelId,
-                Amount = dto.Amount,
-                CreatedAt = DateTime.UtcNow
-            };
-            _db.Transactions.Add(transaction);
-
-            donation.TransactionId = payment.Id.ToString();
-        }
-
         _db.Donations.Add(donation);
         await _db.SaveChangesAsync();
-
-        // Broadcast to chat
-        var user = dto.UserId.HasValue ? await _db.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == dto.UserId.Value) : null;
-
-        
-        await _hubContext.Clients.Group(donation.LivestreamId.ToString()).SendAsync("ReceiveSuperChat", new
-        {
-            id = donation.Id,
-            livestreamId = donation.LivestreamId,
-            donorName = donation.DonorName,
-            userAvatar = user?.Profile?.AvatarUrl,
-            message = donation.Message,
-            amount = donation.Amount,
-            currency = donation.Currency,
-            createdAt = donation.CreatedAt
-        });
 
         return Ok(new { donation.Id, donation.Status });
     }
