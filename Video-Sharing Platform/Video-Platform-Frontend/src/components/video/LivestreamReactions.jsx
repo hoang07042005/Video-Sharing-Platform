@@ -71,18 +71,6 @@ const LivestreamReactions = ({ livestreamId, connRef }) => {
         `}</style>
       </div>
 
-      {/* Reaction Buttons */}
-      <div className="flex gap-1 flex-wrap justify-center mt-2">
-        {emojiList.map((emoji) => (
-          <button
-            key={emoji}
-            onClick={() => sendReaction(emoji)}
-            className="w-10 h-10 text-xl hover:scale-110 hover:bg-white/10 rounded-full transition"
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
     </div>
   );
 };

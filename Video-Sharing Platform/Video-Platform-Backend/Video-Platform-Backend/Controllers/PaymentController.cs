@@ -5,6 +5,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
+using Video_Platform_Backend.Hubs;
 
 namespace Video_Platform_Backend.Controllers;
 
@@ -15,12 +17,14 @@ public class PaymentController : ControllerBase
     private readonly IVnPayService _vnPayService;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IHubContext<LivestreamHub> _hubContext;
 
-    public PaymentController(IVnPayService vnPayService, ApplicationDbContext context, IConfiguration configuration)
+    public PaymentController(IVnPayService vnPayService, ApplicationDbContext context, IConfiguration configuration, IHubContext<LivestreamHub> hubContext)
     {
         _vnPayService = vnPayService;
         _context = context;
         _configuration = configuration;
+        _hubContext = hubContext;
     }
 
     [HttpPost("create-payment-url")]
@@ -54,6 +58,10 @@ public class PaymentController : ControllerBase
             if (model.TargetChannelId.HasValue)
             {
                 orderInfo += $"|TargetChannelId:{model.TargetChannelId.Value}";
+            }
+            if (model.DonationId.HasValue)
+            {
+                orderInfo += $"|DonationId:{model.DonationId.Value}";
             }
             
             if (model.Plan == "Membership" && model.TargetChannelId.HasValue)
@@ -99,16 +107,18 @@ public class PaymentController : ControllerBase
 
         if (response.Success)
         {
+            Guid? redirectLivestreamId = null;
             // Parse OrderInfo
             var parts = response.OrderInfo.Split('|');
             var userIdStr = parts.FirstOrDefault(p => p.StartsWith("UserId:"))?.Replace("UserId:", "");
             var plan = parts.FirstOrDefault(p => p.StartsWith("Plan:"))?.Replace("Plan:", "");
             var cycle = parts.FirstOrDefault(p => p.StartsWith("Cycle:"))?.Replace("Cycle:", "");
             var targetChannelIdStr = parts.FirstOrDefault(p => p.StartsWith("TargetChannelId:"))?.Replace("TargetChannelId:", "");
+            var donationIdStr = parts.FirstOrDefault(p => p.StartsWith("DonationId:"))?.Replace("DonationId:", "");
 
             if (Guid.TryParse(userIdStr, out var userId))
             {
-                var user = await _context.Users.FindAsync(userId);
+                var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
                 if (user != null)
                 {
                     // Create Payment record
@@ -168,6 +178,55 @@ public class PaymentController : ControllerBase
                         };
                         _context.Transactions.Add(transaction);
                     }
+                    else if (plan == "Donation" && Guid.TryParse(donationIdStr, out var donationId))
+                    {
+                        var donation = await _context.Donations.FindAsync(donationId);
+                        if (donation != null)
+                        {
+                            donation.Status = "completed";
+                            donation.TransactionId = payment.Id.ToString();
+
+                            var transaction = new Transaction
+                            {
+                                Id = Guid.NewGuid(),
+                                PaymentId = payment.Id,
+                                TransactionType = "Donation",
+                                TargetChannelId = targetChannelId,
+                                Amount = response.Amount,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            _context.Transactions.Add(transaction);
+                            // Bắn sự kiện SignalR
+                            await _hubContext.Clients.Group(donation.LivestreamId.ToString()).SendAsync("ReceiveSuperChat", new
+                            {
+                                id = donation.Id,
+                                livestreamId = donation.LivestreamId,
+                                donorName = donation.DonorName,
+                                userAvatar = user.Profile?.AvatarUrl,
+                                message = donation.Message,
+                                amount = donation.Amount,
+                                currency = donation.Currency,
+                                createdAt = donation.CreatedAt
+                            });
+
+                            redirectLivestreamId = donation.LivestreamId;
+                        }
+                    }
+                    else if (plan == "BuyCoins")
+                    {
+                        var coinsToAdd = (int)(response.Amount / 100); // 100 VND = 1 Coin
+                        user.Coins += coinsToAdd;
+
+                        var transaction = new Transaction
+                        {
+                            Id = Guid.NewGuid(),
+                            PaymentId = payment.Id,
+                            TransactionType = "BuyCoins",
+                            Amount = response.Amount,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Transactions.Add(transaction);
+                    }
                     else
                     {
                         // Update user premium status
@@ -194,6 +253,10 @@ public class PaymentController : ControllerBase
             }
 
             var frontendUrl = !string.IsNullOrEmpty(frontend) ? frontend : (_configuration["FrontendUrl"] ?? "http://localhost:5173");
+            if (plan == "Donation" && redirectLivestreamId.HasValue) 
+            {
+                return Redirect($"{frontendUrl}/live/{redirectLivestreamId.Value}");
+            }
             return Redirect($"{frontendUrl}/payment-result?status=success&amount={response.Amount}&txn={response.TransactionId}&type={plan}");
         }
 
@@ -215,7 +278,7 @@ public class PaymentController : ControllerBase
 
             if (user.IsPremium != true || (user.PremiumUntil.HasValue && user.PremiumUntil.Value < DateTime.UtcNow))
             {
-                return Ok(new { plan = "Free", premiumUntil = (DateTime?)null });
+                return Ok(new { plan = "Free", premiumUntil = (DateTime?)null, coins = user.Coins });
             }
 
             // Get the latest premium transaction
@@ -229,10 +292,10 @@ public class PaymentController : ControllerBase
                 var parts = latestTxn.TransactionType.Split('_');
                 var plan = parts.Length > 1 ? parts[1] : "Premium";
                 var cycle = parts.Length > 2 ? parts[2] : "Monthly";
-                return Ok(new { plan, cycle, premiumUntil = user.PremiumUntil });
+                return Ok(new { plan, cycle, premiumUntil = user.PremiumUntil, coins = user.Coins });
             }
 
-            return Ok(new { plan = "Premium", cycle = "Monthly", premiumUntil = user.PremiumUntil });
+            return Ok(new { plan = "Premium", cycle = "Monthly", premiumUntil = user.PremiumUntil, coins = user.Coins });
         }
 
         return BadRequest();
@@ -245,4 +308,5 @@ public class PaymentRequestModel
     public string Cycle { get; set; } = "Monthly";
     public decimal Amount { get; set; }
     public Guid? TargetChannelId { get; set; }
+    public Guid? DonationId { get; set; }
 }

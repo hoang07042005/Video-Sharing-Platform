@@ -41,6 +41,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Livestream> Livestreams { get; set; }
 
+    public virtual DbSet<LivestreamLike> LivestreamLikes { get; set; }
+
     public virtual DbSet<StreamStatistic> StreamStatistics { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
@@ -320,7 +322,29 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Channel).WithMany(p => p.Livestreams)
                 .HasForeignKey(d => d.ChannelId)
-                .HasConstraintName("FK__Livestrea__Chann__531856C7");
+                .HasConstraintName("FK__Livestrea__Chann__797309D9");
+        });
+
+        modelBuilder.Entity<LivestreamLike>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LivestreamLikes");
+
+            entity.ToTable("LivestreamLikes");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Livestream).WithMany(p => p.LivestreamLikes)
+                .HasForeignKey(d => d.LivestreamId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_LivestreamLikes_Livestream");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LivestreamLikes_User");
         });
 
         modelBuilder.Entity<Message>(entity =>

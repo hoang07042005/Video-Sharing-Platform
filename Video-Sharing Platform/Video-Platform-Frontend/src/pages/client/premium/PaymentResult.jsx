@@ -51,14 +51,16 @@ export default function PaymentResult() {
               Cảm ơn bạn. Số tiền {amount.toLocaleString('vi-VN')}đ đã được thanh toán. 
               {paymentType === 'Membership' 
                 ? ' Bạn đã trở thành hội viên của kênh và có thể tận hưởng các đặc quyền.'
+                : paymentType === 'BuyCoins'
+                ? ` Bạn đã nạp thành công ${amount / 100} Xu vào tài khoản.`
                 : ' Tài khoản của bạn đã được nâng cấp lên Premium.'}
             </p>
             <Link 
-              to="/" 
+              to={sessionStorage.getItem('returnUrl') || "/"} 
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF5722] to-[#E91E63] text-white py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
             >
               <Video className="w-5 h-5" />
-              Bắt đầu xem video
+              {sessionStorage.getItem('returnUrl') ? 'Quay lại xem Live' : 'Bắt đầu xem video'}
             </Link>
           </div>
         )}

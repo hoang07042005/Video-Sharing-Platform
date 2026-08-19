@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useSignalRConnection } from '../../hooks/useSignalRConnection';
+import LivestreamReactions from './LivestreamReactions';
 
 // -------------------------------------------------------
 //  Helpers
@@ -77,56 +78,7 @@ const ReportDialog = ({ msg, onClose, onSubmit }) => {
   );
 };
 
-/** Donate Modal */
-const DonateModal = ({ onClose, onSend, userName }) => {
-  const [amount, setAmount] = useState(10000);
-  const [message, setMessage] = useState('');
-  const presets = [10000, 20000, 50000, 100000, 200000, 500000];
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 w-80 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">💝 Quyên góp cho kênh</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-lg transition">✕</button>
-        </div>
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          {presets.map(p => (
-            <button
-              key={p}
-              onClick={() => setAmount(p)}
-              className={`text-xs py-2 rounded-lg border transition font-medium
-                ${amount === p ? 'border-pink-500 bg-pink-500/20 text-pink-300' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'}`}
-            >
-              {p >= 1000 ? `${p / 1000}K` : p}đ
-            </button>
-          ))}
-        </div>
-        <input
-          type="number"
-          min={1000}
-          value={amount}
-          onChange={e => setAmount(Number(e.target.value))}
-          className="w-full bg-white/5 border border-white/10 rounded-lg text-white text-sm px-3 py-2 mb-3"
-          placeholder="Nhập số tiền (VND)"
-        />
-        <textarea
-          value={message}
-          onChange={e => setMessage(e.target.value)}
-          maxLength={120}
-          placeholder="Lời nhắn của bạn..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg text-white text-xs px-3 py-2 mb-4 resize-none h-16"
-        />
-        <button
-          onClick={() => onSend(amount, message)}
-          className="w-full py-2.5 rounded-lg font-semibold text-sm text-white
-            bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 transition"
-        >
-          Gửi {amount.toLocaleString('vi-VN')}đ
-        </button>
-      </div>
-    </div>
-  );
-};
+
 
 /** A single chat message row */
 const MessageRow = ({ msg, userId, isChannelOwner, onPin, onUnpin, onReport }) => {
@@ -230,13 +182,27 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
   const [text, setText] = useState('');
   const [pinnedMsg, setPinnedMsg] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
-  const [showDonate, setShowDonate] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const connRef = useSignalRConnection(livestreamId, apiBaseUrl);
+
+  const emojiPickerRef = useRef(null);
+
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target) && !e.target.closest('.emoji-btn')) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const showToast = (msg, type = 'info') => {
     setToast({ msg, type });
@@ -291,8 +257,8 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
         sentAt: msg.createdAt,
         isPinned: false,
         messageType: 'SuperChat',
-        userName: msg.donorName,
-        userAvatar: null,
+        userName: msg.donorName || msg.userName || 'Người xem',
+        userAvatar: msg.donorAvatar || msg.userAvatar || null,
         isMember: false,
         amount: msg.amount,
       }]);
@@ -370,14 +336,6 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
     setReportTarget(null);
   };
 
-  const handleDonate = async (amount, message) => {
-    if (!connRef.current || !userId) { showToast('Cần đăng nhập để quyên góp', 'error'); return; }
-    try {
-      await connRef.current.invoke('SendSuperChat', livestreamId, userId, localStorage.getItem('channelName') || 'Anonymous', message || '❤️', amount);
-      showToast(`Đã gửi ${amount.toLocaleString('vi-VN')}đ 💝`, 'success');
-    } catch (err) { showToast('Lỗi khi quyên góp', 'error'); }
-    setShowDonate(false);
-  };
 
   return (
     <div className="flex flex-col h-full">
@@ -412,7 +370,7 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
 
       {/* Input area */}
       <div className="mt-2 shrink-0 border-t border-white/5 pt-3">
-        <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-2 text-white">
+        <div className="relative flex items-center  px-4 py-2 text-white">
           <input
             ref={inputRef}
             value={text}
@@ -423,8 +381,34 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
             maxLength={300}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-500 disabled:opacity-50"
           />
-          <div className="flex items-center gap-3 ml-2 text-gray-500">
-            <button className="hover:text-white transition">😀</button>
+          <div className="flex items-center gap-3 ml-2 text-gray-500 relative">
+            <button 
+              onClick={() => setShowEmojiPicker(v => !v)}
+              className="emoji-btn hover:text-white transition"
+            >
+              😀
+            </button>
+            {showEmojiPicker && (
+              <div ref={emojiPickerRef} className="absolute bottom-10 right-0 bg-[#222] border border-white/10 rounded-xl p-2 w-64 shadow-2xl z-50">
+                <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto custom-scrollbar">
+                  {['😀','😃','😄','😁','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','❤️','🧡','💛','💚','💙','💜','🤎','🖤','🤍','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝'].map(emoji => (
+                    <button 
+                      key={emoji} 
+                      onClick={() => {
+                        setText(prev => prev + emoji);
+                        inputRef.current?.focus();
+                      }}
+                      className="w-7 h-7 flex items-center justify-center hover:bg-white/10 rounded text-lg cursor-pointer"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+
+
             <button
               onClick={send}
               disabled={sending || !text.trim() || !userId || disabled}
@@ -435,34 +419,9 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
           </div>
         </div>
 
-        {/* Gift quick actions */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => { setAmount(100); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">🌹</span>
-              <span className="text-[10px] text-gray-400">Hoa hồng</span>
-              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 100</span>
-            </button>
-            <button onClick={() => { setAmount(50); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">❤️</span>
-              <span className="text-[10px] text-gray-400">Tim</span>
-              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 50</span>
-            </button>
-            <button onClick={() => { setAmount(200); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">🍦</span>
-              <span className="text-[10px] text-gray-400">Kem</span>
-              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 200</span>
-            </button>
-            <button onClick={() => { setAmount(500); setShowDonate(true); }} className="flex flex-col items-center gap-0.5 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">🧸</span>
-              <span className="text-[10px] text-gray-400">Gấu bông</span>
-              <span className="text-[9px] text-yellow-500 flex items-center gap-0.5 font-semibold">🪙 500</span>
-            </button>
-          </div>
-          
-          <button className="bg-[#7B1FA2] hover:bg-[#6A1B9A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0">
-            Nạp xu
-          </button>
+        {/* Reactions */}
+        <div className="mt-2 pb-2">
+          <LivestreamReactions livestreamId={livestreamId} connRef={connRef} />
         </div>
       </div>
 
@@ -474,12 +433,7 @@ const LivestreamChat = ({ livestreamId, apiBaseUrl = '', userId, isChannelOwner 
           onSubmit={handleReport}
         />
       )}
-      {showDonate && (
-        <DonateModal
-          onClose={() => setShowDonate(false)}
-          onSend={handleDonate}
-        />
-      )}
+
     </div>
   );
 };

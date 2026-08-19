@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
@@ -44,9 +45,86 @@ public class LivestreamsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id)
     {
-        var item = await _db.Livestreams.FindAsync(id);
+        var item = await _db.Livestreams.Include(l => l.Channel).FirstOrDefaultAsync(l => l.Id == id);
         if (item == null) return NotFound();
-        return Ok(item);
+
+        bool isLiked = false;
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdStr, out var userId))
+        {
+            isLiked = await _db.LivestreamLikes.AnyAsync(l => l.LivestreamId == id && l.UserId == userId && l.IsLike);
+        }
+
+        return Ok(new
+        {
+            item.Id,
+            item.ChannelId,
+            item.Title,
+            item.StreamKey,
+            item.Description,
+            item.ThumbnailUrl,
+            item.HlsUrl,
+            item.VodUrl,
+            item.TotalViews,
+            item.Tags,
+            item.Status,
+            item.ScheduledStartTime,
+            item.ActualStartTime,
+            item.EndTime,
+            item.CurrentViewers,
+            item.Likes,
+            IsLiked = isLiked,
+            Channel = item.Channel != null ? new { item.Channel.Id, item.Channel.ChannelName, item.Channel.AvatarUrl } : null
+        });
+    }
+
+    [HttpPost("{id}/like")]
+    public async Task<IActionResult> ToggleLike(Guid id)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+            return Unauthorized();
+
+        var livestream = await _db.Livestreams.FindAsync(id);
+        if (livestream == null) return NotFound("Livestream not found");
+
+        var existingLike = await _db.LivestreamLikes.FirstOrDefaultAsync(l => l.LivestreamId == id && l.UserId == userId);
+        bool isLiked;
+
+        if (existingLike != null)
+        {
+            if (existingLike.IsLike)
+            {
+                existingLike.IsLike = false;
+                livestream.Likes = (livestream.Likes ?? 0) - 1;
+                isLiked = false;
+            }
+            else
+            {
+                existingLike.IsLike = true;
+                livestream.Likes = (livestream.Likes ?? 0) + 1;
+                isLiked = true;
+            }
+        }
+        else
+        {
+            _db.LivestreamLikes.Add(new LivestreamLike
+            {
+                Id = Guid.NewGuid(),
+                LivestreamId = id,
+                UserId = userId,
+                IsLike = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            livestream.Likes = (livestream.Likes ?? 0) + 1;
+            isLiked = true;
+        }
+
+        if (livestream.Likes < 0) livestream.Likes = 0;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new { isLiked, likesCount = livestream.Likes });
     }
 
     [HttpPost("{id}/start")]

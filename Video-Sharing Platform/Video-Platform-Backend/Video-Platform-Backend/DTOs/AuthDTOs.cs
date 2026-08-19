@@ -41,6 +41,7 @@ namespace Video_Platform_Backend.DTOs
         public List<string> Roles { get; set; } = new List<string>();
         public string? Handle { get; set; }
         public string? AvatarUrl { get; set; }
+        public int Coins { get; set; }
     }
 
     public class UpdateUserRolesDto

@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Video, Bell, LogIn, LogOut, LayoutDashboard, Menu, User, UserPlus, Upload, Smartphone, Radio, Crown, Users } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Search, Video, Bell, LogIn, LogOut, LayoutDashboard, Menu, User, UserPlus, Upload, Smartphone, Radio, Crown, Users, Coins } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 export default function Header({ toggleSidebar }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem('token');
   const handle = localStorage.getItem('handle');
   const avatar = localStorage.getItem('avatar') || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
@@ -15,6 +16,7 @@ export default function Header({ toggleSidebar }) {
   const [logoUrl, setLogoUrl] = useState("/logotrang.png");
   const [currentPlan, setCurrentPlan] = useState(null);
   const [premiumUntil, setPremiumUntil] = useState(null);
+  const [coins, setCoins] = useState(0);
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -53,6 +55,9 @@ export default function Header({ toggleSidebar }) {
             setCurrentPlan(res.data.plan);
             if (res.data.premiumUntil) {
               setPremiumUntil(new Date(res.data.premiumUntil));
+            }
+            if (res.data.coins !== undefined) {
+              setCoins(res.data.coins);
             }
           }
         } catch (err) {
@@ -232,8 +237,15 @@ export default function Header({ toggleSidebar }) {
             
             <div className="w-[1px] h-10 bg-white/10 mx-1"></div>
 
+            <Link to={location.pathname.startsWith('/live/') ? `/buy-coins?returnTo=${location.pathname}` : '/buy-coins'} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 transition-colors mx-1 cursor-pointer">
+               <Coins className="w-[18px] h-[18px] text-yellow-500" />
+               <span className="text-[13px] font-bold text-yellow-500">{coins.toLocaleString()} Xu</span>
+            </Link>
+            
+            <div className="w-[1px] h-10 bg-white/10 mx-1"></div>
+
             {currentPlan && (
-              <Link to="/premium" className={`hidden md:flex items-center justify-between gap-3 px-4 py-1 rounded-full border ${currentPlan === 'Premium' ? 'border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]' : currentPlan === 'Family' ? 'border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]' : 'border-white/10 bg-[#1A1A1A] hover:bg-[#222]'} transition-colors cursor-pointer mx-1`}>
+              <Link to="/premium" className={`flex items-center justify-between gap-3 px-4 py-1 rounded-full border ${currentPlan === 'Premium' ? 'border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]' : currentPlan === 'Family' ? 'border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]' : 'border-white/10 bg-[#1A1A1A] hover:bg-[#222]'} transition-colors cursor-pointer mx-1`}>
                 <div className="flex items-center justify-center">
                   {currentPlan === 'Premium' ? (
                      <Crown className="w-[20px] h-[20px] text-[#9C27B0]" fill="currentColor" />

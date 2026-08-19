@@ -3,6 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using Video_Platform_Backend.Hubs;
 using Video_Platform_Backend.Models;
 
 namespace Video_Platform_Backend.Controllers;
@@ -13,11 +17,13 @@ public class DonationsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<DonationsController> _logger;
+    private readonly IHubContext<LivestreamHub> _hubContext;
 
-    public DonationsController(ApplicationDbContext db, ILogger<DonationsController> logger)
+    public DonationsController(ApplicationDbContext db, ILogger<DonationsController> logger, IHubContext<LivestreamHub> hubContext)
     {
         _db = db;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -34,6 +40,7 @@ public class DonationsController : ControllerBase
             .OrderByDescending(d => d.CreatedAt)
             .Take(limit)
             .Include(d => d.User)
+                .ThenInclude(u => u.Profile)
             .Select(d => new
             {
                 d.Id,
@@ -42,7 +49,8 @@ public class DonationsController : ControllerBase
                 d.Amount,
                 d.Currency,
                 d.IsSuperChat,
-                d.CreatedAt
+                d.CreatedAt,
+                AvatarUrl = d.User != null && d.User.Profile != null ? d.User.Profile.AvatarUrl : null
             })
             .ToListAsync();
 
@@ -72,14 +80,103 @@ public class DonationsController : ControllerBase
             Amount = dto.Amount,
             Currency = dto.Currency ?? "VND",
             IsSuperChat = dto.IsSuperChat,
-            Status = "pending",
+            Status = "completed",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        if (dto.UserId.HasValue)
+        {
+            var payment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                UserId = dto.UserId.Value,
+                Amount = dto.Amount,
+                Currency = "VND",
+                PaymentMethod = "Direct",
+                Status = "Success",
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Payments.Add(payment);
+
+            var transaction = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                PaymentId = payment.Id,
+                TransactionType = "Donation",
+                TargetChannelId = livestream.ChannelId,
+                Amount = dto.Amount,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Transactions.Add(transaction);
+
+            donation.TransactionId = payment.Id.ToString();
+        }
+
+        _db.Donations.Add(donation);
+        await _db.SaveChangesAsync();
+
+        // Broadcast to chat
+        var user = dto.UserId.HasValue ? await _db.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == dto.UserId.Value) : null;
+
+        
+        await _hubContext.Clients.Group(donation.LivestreamId.ToString()).SendAsync("ReceiveSuperChat", new
+        {
+            id = donation.Id,
+            livestreamId = donation.LivestreamId,
+            donorName = donation.DonorName,
+            userAvatar = user?.Profile?.AvatarUrl,
+            message = donation.Message,
+            amount = donation.Amount,
+            currency = donation.Currency,
+            createdAt = donation.CreatedAt
+        });
+
+        return Ok(new { donation.Id, donation.Status });
+    }
+
+    /// <summary>
+    /// Tặng quà bằng xu (Trừ xu trực tiếp)
+    /// </summary>
+    [HttpPost("send-gift")]
+    [Authorize]
+    public async Task<IActionResult> SendGift([FromBody] CreateDonationDTO dto)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId)) 
+            return Unauthorized();
+
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound("Người dùng không tồn tại");
+
+        if (dto.Amount <= 0) return BadRequest("Số xu phải lớn hơn 0");
+        if (user.Coins < (int)dto.Amount) return BadRequest("Bạn không đủ xu, vui lòng nạp thêm");
+
+        var livestream = await _db.Livestreams.FindAsync(dto.LivestreamId);
+        if (livestream == null) return NotFound("Livestream không tìm thấy");
+
+        // Deduct coins
+        user.Coins -= (int)dto.Amount;
+        _db.Users.Update(user);
+
+        // Create donation
+        var donation = new Donation
+        {
+            Id = Guid.NewGuid(),
+            LivestreamId = dto.LivestreamId,
+            UserId = userId,
+            DonorName = dto.DonorName ?? user.Email,
+            Message = dto.Message,
+            Amount = dto.Amount,
+            Currency = "Xu",
+            IsSuperChat = dto.IsSuperChat,
+            Status = "completed",
             CreatedAt = DateTime.UtcNow
         };
 
         _db.Donations.Add(donation);
         await _db.SaveChangesAsync();
 
-        return Ok(new { donation.Id, donation.Status });
+        return Ok(new { message = "Tặng quà thành công", coins = user.Coins, donation });
     }
 
     /// <summary>
@@ -115,14 +212,18 @@ public class DonationsController : ControllerBase
             .Where(d => d.LivestreamId == livestreamId && d.Status == "completed")
             .ToListAsync();
 
-        var totalAmount = donations.Sum(d => d.Amount);
+        var totalAmount = donations.Where(d => d.Currency != "Xu").Sum(d => d.Amount);
+        var totalCoins = donations.Where(d => d.Currency == "Xu").Sum(d => d.Amount);
         var totalDonations = donations.Count;
-        var topDonor = donations.OrderByDescending(d => d.Amount).FirstOrDefault();
+        
+        // Find top donor by VND amount
+        var topDonor = donations.Where(d => d.Currency != "Xu").OrderByDescending(d => d.Amount).FirstOrDefault();
 
         return Ok(new
         {
             livestreamId,
             totalAmount,
+            totalCoins,
             totalDonations,
             topDonor = topDonor != null ? new
             {

@@ -1,10 +1,8 @@
-﻿import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import LivestreamPlayer from '../../../components/video/LivestreamPlayer';
 import LivestreamChat from '../../../components/video/LivestreamChat';
-import LivestreamReactions from '../../../components/video/LivestreamReactions';
-import DonationPanel from '../../../components/DonationPanel';
 import { useSignalRConnection } from '../../../hooks/useSignalRConnection';
 import * as LucideIcons from 'lucide-react';
 
@@ -28,9 +26,6 @@ const StudioLive = () => {
   const mediaRecorderRef = useRef(null);
   const wsRef = useRef(null);
   const apiBase = '';
-
-  // SignalR connection for reactions and chat
-  const connRef = useSignalRConnection(livestream?.id, apiBase);
 
   const resolveCurrentChannel = async () => {
     try {
@@ -221,18 +216,31 @@ const StudioLive = () => {
   }, [isLive, livestream?.id]);
 
   useEffect(() => {
+    let pollInterval;
     if (idParam) {
-      (async () => {
+      const fetchLivestreamData = async () => {
         try {
           const res = await axios.get(`${apiBase}/api/livestreams/${idParam}`);
-          setLivestream(res.data);
+          setLivestream(prev => {
+            if (!prev) return res.data;
+            return {
+              ...prev,
+              currentViewers: res.data.currentViewers,
+              likes: res.data.likes,
+              totalViews: res.data.totalViews
+            };
+          });
         } catch (_err) {
           console.error(_err);
         }
-      })();
+      };
+
+      fetchLivestreamData();
+      pollInterval = setInterval(fetchLivestreamData, 5000);
     }
 
     return () => {
+      if (pollInterval) clearInterval(pollInterval);
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((track) => track.stop());
       }
@@ -559,7 +567,7 @@ const StudioLive = () => {
           <LucideIcons.Users className="w-5 h-5 text-gray-400 shrink-0" />
           <div>
             <p className="text-[11px] text-gray-500 mb-0.5">Người xem đồng thời</p>
-            <p className="text-base font-bold text-white leading-tight">0</p>
+            <p className="text-base font-bold text-white leading-tight">{livestream?.currentViewers || 0}</p>
             <p className="text-[10px] text-gray-600 mt-0.5">Tối đa hiện tại</p>
           </div>
         </div>
@@ -568,7 +576,7 @@ const StudioLive = () => {
           <LucideIcons.Heart className="w-5 h-5 text-gray-400 shrink-0" />
           <div>
             <p className="text-[11px] text-gray-500 mb-0.5">Lượt thích</p>
-            <p className="text-base font-bold text-white leading-tight">0</p>
+            <p className="text-base font-bold text-white leading-tight">{livestream?.likes || 0}</p>
             <p className="text-[10px] text-gray-600 mt-0.5">Tổng lượt thích</p>
           </div>
         </div>
@@ -707,7 +715,7 @@ const StudioLive = () => {
 
         {/* Right column — Chat */}
         <div className="flex flex-col h-full">
-          <div className="flex flex-col overflow-hidden" style={{minHeight: '600px'}}>
+          <div className="flex flex-col overflow-hidden bg-[#141418] border border-white/5 rounded-2xl h-[600px]">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 shrink-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-white">Chat trực tiếp</h3>
@@ -718,7 +726,7 @@ const StudioLive = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto" style={{minHeight: '600px'}}>
+            <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
               {livestream && livestream.id ? (
                 <LivestreamChat livestreamId={livestream.id} apiBaseUrl={apiBase} userId={localStorage.getItem('userId')} />
               ) : (
@@ -731,26 +739,6 @@ const StudioLive = () => {
                 </div>
               )}
             </div>
-
-            {livestream && livestream.id && (
-              <div className="px-4 pb-3 shrink-0 bottom-0">
-                <DonationPanel livestreamId={livestream.id} connRef={connRef} />
-              </div>
-            )}
-
-            <div className="px-4 py-3 border-t border-white/5 shrink-0 flex items-center gap-3">
-              {['❤️','👍','😂','😮','😢','🔥','🎉','💯'].map((emoji, i) => (
-                <button key={i} className="text-base hover:scale-125 transition-transform cursor-pointer">
-                  {emoji}
-                </button>
-              ))}
-            </div>
-
-            {livestream && livestream.id && (
-              <div className="px-4 pb-3 shrink-0">
-                <LivestreamReactions livestreamId={livestream.id} connRef={connRef} />
-              </div>
-            )}
           </div>
         </div>
 

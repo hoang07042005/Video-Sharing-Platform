@@ -34,8 +34,10 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
     } else if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 90,
+        lowLatencyMode: false, // Tắt chế độ độ trễ cực thấp để tránh bị dừng/khựng video
+        liveSyncDurationCount: 3, // Giữ khoảng cách an toàn 3 segments so với live edge
+        liveMaxLatencyDurationCount: 10,
+        maxLiveSyncPlaybackRate: 1.2, // Tăng tốc nhẹ nếu bị trễ thay vì 1.5x có thể gây khựng
       });
       hlsRef.current = hls;
       hls.loadSource(hlsUrl);
@@ -55,6 +57,7 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
         }, 100);
       });
 
+      let retryCount = 0;
       hls.on(Hls.Events.ERROR, (event, data) => {
         console.error('[LivestreamPlayer] HLS Error:', data.type, data.details, data.fatal);
         if (data.fatal) {
@@ -62,7 +65,10 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               console.log('[LivestreamPlayer] Retrying after network error...');
-              hls.startLoad();
+              retryCount++;
+              setTimeout(() => {
+                if (hlsRef.current) hlsRef.current.startLoad();
+              }, Math.min(1000 * retryCount, 5000));
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               console.log('[LivestreamPlayer] Recovering from media error...');

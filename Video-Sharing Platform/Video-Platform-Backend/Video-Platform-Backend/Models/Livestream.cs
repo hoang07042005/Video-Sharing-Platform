@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Video_Platform_Backend.Models;
@@ -24,6 +24,8 @@ public partial class Livestream
     // Status: "scheduled", "live", "ended"
     public string? Status { get; set; }
 
+    public int? Likes { get; set; }
+
     public DateTime? ScheduledStartTime { get; set; }
 
     // ActualStartTime used to track when stream went live
@@ -43,4 +45,6 @@ public partial class Livestream
     public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
 
     public virtual ICollection<VideoQuality> VideoQualities { get; set; } = new List<VideoQuality>();
+
+    public virtual ICollection<LivestreamLike> LivestreamLikes { get; set; } = new List<LivestreamLike>();
 }

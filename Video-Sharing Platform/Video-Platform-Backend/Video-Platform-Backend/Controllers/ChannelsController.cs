@@ -294,6 +294,17 @@ namespace Video_Platform_Backend.Controllers
             return Ok(new { message = "Cáº­p nháº­t thÃ nh cÃ´ng!" });
         }
 
+        [HttpGet("by-id/{channelId}/check-follow")]
+        [Authorize]
+        public async Task<IActionResult> CheckFollow(Guid channelId)
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            bool isSubscribed = await _context.Followers.AnyAsync(f => f.FollowerId == userId && f.ChannelId == channelId);
+            return Ok(new { isSubscribed });
+        }
+
         // POST: api/channels/{channelId}/follow
         [HttpPost("{channelId}/follow")]
         [Authorize]

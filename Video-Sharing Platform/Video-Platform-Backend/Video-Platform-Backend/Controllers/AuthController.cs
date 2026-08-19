@@ -118,7 +118,8 @@ namespace Video_Platform_Backend.Controllers
                 FullName = user.Profile?.FullName,
                 Roles = userRoles,
                 Handle = user.Channel?.Handle,
-                AvatarUrl = user.Profile?.AvatarUrl
+                AvatarUrl = user.Profile?.AvatarUrl,
+                Coins = user.Coins
             });
         }
 

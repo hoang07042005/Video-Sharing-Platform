@@ -10,7 +10,7 @@ export default function MainLayout() {
   const isShorts = location.pathname.startsWith('/shorts');
 
   useEffect(() => {
-    if (location.pathname.startsWith('/watch')) {
+    if (location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) {
       setIsSidebarOpen(false);
     } else {
       setIsSidebarOpen(true);

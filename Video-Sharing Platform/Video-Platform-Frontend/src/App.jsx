@@ -25,6 +25,7 @@ import SearchResults from './pages/client/search/SearchResults';
 import LiveWatch from './pages/client/live/LiveWatch';
 import VideoManagement from './pages/admin/video/VideoManagement';
 import MembershipPage from './pages/client/channel/MembershipPage';
+import BuyCoins from './pages/client/BuyCoins';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/payment-result" element={<PaymentResult />} />
+          <Route path="/buy-coins" element={<BuyCoins />} />
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
           <Route path="/studio/live" element={<StudioLive />} />
