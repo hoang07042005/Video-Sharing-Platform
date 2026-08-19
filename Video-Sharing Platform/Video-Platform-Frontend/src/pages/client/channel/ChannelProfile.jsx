@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -33,7 +33,14 @@ import {
   AlertTriangle,
   Smartphone,
   Gift,
+  Wallet,
+  Star,
+  Activity,
+  Heart,
+  Coffee,
+  Crown
 } from "lucide-react";
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import VideoCard from "../../../components/home/VideoCard";
 import CustomizeChannelModal from "../../../components/channel/CustomizeChannelModal";
 
@@ -934,6 +941,7 @@ function LivestreamsTab({ channelId }) {
 }
 
 export default function ChannelProfile() {
+  const [showAllActivities, setShowAllActivities] = useState(false);
   const { handle } = useParams();
   const navigate = useNavigate();
   const [channel, setChannel] = useState(null);
@@ -1467,7 +1475,7 @@ export default function ChannelProfile() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 md:px-8 mt-8">
+      <div className="max-w-[1280px] mx-auto px-2 md:px-2 mt-2">
         {/* Tab Content */}
         {(() => {
           if (activeTab === "overview") {
@@ -1906,13 +1914,75 @@ export default function ChannelProfile() {
             );
           }
 
-          if (activeTab === "revenue" && isOwner) {
+                    if (activeTab === "revenue" && isOwner) {
+            
+            // --- DATA PROCESSING FOR DASHBOARD ---
+            const giftsDef = [
+              { id: 1, name: "Hoa hồng", price: 10, icon: "🌹" },
+              { id: 2, name: "Trái tim", price: 20, icon: "❤️" },
+              { id: 3, name: "Cà phê", price: 50, icon: "☕" },
+              { id: 4, name: "Kem", price: 100, icon: "🍦" },
+              { id: 5, name: "Gấu bông", price: 200, icon: "🧸" },
+              { id: 6, name: "Vương miện", price: 500, icon: "👑" },
+              { id: 7, name: "Kim cương", price: 1000, icon: "💎" },
+              { id: 8, name: "Tên lửa", price: 2000, icon: "🚀" },
+              { id: 9, name: "Siêu xe", price: 5000, icon: "🏎️" },
+              { id: 10, name: "Lâu đài", price: 10000, icon: "🏰" },
+              { id: 11, name: "Phi thuyền", price: 20000, icon: "🛸" },
+              { id: 12, name: "Hành tinh", price: 50000, icon: "🌍" },
+            ];
+            const giftCounts = giftsDef.map(g => {
+               const count = revenueStats?.coinReceivedHistory?.filter(h => h.message && h.message.includes(`Đã tặng ${g.name}`)).length || 0;
+               return { ...g, count };
+            }).sort((a, b) => b.count - a.count);
+
+            const totalDeposit = revenueStats?.depositHistory?.reduce((acc, curr) => acc + curr.coinsAdded, 0) || 0;
+            const totalSpent = revenueStats?.coinSpentHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+            const totalDonate = revenueStats?.donateHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+            const totalDonors = new Set(revenueStats?.donateHistory?.map(d => d.donorName)).size;
+            
+            // Timeline processing
+            const allActivities = [
+              ...(revenueStats?.donateHistory?.map(d => ({...d, type: 'donate', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `${d.donorName} đã donate`, desc: d.message, amountStr: `+${d.amount.toLocaleString('vi-VN')} đ`, amountColor: 'text-green-500', icon: <img src={d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}`} className="w-8 h-8 rounded-full" /> })) || []),
+              ...(revenueStats?.coinReceivedHistory?.map(d => ({...d, type: 'receive_coin', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `${d.donorName} đã tặng quà`, desc: d.message, amountStr: `+${d.amount.toLocaleString('vi-VN')} Xu`, amountColor: 'text-yellow-500', icon: <img src={d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}`} className="w-8 h-8 rounded-full" /> })) || []),
+              ...(revenueStats?.depositHistory?.map(d => ({...d, type: 'deposit', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `Nạp xu qua hệ thống`, desc: `Thanh toán: ${d.amount.toLocaleString('vi-VN')} đ`, amountStr: `+${d.coinsAdded.toLocaleString('vi-VN')} Xu`, amountColor: 'text-blue-500', icon: <Wallet className="w-4 h-4 text-blue-400" />, iconBg: 'bg-blue-500/10' })) || []),
+              ...(revenueStats?.coinSpentHistory?.map(d => ({...d, type: 'spend_coin', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `Tặng cho ${d.channelName}`, desc: d.message || 'Đã tặng quà', amountStr: `-${d.amount.toLocaleString('vi-VN')} Xu`, amountColor: 'text-red-500', icon: <Gift className="w-4 h-4 text-red-400" />, iconBg: 'bg-red-500/10' })) || [])
+            ].sort((a, b) => b.date - a.date).slice(0, 50);
+            
+            // Chart Data (Last 7 days)
+            const last7Days = Array.from({length: 7}, (_, i) => { 
+              const d = new Date(); d.setDate(d.getDate() - 6 + i); 
+              return d; 
+            });
+            const chartData = last7Days.map(date => {
+              const dateStr = date.toLocaleDateString('vi-VN'); // dd/MM/yyyy
+              const shortDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}`;
+              const donateVND = revenueStats?.donateHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
+              const coinsReceived = revenueStats?.coinReceivedHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
+              const coinsSpent = revenueStats?.coinSpentHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
+              return { name: shortDate, donate: donateVND, received: coinsReceived, spent: coinsSpent };
+            });
+
+            // Top Donate
+            const topDonatorsMap = new Map();
+            revenueStats?.donateHistory?.forEach(d => {
+              const existing = topDonatorsMap.get(d.donorName) || { amount: 0, avatar: d.avatarUrl };
+              topDonatorsMap.set(d.donorName, { amount: existing.amount + d.amount, avatar: d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}` });
+            });
+            const topDonators = Array.from(topDonatorsMap.entries()).map(([name, data]) => ({name, ...data})).sort((a, b) => b.amount - a.amount).slice(0, 8);
+
             return (
-              <div className="space-y-8 animate-fade-in">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-[#FF4E00]" /> Thống kê doanh thu
-                  </h3>
+              <div className="space-y-6 animate-fade-in text-white pb-10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold">Tổng quan</h3>
+                  <div className="flex items-center gap-3">
+                     <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                        12/08/2026 - 18/08/2026 <ChevronDown className="w-4 h-4" />
+                     </button>
+                     <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                        <MonitorPlay className="w-4 h-4" /> Bộ lọc
+                     </button>
+                  </div>
                 </div>
 
                 {loadingRevenue ? (
@@ -1923,186 +1993,182 @@ export default function ChannelProfile() {
                   <div className="text-gray-400 text-center py-20">Không có dữ liệu doanh thu.</div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Doanh thu Donate VND */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6 shadow-lg flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-400 text-sm font-medium mb-1">Tổng doanh thu Donate (VNĐ)</p>
-                          <h4 className="text-3xl font-bold text-white">{revenueStats.totalDonateVND?.toLocaleString('vi-VN') || '0'} đ</h4>
-                        </div>
-                        <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                          <span className="text-green-500 text-2xl font-bold">₫</span>
-                        </div>
-                      </div>
-
-                      {/* Tổng xu đã nhận */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6 shadow-lg flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-400 text-sm font-medium mb-1">Tổng xu nhận được (Từ quà tặng)</p>
-                          <h4 className="text-3xl font-bold text-white">{revenueStats.totalCoinReceived?.toLocaleString('vi-VN') || '0'} Xu</h4>
-                        </div>
-                        <div className="w-14 h-14 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
-                          <span className="text-yellow-500 text-2xl font-bold">⭐</span>
-                        </div>
-                      </div>
+                    {/* Top Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                       <DashboardCard title="TỔNG DOANH THU (VNĐ)" value={`${revenueStats.totalDonateVND?.toLocaleString('vi-VN') || '0'} đ`} icon={<Wallet className="w-5 h-5"/>} gradient="from-purple-600/80 to-purple-900/80" color="text-purple-400" trend="+12.5%" />
+                       <DashboardCard title="TỔNG XU NHẬN" value={`${revenueStats.totalCoinReceived?.toLocaleString('vi-VN') || '0'} Xu`} icon={<Star className="w-5 h-5"/>} gradient="from-orange-500/80 to-orange-800/80" color="text-orange-400" trend="+8.3%" />
+                       <DashboardCard title="XU ĐÃ NẠP" value={`${totalDeposit.toLocaleString('vi-VN')} Xu`} icon={<Wallet className="w-5 h-5"/>} gradient="from-blue-600/80 to-blue-900/80" color="text-blue-400" trend="+10.2%" />
+                       <DashboardCard title="XU ĐÃ TIÊU (QUÀ TẶNG)" value={`${totalSpent.toLocaleString('vi-VN')} Xu`} icon={<Gift className="w-5 h-5"/>} gradient="from-red-600/80 to-red-900/80" color="text-red-400" trend="-5.1%" trendDown />
+                       <DashboardCard title="TỔNG DONATE (VNĐ)" value={`${totalDonate.toLocaleString('vi-VN')} đ`} icon={<Activity className="w-5 h-5"/>} gradient="from-fuchsia-600/80 to-purple-900/80" color="text-purple-400" trend="+12.5%" />
+                       <DashboardCard title="NGƯỜI DONATE" value={totalDonors} icon={<Users className="w-5 h-5"/>} gradient="from-teal-500/80 to-teal-800/80" color="text-teal-400" trend="+7.4%" />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                      {/* Lịch sử Donate */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6">
-                        <h4 className="text-lg font-bold text-white mb-6">Lịch sử Donate (VNĐ)</h4>
-                        <div className="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                          {revenueStats.donateHistory?.length > 0 ? (
-                            Object.entries(groupHistoryByDate(revenueStats.donateHistory)).map(([dateGroup, items]) => (
-                              <div key={dateGroup}>
-                                <h5 className="text-gray-400 text-xs font-semibold mb-3 sticky top-0 bg-[#1A1A1A]/95 py-2 backdrop-blur-sm z-10">{dateGroup}</h5>
-                                <div className="space-y-3">
-                                  {items.map(item => (
-                                    <div key={item.id} className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                                      <img src={item.avatarUrl || `https://ui-avatars.com/api/?name=${item.donorName}`} className="w-10 h-10 rounded-full" />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start gap-2">
-                                          <p className="text-white text-sm font-medium truncate">{item.donorName}</p>
-                                          <span className="text-green-400 font-bold whitespace-nowrap">+{item.amount.toLocaleString('vi-VN')} đ</span>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-1 truncate">{item.message || 'Đã ủng hộ'}</p>
-                                        <p className="text-gray-500 text-[10px] mt-1">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center text-gray-500 py-8">Chưa có lượt donate nào.</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Lịch sử nhận Xu */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6">
+                    
+                    {/* Main Content Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6">
+                      
+                      {/* Left: Recent Activity */}
+                      <div className={`bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col transition-all duration-300 ${showAllActivities ? 'lg:col-span-12 order-3' : 'lg:col-span-4 order-1'}`}>
                         <div className="flex items-center justify-between mb-6">
-                          <h4 className="text-lg font-bold text-white">Lịch sử nhận Xu</h4>
-                          <input 
-                            type="date" 
-                            value={coinReceivedDateFilter}
-                            onChange={(e) => setCoinReceivedDateFilter(e.target.value)}
-                            className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
-                          />
+                           <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                             <Activity className="w-4 h-4 text-purple-400" /> HOẠT ĐỘNG GẦN ĐÂY
+                           </h4>
+                           {/* <span onClick={() => setShowAllActivities(!showAllActivities)} className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors bg-white/5 px-2 py-1 rounded-md">
+                             {showAllActivities ? "Ẩn bớt" : "Xem tất cả"}
+                           </span> */}
                         </div>
-                        <div className="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                          {filterByDate(revenueStats.coinReceivedHistory, coinReceivedDateFilter)?.length > 0 ? (
-                            Object.entries(groupHistoryByDate(filterByDate(revenueStats.coinReceivedHistory, coinReceivedDateFilter))).map(([dateGroup, items]) => (
-                              <div key={dateGroup}>
-                                <h5 className="text-gray-400 text-xs font-semibold mb-3 sticky top-0 bg-[#1A1A1A]/95 py-2 backdrop-blur-sm z-10">{dateGroup}</h5>
-                                <div className="space-y-3">
-                                  {items.map(item => (
-                                    <div key={item.id} className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                                      <img src={item.avatarUrl || `https://ui-avatars.com/api/?name=${item.donorName}`} className="w-10 h-10 rounded-full" />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start gap-2">
-                                          <p className="text-white text-sm font-medium truncate">{item.donorName}</p>
-                                          <span className="text-yellow-400 font-bold whitespace-nowrap">+{item.amount.toLocaleString('vi-VN')} Xu</span>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-1 truncate">{item.message || 'Đã tặng quà'}</p>
-                                        <p className="text-gray-500 text-[10px] mt-1">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</p>
-                                      </div>
+                        <div className={`flex-1 overflow-y-auto custom-scrollbar pr-2 transition-all duration-300 ${showAllActivities ? 'h-[600px] lg:h-[700px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start' : 'h-[320px] space-y-6 relative'}`}>
+                          {!showAllActivities && <div className="absolute left-[19px] top-4 bottom-4 w-px bg-white/10" />}
+                          {(showAllActivities ? allActivities : allActivities.slice(0, 8)).length > 0 ? (showAllActivities ? allActivities : allActivities.slice(0, 8)).map((act, i) => (
+                            <div key={i} className={`flex items-start gap-4 relative z-10 ${showAllActivities ? "bg-[#1A1A1A] border border-white/5 p-4 rounded-xl hover:bg-white/5 transition-colors" : ""}`}>
+                               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] border-[#111111] ${act.iconBg || 'bg-[#1A1A1A]'}`}>
+                                 {act.icon}
+                               </div>
+                               <div className="flex-1 min-w-0 pt-1">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <p className="text-sm font-medium text-white truncate">{act.title}</p>
+                                      <p className="text-xs text-gray-500 mt-1 truncate">{act.desc || 'Không có tin nhắn'}</p>
                                     </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center text-gray-500 py-8">Chưa có lượt nhận xu nào.</div>
+                                    <div className="text-right">
+                                      <p className={`text-sm font-bold ${act.amountColor} whitespace-nowrap`}>{act.amountStr}</p>
+                                      <p className="text-[10px] text-gray-500 mt-1">{act.date.toLocaleTimeString('vi-VN')}<br/>{act.date.toLocaleDateString('vi-VN')}</p>
+                                    </div>
+                                  </div>
+                               </div>
+                            </div>
+                          )) : (
+                            <div className="text-center text-gray-500 py-10">Không có hoạt động nào.</div>
                           )}
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                      {/* Lịch sử Nạp Xu (Của chính user) */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6">
-                        <h4 className="text-lg font-bold text-white mb-6">Lịch sử nạp Xu của bạn</h4>
-                        <div className="space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                          {revenueStats.depositHistory?.length > 0 ? (
-                            Object.entries(groupHistoryByDate(revenueStats.depositHistory)).map(([dateGroup, items]) => (
-                              <div key={dateGroup}>
-                                <h5 className="text-gray-400 text-xs font-semibold mb-3 sticky top-0 bg-[#1A1A1A]/95 py-2 backdrop-blur-sm z-10">{dateGroup}</h5>
-                                <div className="space-y-3">
-                                  {items.map(item => (
-                                    <div key={item.id} className="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5">
-                                      <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                          <HardDrive className="w-5 h-5 text-blue-500" />
-                                        </div>
-                                        <div>
-                                          <p className="text-white text-sm font-medium">Nạp xu qua hệ thống</p>
-                                          <p className="text-gray-500 text-[10px] mt-0.5">{new Date(item.createdAt).toLocaleTimeString('vi-VN')} - {item.id}</p>
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="text-blue-400 font-bold text-sm">+{item.coinsAdded} Xu</p>
-                                        <p className="text-gray-400 text-xs">Thanh toán: {item.amount.toLocaleString('vi-VN')} đ</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center text-gray-500 py-8">Bạn chưa có giao dịch nạp xu nào.</div>
-                          )}
-                        </div>
+                        {!showAllActivities ? (
+                           <button onClick={() => setShowAllActivities(true)} className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2">
+                             Xem tất cả hoạt động <ChevronDown className="w-4 h-4" />
+                           </button>
+                        ) : (
+                           <button onClick={() => setShowAllActivities(false)} className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2">
+                             Ẩn bớt <ChevronDown className="w-4 h-4 rotate-180" />
+                           </button>
+                        )}
                       </div>
 
-                      {/* Lịch sử Tiêu Xu (Tặng quà) */}
-                      <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-6">
-                        <div className="flex items-center justify-between mb-6">
-                          <h4 className="text-lg font-bold text-white">Lịch sử tiêu Xu (Tặng quà)</h4>
-                          <input 
-                            type="date" 
-                            value={coinSpentDateFilter}
-                            onChange={(e) => setCoinSpentDateFilter(e.target.value)}
-                            className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-red-500"
-                          />
+                      {/* Middle: Charts */}
+                      <div className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? 'lg:col-span-8 order-1' : 'lg:col-span-5 order-2'}`}>
+                        {/* Line Chart */}
+                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
+                          <div className="flex items-center justify-between mb-4">
+                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                               <Wallet className="w-4 h-4 text-blue-400" /> DOANH THU (VNĐ)
+                             </h4>
+                             <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
+                               <option>7 ngày qua</option>
+                             </select>
+                          </div>
+                          <div className="mb-6">
+                             <div className="text-3xl font-bold text-white mb-1">{revenueStats.totalDonateVND?.toLocaleString('vi-VN') || '0'} đ</div>
+                             <div className="text-xs text-green-400 font-medium">↑ 12.5% <span className="text-gray-500">so với 7 ngày trước</span></div>
+                          </div>
+                          <div className="flex-1 w-full min-h-[150px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                  <linearGradient id="colorDonate" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#7E22CE" stopOpacity={0.5}/>
+                                    <stop offset="95%" stopColor="#7E22CE" stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid vertical={false} stroke="#ffffff" strokeOpacity={0.05} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 11}} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 11}} tickFormatter={(value) => value >= 1000000 ? (value / 1000000) + 'M' : value >= 1000 ? (value / 1000) + 'k' : value} dx={-10} />
+                                <RechartsTooltip contentStyle={{backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff'}} itemStyle={{color: '#fff'}} cursor={{stroke: '#7E22CE', strokeWidth: 1, strokeOpacity: 0.5}} />
+                                <Area type="monotone" dataKey="donate" name="Doanh thu" stroke="#A855F7" strokeWidth={3} fillOpacity={1} fill="url(#colorDonate)" dot={{r: 4, fill: '#fff', stroke: '#A855F7', strokeWidth: 2}} activeDot={{r: 6, fill: '#fff', stroke: '#A855F7', strokeWidth: 3}} />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
-                        <div className="space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                          {filterByDate(revenueStats.coinSpentHistory, coinSpentDateFilter)?.length > 0 ? (
-                            Object.entries(groupHistoryByDate(filterByDate(revenueStats.coinSpentHistory, coinSpentDateFilter))).map(([dateGroup, items]) => (
-                              <div key={dateGroup}>
-                                <h5 className="text-gray-400 text-xs font-semibold mb-3 sticky top-0 bg-[#1A1A1A]/95 py-2 backdrop-blur-sm z-10">{dateGroup}</h5>
-                                <div className="space-y-3">
-                                  {items.map(item => (
-                                    <div key={item.id} className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                                      <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                                        <Gift className="w-5 h-5 text-red-500" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start gap-2">
-                                          <p className="text-white text-sm font-medium truncate">Tặng cho {item.channelName}</p>
-                                          <span className="text-red-400 font-bold whitespace-nowrap">-{item.amount.toLocaleString('vi-VN')} Xu</span>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-1 truncate">{item.message || 'Gửi tặng quà'}</p>
-                                        <p className="text-gray-500 text-[10px] mt-1">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center text-gray-500 py-8">Bạn chưa tiêu xu nào.</div>
-                          )}
+
+                        {/* Bar Chart */}
+                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
+                          <div className="flex items-center justify-between mb-6">
+                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                               <Star className="w-4 h-4 text-yellow-400" /> XU NHẬN / XU TIÊU
+                             </h4>
+                             <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
+                               <option>7 ngày qua</option>
+                             </select>
+                          </div>
+                          <div className="flex items-center gap-6 mb-4">
+                             <div className="flex items-center gap-2 text-xs text-gray-400"><div className="w-3 h-3 rounded bg-[#10B981]"/> Xu nhận</div>
+                             <div className="flex items-center gap-2 text-xs text-gray-400"><div className="w-3 h-3 rounded bg-[#EF4444]"/> Xu tiêu</div>
+                          </div>
+                          <div className="flex-1 w-full min-h-[150px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={chartData} barGap={4}>
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 10}} dy={10} />
+                                <YAxis hide />
+                                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{backgroundColor: '#1A1A1A', border: 'none', borderRadius: '8px'}} />
+                                <Bar dataKey="received" name="Xu nhận" fill="#10B981" radius={[2, 2, 0, 0]} maxBarSize={15} />
+                                <Bar dataKey="spent" name="Xu tiêu" fill="#EF4444" radius={[2, 2, 0, 0]} maxBarSize={15} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Right: Top Donators & Gifts */}
+                      <div className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? 'lg:col-span-4 order-2' : 'lg:col-span-3 order-3'}`}>
+                        {/* Top Donate */}
+                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 max-h-[400px] flex flex-col">
+                          <div className="flex items-center justify-between mb-6">
+                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                               <Crown className="w-4 h-4 text-yellow-500" /> TOP DONATE
+                             </h4>
+                             <span className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors">Tháng này</span>
+                          </div>
+                          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+                            {topDonators.length > 0 ? topDonators.map((donor, idx) => (
+                              <div key={idx} className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx===0?'bg-yellow-500 text-black':idx===1?'bg-gray-300 text-black':idx===2?'bg-amber-600 text-white':'bg-[#222] text-gray-400'}`}>
+                                  {idx + 1}
+                                </div>
+                                <img src={donor.avatar} className="w-8 h-8 rounded-full border border-white/10" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-200 truncate">{donor.name}</p>
+                                </div>
+                                <div className="text-purple-400 text-sm font-bold whitespace-nowrap">
+                                  {donor.amount.toLocaleString('vi-VN')} đ
+                                </div>
+                              </div>
+                            )) : (
+                              <div className="text-center text-gray-500 py-4 text-sm">Chưa có dữ liệu</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Popular Gifts */}
+                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-2 shadow-xl flex-1">
+                          <div className="flex items-center justify-between mb-6 p-2">
+                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                               <Gift className="w-4 h-4 text-pink-500" /> QUÀ TẶNG PHỔ BIẾN
+                             </h4>
+                          </div>
+                          <div className="grid grid-cols-3 md:grid-cols-4 gap-1 lg:gap-3 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                            {giftCounts.map(g => (
+                              <GiftCard key={g.id} icon={g.icon} name={g.name} count={g.count} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
                     </div>
+
                   </>
                 )}
               </div>
             );
           }
 
-          if (activeTab === "videos") {
+if (activeTab === "videos") {
             const normalVideos = videos.filter((v) => !v.isShort);
             const filteredVideos = normalVideos.filter((v) =>
               v.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -2892,6 +2958,40 @@ export default function ChannelProfile() {
       {activeTab === "livestreams" && (
         <LivestreamsTab channelId={channel?.id} />
       )}
+    </div>
+  );
+}
+
+function DashboardCard({ title, value, icon, gradient, color, trend, trendDown }) {
+  return (
+    <div className={`bg-gradient-to-br ${gradient} border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group`}>
+       <div className="flex justify-between items-start mb-4">
+         <div className={`w-10 h-10 rounded-full bg-black/40 flex items-center justify-center border border-white/10 ${color}`}>
+           {icon}
+         </div>
+       </div>
+       <div className="relative z-10">
+         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1 opacity-80 truncate">{title}</p>
+         <h4 className="text-xl lg:text-2xl font-black text-white mb-2">{value}</h4>
+         <p className={`text-xs font-semibold ${trendDown ? 'text-red-400' : 'text-green-400'} flex items-center gap-1`}>
+           {trendDown ? '↓' : '↑'} {trend}
+         </p>
+       </div>
+       <div className="absolute bottom-0 left-0 right-0 h-1/2 opacity-30 pointer-events-none overflow-hidden">
+          <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full h-full">
+            <path d="M0,20 L0,15 Q10,10 20,15 T40,15 T60,15 T80,15 T100,10 L100,20 Z" fill="currentColor" className={color} />
+          </svg>
+       </div>
+    </div>
+  );
+}
+
+function GiftCard({ icon, name, count }) {
+  return (
+    <div className="rounded-xl p-0 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer">
+      <span className="text-2xl mb-2">{icon}</span>
+      <p className="text-[10px] font-medium text-gray-400 truncate w-full">{name}</p>
+      <p className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full mt-1">{count}</p>
     </div>
   );
 }
