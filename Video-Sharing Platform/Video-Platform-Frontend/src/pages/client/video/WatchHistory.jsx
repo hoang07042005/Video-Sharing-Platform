@@ -106,7 +106,7 @@ function HistoryVideoRow({ video, onRemove }) {
             <img src={video.channelAvatarUrl} alt="" className="w-4 h-4 rounded-full object-cover" />
           ) : null}
           {video.channelName}
-          <CheckCircle className="w-3 h-3 text-[#FF5722] fill-[#FF5722]" />
+          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-[#FF5722] fill-[#FF5722]" />}
         </Link>
         <div className="flex items-center gap-2 text-gray-500 text-xs">
           <Eye className="w-3 h-3" />

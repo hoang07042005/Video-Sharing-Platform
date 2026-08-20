@@ -8,6 +8,7 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -107,6 +108,11 @@ namespace Video_Platform_Backend.Controllers
             if (channel == null)
             {
                 return NotFound(new { message = "KhÃ´ng tÃ¬m tháº¥y kÃªnh nÃ y" });
+            }
+
+            if (channel.IsSuspended)
+            {
+                return StatusCode(403, new { message = "Kênh này đã bị đình chỉ", isSuspended = true });
             }
 
             var followersCount = await _context.Followers.CountAsync(f => f.ChannelId == channel.Id);
@@ -299,14 +305,54 @@ namespace Video_Platform_Backend.Controllers
                 })
                 .ToListAsync();
 
+            // 7: Membership Revenue & Members
+            var membershipRevenue = await _context.Transactions
+                .Include(t => t.Payment)
+                .Where(t => t.TargetChannelId == channelId 
+                         && t.TransactionType != null 
+                         && t.TransactionType.StartsWith("ChannelMembership")
+                         && t.Payment != null 
+                         && t.Payment.Status == "Completed")
+                .SumAsync(t => t.Amount);
+
+            var members = await _context.Subscriptions
+                .Include(s => s.Subscriber)
+                    .ThenInclude(u => u.Profile)
+                .Where(s => s.ChannelId == channelId && s.Status == "Active" && (s.EndDate == null || s.EndDate > DateTime.UtcNow))
+                .OrderByDescending(s => s.StartDate)
+                .Select(s => new
+                {
+                    UserId = s.SubscriberId,
+                    FullName = s.Subscriber.Profile != null ? s.Subscriber.Profile.FullName : "Người dùng",
+                    AvatarUrl = s.Subscriber.Profile != null && s.Subscriber.Profile.AvatarUrl != null ? s.Subscriber.Profile.AvatarUrl : "",
+                    JoinedAt = s.StartDate,
+                    EndDate = s.EndDate,
+                    Tier = s.Tier ?? "Thường"
+                })
+                .ToListAsync();
+
+            var withdrawals = await _context.WithdrawalRequests
+                .Where(w => w.UserId == userId && w.Status != "Rejected")
+                .Select(w => new
+                {
+                    w.Id,
+                    AmountVnd = w.AmountFiat,
+                    w.Coins,
+                    w.BreakdownData
+                })
+                .ToListAsync();
+
             return Ok(new
             {
                 TotalDonateVND = totalDonateVND,
                 TotalCoinReceived = totalCoinReceived,
+                MembershipRevenue = membershipRevenue,
+                Members = members,
                 DonateHistory = donateHistory,
                 CoinReceivedHistory = coinReceivedHistory,
                 DepositHistory = depositHistory,
-                CoinSpentHistory = coinSpentHistory
+                CoinSpentHistory = coinSpentHistory,
+                Withdrawals = withdrawals
             });
         }
 
@@ -486,5 +532,92 @@ namespace Video_Platform_Backend.Controllers
 
             return Ok(new { isMember = false });
         }
+
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllChannelsForAdmin()
+        {
+            var channels = await _context.Channels
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.ChannelName,
+                    c.Handle,
+                    AvatarUrl = c.User.Profile != null ? c.User.Profile.AvatarUrl : null,
+                    OwnerEmail = c.User.Email,
+                    OwnerName = c.User.Email,
+                    c.TotalViews,
+                    SubscribersCount = c.Followers.Count,
+                    c.IsVerified,
+                    c.IsSuspended,
+                    c.CanLivestream,
+                    c.CanUploadVideo,
+                    c.CreatedAt
+                })
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return Ok(channels);
+        }
+
+        [HttpPut("{id}/verify")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleVerifyChannel(Guid id)
+        {
+            var channel = await _context.Channels.FindAsync(id);
+            if (channel == null) return NotFound(new { message = "Kênh không tồn tại" });
+
+            channel.IsVerified = !channel.IsVerified;
+            var actionStr = channel.IsVerified ? "Cấp tích xanh" : "Thu hồi tích xanh";
+            this.AddAuditLog(_context, actionStr, "update", $"Channel:{id}", $"Trạng thái: {(channel.IsVerified ? "Verified" : "Unverified")}");
+            
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Đã {(channel.IsVerified ? "cấp" : "thu hồi")} tích xanh.", isVerified = channel.IsVerified });
+        }
+
+        [HttpPut("{id}/suspend")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleSuspendChannel(Guid id)
+        {
+            var channel = await _context.Channels.FindAsync(id);
+            if (channel == null) return NotFound(new { message = "Kênh không tồn tại" });
+
+            channel.IsSuspended = !channel.IsSuspended;
+            if (channel.IsSuspended)
+            {
+                channel.CanLivestream = false;
+                channel.CanUploadVideo = false;
+            }
+            var actionStr = channel.IsSuspended ? "Đình chỉ kênh" : "Mở lại kênh";
+            this.AddAuditLog(_context, actionStr, "update", $"Channel:{id}", $"Trạng thái: {(channel.IsSuspended ? "Suspended" : "Active")}");
+            
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Đã {(channel.IsSuspended ? "đình chỉ" : "mở lại")} kênh.", isSuspended = channel.IsSuspended });
+        }
+
+        [HttpPut("{id}/permissions")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateChannelPermissions(Guid id, [FromBody] ChannelPermissionsDto dto)
+        {
+            var channel = await _context.Channels.FindAsync(id);
+            if (channel == null) return NotFound(new { message = "Kênh không tồn tại" });
+            if (channel.IsSuspended) return BadRequest(new { message = "Không thể thay đổi quyền khi kênh đang bị đình chỉ." });
+
+            channel.CanLivestream = dto.CanLivestream;
+            channel.CanUploadVideo = dto.CanUploadVideo;
+
+            this.AddAuditLog(_context, "Cập nhật quyền kênh", "update", $"Channel:{id}", $"Livestream: {dto.CanLivestream}, Upload: {dto.CanUploadVideo}");
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật quyền kênh thành công.", canLivestream = channel.CanLivestream, canUploadVideo = channel.CanUploadVideo });
+        }
+    }
+
+    public class ChannelPermissionsDto
+    {
+        public bool CanLivestream { get; set; }
+        public bool CanUploadVideo { get; set; }
     }
 }

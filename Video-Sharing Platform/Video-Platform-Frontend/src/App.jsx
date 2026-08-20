@@ -12,6 +12,8 @@ import Subscriptions from './pages/client/video/Subscriptions';
 import Downloads from './pages/client/video/Downloads';
 import Trending from './pages/client/video/Trending';
 import Settings from './pages/client/settings/Settings';
+import Help from './pages/client/help/Help';
+import Feedback from './pages/client/feedback/Feedback';
 import Shorts from './pages/client/shorts/Shorts';
 import LikedVideos from './pages/client/video/LikedVideos';
 import Explore from './pages/client/video/Explore';
@@ -33,6 +35,7 @@ import AdminRoute from './components/layout/admin/AdminRoute';
 import AdminLayout from './components/layout/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/user/AdminUsers';
+import AdminChannels from './pages/admin/channel/AdminChannels';
 import AdminVideoCategory from './pages/admin/category/AdminVideoCategory';
 import AdminComments from './pages/admin/comment/AdminComments';
 import AdminRoles from './pages/admin/roles/AdminRoles';
@@ -41,7 +44,15 @@ import AdminComplaints from './pages/admin/reports/AdminComplaints';
 import AdminViolations from './pages/admin/reports/AdminViolations';
 import AdminSettings from './pages/admin/settings/AdminSettings';
 import AdminTransactions from './pages/admin/transactions/AdminTransactions';
+import AdminFeedbacks from './pages/admin/feedback/AdminFeedbacks';
+import AdminActivities from './pages/admin/activities/AdminActivities';
+import AdminWithdrawals from './pages/admin/transactions/AdminWithdrawals';
+import AdminRevenue from './pages/admin/revenue/AdminRevenue';
+import StudioRevenue from './pages/client/studio/StudioRevenue';
 import NotFound from './pages/error/NotFound';
+
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 function App() {
   return (
@@ -50,6 +61,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
@@ -63,6 +76,8 @@ function App() {
           <Route path="/download" element={<Downloads />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/feedback" element={<Feedback />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/liked" element={<LikedVideos />} />
           <Route path="/explore" element={<Explore />} />
@@ -74,6 +89,7 @@ function App() {
           <Route path="/studio/upload" element={<StudioUpload />} />
           <Route path="/studio/upload-short" element={<StudioUpload isShortType={true} />} />
           <Route path="/studio/live" element={<StudioLive />} />
+          <Route path="/studio/revenue" element={<StudioRevenue />} />
           <Route path="/video/livestreams" element={<LivePages />} />
           <Route path="/results" element={<SearchResults />} />
 
@@ -85,15 +101,20 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="channels" element={<AdminChannels />} />
             <Route path="videos" element={<VideoManagement />} />
             <Route path="categories" element={<AdminVideoCategory />} />
             <Route path="comments" element={<AdminComments />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="complaints" element={<AdminComplaints />} />
+            <Route path="activities" element={<AdminActivities />} />
             <Route path="violations" element={<AdminViolations />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="transactions" element={<AdminTransactions />} />
+            <Route path="feedbacks" element={<AdminFeedbacks />} />
+            <Route path="withdrawals" element={<AdminWithdrawals />} />
+            <Route path="revenue" element={<AdminRevenue />} />
             {/* Catch-all for Admin */}
             <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>

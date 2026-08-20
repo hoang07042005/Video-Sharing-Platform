@@ -11,6 +11,7 @@ import {
   Star,
   MoreVertical,
   Smartphone,
+  CheckCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CategoryFilter from "../../../components/home/CategoryFilter";
@@ -108,12 +109,13 @@ function SmallVideoCard({ video }) {
             {video.title}
           </h3>
           <Link
-            to={`/c/${video.channelHandle}`}
-            onClick={(e) => e.stopPropagation()}
-            className="text-gray-500 text-[11px] mt-0.5 block hover:text-white transition-colors"
-          >
-            {video.channelName}
-          </Link>
+          to={`/c/${video.channelHandle}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
+        >
+          {video.channelName}
+          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+        </Link>
           <p className="text-gray-500 text-[11px]">
             {formatViews(video.viewsCount)} lượt xem •{" "}
             {timeAgo(video.createdAt)}
@@ -177,9 +179,10 @@ function HorizontalVideoCard({ video }) {
         <Link
           to={`/c/${video.channelHandle}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-gray-500 text-xs mt-1 block hover:text-white transition-colors"
+          className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
         >
           {video.channelName}
+          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
         </Link>
         <p className="text-gray-500 text-xs mt-0.5">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
@@ -278,13 +281,13 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
   const [subbed, setSubbed] = useState(initialSubbed ?? false);
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[#161616] border border-white/5 hover:border-white/10 hover:bg-[#1A1A1A] transition-all group">
+    <div className="flex flex-col gap-2  p-2 rounded-2xl transition-all group">
       {/* Top: Avatar + Info */}
-      <div className="flex items-center gap-3">
+      
         {/* Avatar */}
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 flex justify-center">
           <Link to={`/c/${channel.handle}`}>
-            <div className="w-[52px] h-[52px] rounded-full overflow-hidden bg-[#2A2A2A]">
+            <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-[#2A2A2A]">
               <img
                 src={channel.avatarUrl || "https://via.placeholder.com/80"}
                 alt={channel.channelName}
@@ -295,18 +298,18 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
         </div>
 
         {/* Info */}
-        <div className="min-w-0 flex-1 flex flex-col items-start text-left justify-center">
+        <div className="min-w-0 flex-1 flex flex-col items-center text-center">
           <Link
             to={`/c/${channel.handle}`}
             className="text-white text-[13px] font-bold line-clamp-1 hover:text-white/80 transition-colors block"
           >
             {channel.channelName}
           </Link>
-          <p className="text-gray-400 text-[11px] mt-0.5">{channel.handle}</p>
+          {/* <p className="text-gray-400 text-[11px] mt-0.5">{channel.handle}</p> */}
           <p className="text-gray-400 text-[11px] mt-0.5">
             {formatViews(channel.subscriberCount)} người đăng ký
           </p>
-        </div>
+        
       </div>
 
       {/* Subscribe button */}
@@ -563,13 +566,13 @@ export default function Home() {
   const shortsSection2 = filteredShorts.slice(6, 12);
 
   // Thịnh hành: Dùng video thường
-  const trending = filteredVideos.slice(4, 14);
+  const trending = filteredVideos.slice(4, 18);
 
   // Đề xuất: Dùng video thường
-  const suggested = filteredVideos.slice(14, 26);
+  const suggested = filteredVideos.slice(18, 34);
 
   // Mới nhất: Dùng video thường
-  const latest = filteredVideos.slice(26, 35);
+  const latest = filteredVideos.slice(34, 50);
 
   // Fallback channels nếu API chưa có
   const mockChannels = [
@@ -621,7 +624,7 @@ export default function Home() {
     const handleCheck = currentUserHandle.startsWith('@') ? currentUserHandle : `@${currentUserHandle}`;
     featuredChannelsRaw = featuredChannelsRaw.filter(c => c.handle !== handleCheck && c.handle !== currentUserHandle);
   }
-  const featuredChannels = featuredChannelsRaw.slice(0, 5);
+  const featuredChannels = featuredChannelsRaw.slice(0, 6);
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F] min-h-screen">
@@ -676,6 +679,26 @@ export default function Home() {
             </section>
           )}
 
+
+          {/* Đề xuất cho bạn */}
+          <section>
+            <SectionHeader
+              icon={Star}
+              title="Đề xuất cho bạn"
+              linkTo="/explore"
+            />
+            {suggested.length === 0 ? (
+              <p className="text-gray-500 text-sm">Chưa có video nào.</p>
+            ) : (
+              <div className="grid grid-cols-6 gap-4">
+                {suggested.map((v) => (
+                  <SmallVideoCard key={`sug-${v.id}`} video={v} />
+                ))}
+              </div>
+            )}
+          </section>
+
+
           {/* Thịnh hành */}
           <section>
             <SectionHeader icon={Flame} title="Thịnh hành" linkTo="/trending" />
@@ -683,7 +706,7 @@ export default function Home() {
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
               <div className="grid grid-cols-5 gap-4">
-                {trending.slice(0, 10).map((v) => (
+                {trending.slice(0, 18).map((v) => (
                   <SmallVideoCard key={v.id} video={v} />
                 ))}
               </div>
@@ -703,24 +726,6 @@ export default function Home() {
               <div className="grid grid-cols-6 gap-4">
                 {shortsSection1.map((s) => (
                   <ShortVideoCard key={`short-1-${s.id}`} short={s} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Đề xuất cho bạn */}
-          <section>
-            <SectionHeader
-              icon={Star}
-              title="Đề xuất cho bạn"
-              linkTo="/explore"
-            />
-            {suggested.length === 0 ? (
-              <p className="text-gray-500 text-sm">Chưa có video nào.</p>
-            ) : (
-              <div className="grid grid-cols-6 gap-4">
-                {suggested.map((v) => (
-                  <SmallVideoCard key={`sug-${v.id}`} video={v} />
                 ))}
               </div>
             )}
@@ -769,7 +774,7 @@ export default function Home() {
               title="Kênh nổi bật"
               linkTo="/subscriptions"
             />
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-6 gap-4">
               {featuredChannels.map((ch) => (
                 <FeaturedChannelCard 
                   key={ch.id} 

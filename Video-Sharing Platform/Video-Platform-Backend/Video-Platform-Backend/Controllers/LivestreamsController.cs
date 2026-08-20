@@ -24,14 +24,14 @@ public class LivestreamsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var list = await _db.Livestreams.OrderByDescending(l => l.ActualStartTime).ToListAsync();
+        var list = await _db.Livestreams.Include(l => l.Channel).Where(l => !l.Channel.IsSuspended).OrderByDescending(l => l.ActualStartTime).ToListAsync();
         return Ok(list);
     }
 
     [HttpGet("active")]
     public async Task<IActionResult> GetActive()
     {
-        var list = await _db.Livestreams.Where(l => l.Status == "live").OrderByDescending(l => l.ActualStartTime).ToListAsync();
+        var list = await _db.Livestreams.Include(l => l.Channel).Where(l => l.Status == "live" && !l.Channel.IsSuspended).OrderByDescending(l => l.ActualStartTime).ToListAsync();
         return Ok(list);
     }
 
@@ -50,6 +50,7 @@ public class LivestreamsController : ControllerBase
             .Include(l => l.Category)
             .FirstOrDefaultAsync(l => l.Id == id);
         if (item == null) return NotFound();
+        if (item.Channel.IsSuspended) return StatusCode(403, new { message = "Kênh này đã bị đình chỉ hoạt động." });
 
         bool isLiked = false;
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -191,7 +192,12 @@ public class LivestreamsController : ControllerBase
                 .ToDictionary(kv => kv.Key, kv => kv.Value.Errors.Select(e => e.ErrorMessage).ToArray());
             return BadRequest(new { title = "One or more validation errors occurred.", status = 400, errors });
         }
-        var model = new Livestream
+            var channel = await _db.Channels.FindAsync(dto.ChannelId);
+            if (channel == null) return BadRequest(new { message = "Kênh không tồn tại." });
+            if (channel.IsSuspended) return StatusCode(403, new { message = "Kênh của bạn đã bị đình chỉ hoạt động." });
+            if (!channel.CanLivestream) return StatusCode(403, new { message = "Kênh của bạn đã bị cấm phát trực tiếp." });
+
+            var model = new Livestream
         {
             Id = Guid.NewGuid(),
             ChannelId = dto.ChannelId,

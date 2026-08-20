@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
 using System.Linq;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -107,5 +108,33 @@ namespace Video_Platform_Backend.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateTransactionStatus(Guid id, [FromBody] UpdateTransactionStatusDto dto)
+        {
+            var transaction = await _context.Transactions
+                .Include(t => t.Payment)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (transaction == null || transaction.Payment == null)
+            {
+                return NotFound(new { message = "Giao dịch không tồn tại." });
+            }
+
+            var oldStatus = transaction.Payment.Status;
+            transaction.Payment.Status = dto.Status; // Completed, Failed, Refunded
+
+            var actionStr = dto.Status == "Completed" ? "Duyệt giao dịch" : dto.Status == "Refunded" ? "Hoàn tiền giao dịch" : "Từ chối giao dịch";
+            this.AddAuditLog(_context, actionStr, "update", $"Payment:{transaction.PaymentId}", $"Trạng thái: {oldStatus} -> {dto.Status}");
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật trạng thái thành công.", status = dto.Status });
+        }
+    }
+
+    public class UpdateTransactionStatusDto
+    {
+        public string Status { get; set; }
     }
 }

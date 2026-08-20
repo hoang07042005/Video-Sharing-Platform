@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import { Users, Video, Eye, DollarSign, Loader2, Database, ThumbsUp, Heart, AlertTriangle, Flag, Video as VideoIcon, Calendar } from 'lucide-react';
+import { Users, Video, Eye, DollarSign, Loader2, Database, ThumbsUp, Heart, AlertTriangle, Flag, Video as VideoIcon, Calendar, MessageSquare } from 'lucide-react';
 
 const toInputValue = (date) => {
   if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) return date.slice(0, 10);
@@ -21,6 +21,7 @@ const getDefaultDates = () => {
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState(null);
+  const [recentFeedbacks, setRecentFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
 
@@ -62,12 +63,16 @@ export default function AdminDashboard() {
       if (endDate)   params.set('endDate',   endDate);
       if (days)      params.set('days',      String(days));
       const qs = params.toString() ? `?${params.toString()}` : '';
-      const [statsRes, chartRes] = await Promise.all([
+      const [statsRes, chartRes, feedbacksRes] = await Promise.all([
         axios.get(`/api/admin/stats${qs}`),
         axios.get(`/api/admin/chart-data${qs}`),
+        axios.get(`/api/admin/feedbacks?status=All`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).catch(err => ({ data: [] }))
       ]);
       setStats(statsRes.data);
       setChartData(chartRes.data);
+      setRecentFeedbacks(feedbacksRes.data.slice(0, 5));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -83,12 +88,16 @@ export default function AdminDashboard() {
         params.set('endDate', '2099-12-31');
         params.set('days', '36500');
         const qs = `?${params.toString()}`;
-        const [statsRes, chartRes] = await Promise.all([
+        const [statsRes, chartRes, feedbacksRes] = await Promise.all([
           axios.get(`/api/admin/stats${qs}`),
           axios.get(`/api/admin/chart-data${qs}`),
+          axios.get(`/api/admin/feedbacks?status=All`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          }).catch(err => ({ data: [] }))
         ]);
         setStats(statsRes.data);
         setChartData(chartRes.data);
+        setRecentFeedbacks(feedbacksRes.data.slice(0, 5));
       } catch (error) {
         console.error('Error fetching initial dashboard data:', error);
       } finally {
@@ -381,10 +390,10 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── ROW 3: Pie | Categories | Reports | Transactions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.2fr_2fr_1.3fr] gap-3 mb-3">
+      {/* ── ROW 3: Pie | Categories | Reports | Transactions | Feedbacks ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_4.5fr] gap-3 mb-3">
         {/* Phân bố doanh thu */}
-        <div className="bg-[#141418] p-4 rounded-xl border border-white/5">
+        <div className="bg-[#141418] p-4 rounded-xl border border-white/5 h-full">
           <h3 className="text-xs font-semibold text-white mb-2">Phân bố doanh thu</h3>
           <div className="w-full h-[150px] relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -415,6 +424,11 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Cột phải: 3 cột trên, phản hồi dưới */}
+        <div className="flex flex-col gap-3">
+          {/* Phần trên */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr_1.3fr] gap-3">
 
         {/* Top danh mục */}
         <div className="bg-[#141418] p-4 rounded-xl border border-white/5">
@@ -480,13 +494,31 @@ export default function AdminDashboard() {
           <h3 className="text-xs font-semibold text-white mb-3">Giao dịch gần nhất</h3>
           <div className="flex flex-col gap-2.5">
             {stats?.recentTransactions?.map((trx, idx) => {
-              const bgColor = trx.type==='Premium' ? 'bg-blue-500/20 text-blue-400' : trx.type==='Donate' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+              const typeStr = trx.type || 'Other';
+              const isPremium = typeStr.startsWith('Premium') || typeStr.startsWith('ChannelMembership');
+              const isDonation = typeStr === 'Donation';
+              const isBuyCoins = typeStr === 'BuyCoins';
+              
+              let bgColor = 'bg-gray-500/20 text-gray-400';
+              if (isPremium) bgColor = 'bg-blue-500/20 text-blue-400';
+              else if (isDonation) bgColor = 'bg-green-500/20 text-green-400';
+              else if (isBuyCoins) bgColor = 'bg-yellow-500/20 text-yellow-400';
+              else if (typeStr === 'Ad Revenue') bgColor = 'bg-red-500/20 text-red-400';
+
               return (
                 <div key={idx} className="flex items-center justify-between pb-2.5 border-b border-white/5 last:border-0 last:pb-0">
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${bgColor}`}>{trx.type.charAt(0)}</div>
+                    {trx.userAvatar ? (
+                      <img src={trx.userAvatar} alt="Avatar" className="w-7 h-7 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${bgColor}`}>
+                        {typeStr.charAt(0)}
+                      </div>
+                    )}
                     <div>
-                      <p className="text-[11px] font-medium text-gray-300 leading-tight">{trx.type==='Premium' ? 'Premium Subscription' : trx.type==='Donate' ? 'Donate' : 'Ad Revenue'}</p>
+                      <p className="text-[11px] font-medium text-gray-300 leading-tight">
+                        {typeStr}
+                      </p>
                       <p className="text-[9px] text-gray-500">User: {trx.user}</p>
                     </div>
                   </div>
@@ -502,6 +534,73 @@ export default function AdminDashboard() {
             <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">Xem tất cả giao dịch →</span>
           </div>
         </div>
+
+        </div> {/* Kết thúc phần trên */}
+
+        {/* Phần dưới: Phản hồi người dùng mới nhất */}
+        <div className="bg-[#141418] p-4 rounded-xl border border-white/5 flex-1">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-white">Phản hồi người dùng mới nhất</h3>
+            <a href="/admin/feedbacks" className="text-[11px] text-purple-400 cursor-pointer hover:underline">Xem tất cả phản hồi →</a>
+          </div>
+          <table className="w-full text-left table-fixed">
+            <thead className="text-[9px] uppercase text-gray-500 border-b border-white/10">
+              <tr>
+                <th className="pb-2 pr-2 font-medium w-[22%]">Người dùng</th>
+                <th className="pb-2 px-2 font-medium w-[15%]">Loại</th>
+                <th className="pb-2 px-2 font-medium w-[31%]">Nội dung</th>
+                <th className="pb-2 px-2 font-medium text-center w-[18%]">Trạng thái</th>
+                <th className="pb-2 pl-2 font-medium text-right w-[14%]">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {recentFeedbacks.length > 0 ? recentFeedbacks.map((fb, idx) => (
+                <tr key={idx} className="group hover:bg-white/[0.02] transition-colors">
+                  <td className="py-2 pr-2">
+                    <div className="flex items-center gap-2">
+                      {fb.userAvatarUrl ? (
+                        <img src={fb.userAvatarUrl} alt="Avatar" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-[#FF5722]/20 flex items-center justify-center text-[#FF5722] font-bold text-[8px] shrink-0">
+                          {fb.userFullName?.charAt(0) || 'U'}
+                        </div>
+                      )}
+                      <span className="text-[11px] text-gray-300 font-medium truncate max-w-[80px]" title={fb.userFullName || 'Người dùng'}>
+                        {fb.userFullName || 'Người dùng'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-2 text-[10px] text-gray-400 capitalize">{fb.type === 'bug' ? 'Báo lỗi' : fb.type === 'feature' ? 'Góp ý' : fb.type === 'ui' ? 'Giao diện' : 'Khác'}</td>
+                  <td className="py-1 px-1 text-[10px] text-gray-400">
+                    <div className="flex items-start gap-2">
+                      <span className="line-clamp-2 flex-1">{fb.content}</span>
+                      {fb.attachmentUrl && (
+                        <a href={fb.attachmentUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                          <img src={fb.attachmentUrl} alt="Đính kèm" className="w-8 h-8 rounded object-cover border border-white/10 hover:border-white/30 transition-colors" />
+                        </a>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <span className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-medium ${fb.status==='Pending' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                      {fb.status==='Pending' ? 'Chờ xử lý' : 'Đã trả lời'}
+                    </span>
+                  </td>
+                  <td className="py-2 pl-2 text-right">
+                    <a href="/admin/feedbacks" className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-[#272727] hover:bg-[#353535] text-white transition-colors">Xem</a>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="5" className="py-4 text-center text-xs text-gray-500">Không có phản hồi mới</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          
+        </div>
+
+        </div> {/* Kết thúc cột phải */}
       </div>
 
       {/* ── ROW 4: Top Videos | Top Channels | Activity ── */}

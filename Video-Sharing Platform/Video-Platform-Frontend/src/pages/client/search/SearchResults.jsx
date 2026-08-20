@@ -105,7 +105,7 @@ export default function SearchResults() {
                       <div className="flex flex-col items-center sm:items-start flex-1 mt-2 sm:mt-6">
                         <Link to={`/c/${channel.handle}`} className="text-lg sm:text-xl font-medium text-white group-hover:text-gray-300 transition-colors flex items-center gap-2">
                           {channel.channelName}
-                          <CheckCircle className="w-4 h-4 text-gray-400 fill-gray-400/20" />
+                          {channel.isVerified && <CheckCircle className="w-4 h-4 text-gray-400 fill-gray-400/20" />}
                         </Link>
                         <div className="text-gray-400 text-sm mt-1 flex gap-2">
                           <span>@{channel.handle}</span>
@@ -212,7 +212,7 @@ export default function SearchResults() {
                           </Link>
                           <Link to={`/c/${video.channelHandle}`} onClick={(e) => e.stopPropagation()} className="text-gray-400 text-[13px] hover:text-white transition-colors flex items-center gap-1">
                             {video.channelName}
-                            <CheckCircle className="w-3.5 h-3.5 text-gray-400 fill-gray-400/20" />
+                            {video.channelIsVerified && <CheckCircle className="w-3.5 h-3.5 text-gray-400 fill-gray-400/20" />}
                           </Link>
                         </div>
                         {video.description && (

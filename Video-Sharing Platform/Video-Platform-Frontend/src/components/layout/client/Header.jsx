@@ -15,6 +15,7 @@ import {
   Crown,
   Users,
   Coins,
+  DollarSign
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -375,7 +376,7 @@ export default function Header({ toggleSidebar }) {
                 }
                 className="flex items-center gap-3 cursor-pointer text-left group"
               >
-                <div className="w-11 h-11 rounded-full overflow-hidden border-[3px] border-[#272727] group-hover:border-gray-500 transition-colors">
+                <div className="w-11 h-11 rounded-full overflow-hidden border-[1px] border-[#272727] group-hover:border-gray-500 transition-colors">
                   <img
                     src={avatar}
                     alt="Ảnh đại diện"
@@ -400,6 +401,13 @@ export default function Header({ toggleSidebar }) {
                     className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors"
                   >
                     <User className="w-4 h-4" /> Kênh của bạn
+                  </Link>
+                  <Link
+                    to="/studio/revenue"
+                    onClick={() => setActiveDropdown(null)}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors"
+                  >
+                    <DollarSign className="w-4 h-4" /> Doanh thu & Rút tiền
                   </Link>
                   {isAdmin && (
                     <Link

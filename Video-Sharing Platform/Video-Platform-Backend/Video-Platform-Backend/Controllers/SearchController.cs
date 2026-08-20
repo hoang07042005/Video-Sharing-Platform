@@ -42,7 +42,7 @@ namespace Video_Platform_Backend.Controllers
             var channels = await _context.Channels
                 .Include(c => c.User)
                     .ThenInclude(u => u.Profile)
-                .Where(c => c.ChannelName.ToLower().Contains(query) || c.Handle.ToLower().Contains(query))
+                .Where(c => (c.ChannelName.ToLower().Contains(query) || c.Handle.ToLower().Contains(query)) && !c.IsSuspended)
                 .Select(c => new ChannelCardDTO
                 {
                     Id = c.Id,
@@ -80,7 +80,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => v.Visibility == "Public" && 
+                .Where(v => v.Visibility == "Public" && !v.Channel.IsSuspended &&
                             (v.Title.ToLower().Contains(query) || 
                             (v.Description != null && v.Description.ToLower().Contains(query))))
                 .Select(v => new VideoResponseDTO

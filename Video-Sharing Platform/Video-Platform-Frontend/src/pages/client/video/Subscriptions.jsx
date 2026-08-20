@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, Bell, Users, UserCheck } from 'lucide-react';
+import { Loader2, Bell, Users, UserCheck, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const formatSubscribers = (count) => {
@@ -131,8 +131,9 @@ export default function Subscriptions() {
 
               {/* Info */}
               <div className="text-center">
-                <p className="text-white font-medium text-sm md:text-base line-clamp-1 group-hover:text-[#FF5722] transition-colors">
+                <p className="text-white font-medium text-sm md:text-base line-clamp-1 group-hover:text-[#FF5722] transition-colors flex items-center justify-center gap-1">
                   {channel.channelName}
+                  {channel.isVerified && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
                 </p>
                 <p className="text-gray-400 text-xs mt-0.5">
                   {formatSubscribers(channel.subscriberCount)}

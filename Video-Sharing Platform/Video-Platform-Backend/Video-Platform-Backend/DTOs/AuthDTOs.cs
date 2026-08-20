@@ -42,6 +42,7 @@ namespace Video_Platform_Backend.DTOs
         public string? Handle { get; set; }
         public string? AvatarUrl { get; set; }
         public int Coins { get; set; }
+        public bool? IsNewUser { get; set; }
     }
 
     public class UpdateUserRolesDto

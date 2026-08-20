@@ -9,6 +9,9 @@ using Video_Platform_Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load .env variables
+DotNetEnv.Env.Load();
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -31,12 +34,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["Secret"];
+var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourFallbackSecretKeyHere1234567890";
 
 builder.Services.AddScoped<Video_Platform_Backend.Services.VideoProcessingService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IContentModerationService, ContentModerationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddSingleton<IVideoRecordingService, VideoRecordingService>();
 builder.Services.AddHostedService<VideoRecordingBackgroundService>();
 

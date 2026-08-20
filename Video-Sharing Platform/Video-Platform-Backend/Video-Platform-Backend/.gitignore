@@ -67,3 +67,4 @@ project.assets.json
 *.nuget.targets
 ffmpeg/
 wwwroot/uploads/
+.env

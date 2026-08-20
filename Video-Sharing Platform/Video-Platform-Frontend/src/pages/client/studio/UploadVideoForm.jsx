@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Loader2, Globe, Settings, PlaySquare, Check, ChevronDown, Clock, FileCode, FileVideo, HardDrive, Image as ImageIcon, Upload, UploadCloud } from 'lucide-react';
+import { Loader2, Globe, Settings, PlaySquare, Check, ChevronDown, Clock, FileCode, FileVideo, HardDrive, Image as ImageIcon, Upload, UploadCloud, AlertTriangle } from 'lucide-react';
 
 export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCancelEdit, isShortType }) {
   const [title, setTitle] = useState('');
@@ -19,6 +19,7 @@ export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCanc
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [bannedError, setBannedError] = useState(null);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -176,14 +177,35 @@ export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCanc
       
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi tải video lên.');
+      if (err?.response?.status === 403) {
+        setBannedError(err.response.data.message || 'Kênh của bạn đã bị cấm tải lên video.');
+      } else {
+        setError(err.response?.data?.message || 'Có lỗi xảy ra khi tải video lên.');
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 mb-8 flex flex-col xl:flex-row gap-8 relative">
+    <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-4 md:p-6 mb-8 flex flex-col xl:flex-row gap-6 md:gap-8 relative">
+      
+      {/* Modal Cấm */}
+      {bannedError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full text-center shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+            <p className="text-gray-400 mb-8">{bannedError}</p>
+            <button onClick={() => setBannedError(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Loading Overlay */}
       {isUploading && (
         <div className="absolute inset-0 z-50 bg-black/60 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm">

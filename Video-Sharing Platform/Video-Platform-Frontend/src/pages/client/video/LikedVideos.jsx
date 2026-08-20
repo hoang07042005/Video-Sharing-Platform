@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, ThumbsUp } from 'lucide-react';
+import { Loader2, ThumbsUp, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LikedVideos = () => {
@@ -159,7 +159,10 @@ const LikedVideos = () => {
                           ) : (
                             <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white shrink-0">{(video.channelName || ' ')[0]}</div>
                           )}
-                          <div className="truncate max-w-[100%]">{video.channelName}</div>
+                          <div className="truncate max-w-[100%] flex items-center gap-1">
+                            {video.channelName}
+                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                          </div>
                         </div>
                         <div>{formatViews(video.viewsCount)}</div>
                       </div>
@@ -191,7 +194,10 @@ const LikedVideos = () => {
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white shrink-0">{(v.channelName || ' ')[0]}</div>
                         )}
-                        <div className="truncate max-w-[100%]">{v.channelName}</div>
+                        <div className="truncate max-w-[100%] flex items-center gap-1">
+                          {v.channelName}
+                          {v.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                        </div>
                       </div>
                       <div className="text-xs shrink-0">{formatViews(v.viewsCount)}</div>
                     </div>

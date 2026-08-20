@@ -466,7 +466,7 @@ export default function Trending() {
                           <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-1 text-gray-300 text-[12px] font-medium truncate group-hover:text-white transition-colors">
                               {video.channelName}
-                              <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+                              {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                             </div>
                             <div className="text-gray-500 text-[10px]">
                               {formatViews(video.viewsCount)} lượt xem •{" "}
@@ -619,7 +619,7 @@ export default function Trending() {
                               <span className="truncate max-w-[100px]">
                                 {video.channelName}
                               </span>
-                              <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+                              {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                             </div>
                             <span>•</span>
                             <span>

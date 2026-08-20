@@ -4,7 +4,7 @@ import {
   Loader2, Play, Shuffle, Clock, Lock,
   ChevronDown, LayoutList, LayoutGrid, Trash2, 
   MoreVertical, Zap, Calendar, Folder, SlidersHorizontal,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, CheckCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -318,7 +318,10 @@ const SavedVideos = () => {
                               {video.channelName?.charAt(0)?.toUpperCase() || '@'}
                             </div>
                           )}
-                          <span>{video.channelName}</span>
+                          <span className="flex items-center gap-1">
+                            {video.channelName}
+                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                          </span>
                         </Link>
                         <span>•</span>
                         <span>{formatViews(video.viewsCount)} lượt xem</span>

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Video_Platform_Backend.DTOs;
 using Video_Platform_Backend.Hubs;
 using Video_Platform_Backend.Models;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -140,6 +141,9 @@ namespace Video_Platform_Backend.Controllers
             }
 
             report.Status = request.Status;
+            
+            this.AddAuditLog(_context, "Cập nhật trạng thái báo cáo", "update", $"Report:{id}", $"Trạng thái: {request.Status}");
+            
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -202,6 +206,23 @@ namespace Video_Platform_Backend.Controllers
                     }
                     break;
 
+                case "Livestream":
+                    var livestream = await _context.Livestreams.FirstOrDefaultAsync(l => l.Id == request.TargetId);
+                    if (livestream == null)
+                    {
+                        return NotFound(new { message = "Livestream không tồn tại." });
+                    }
+
+                    if (action == "delete")
+                    {
+                        _context.Livestreams.Remove(livestream);
+                    }
+                    else
+                    {
+                        livestream.Status = "ended";
+                    }
+                    break;
+
                 case "LiveMessage":
                     var liveMessage = await _context.LiveMessages
                         .Include(m => m.Livestream)
@@ -245,6 +266,8 @@ namespace Video_Platform_Backend.Controllers
             {
                 relatedReport.Status = action == "ignore" ? "Ignored" : "Resolved";
             }
+
+            this.AddAuditLog(_context, "Xử lý vi phạm", "update", $"{normalizedTargetType}:{request.TargetId}", $"Hành động: {action ?? "hide"}");
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Đã xử lý vi phạm thành công.", action = action ?? "hide" });

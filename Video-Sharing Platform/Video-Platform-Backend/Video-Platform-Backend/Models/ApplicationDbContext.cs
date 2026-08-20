@@ -61,6 +61,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Report> Reports { get; set; }
 
+    public virtual DbSet<Feedback> Feedbacks { get; set; }
+
     public virtual DbSet<SystemSetting> SystemSettings { get; set; }
 
     public virtual DbSet<Setting> Settings { get; set; }
@@ -90,6 +92,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<WatchHistory> WatchHistories { get; set; }
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
+    
+    public virtual DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
 
@@ -482,6 +486,28 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.ReporterId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Reports__Reporte__45BE5BA9");
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Type).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending");
+            entity.Property(e => e.Content).HasMaxLength(2000);
+            entity.Property(e => e.AdminReply).HasMaxLength(2000);
+            entity.Property(e => e.AttachmentUrl).HasMaxLength(500);
+            
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Setting>(entity =>

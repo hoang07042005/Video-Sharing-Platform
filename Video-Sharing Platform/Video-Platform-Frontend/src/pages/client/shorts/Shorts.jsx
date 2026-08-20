@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
   Heart, MessageCircle, Share2, Bookmark,
   Volume2, VolumeX, Play, Pause, Music2, ChevronDown, ChevronUp,
-  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical, User, Send
+  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical, User, Send, AlertTriangle
 } from 'lucide-react';
 
 
@@ -48,6 +48,7 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [banModal, setBanModal] = useState(null);
 
   // Fetch comments when panel opens
   useEffect(() => {
@@ -167,6 +168,9 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
       setNewComment('');
     } catch (error) {
       console.error('Failed to post comment', error);
+      if (error.response?.status === 403) {
+        setBanModal({ message: error.response?.data?.message || 'Kênh của bạn đã bị đình chỉ.' });
+      }
     }
   };
 
@@ -215,6 +219,9 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
       setReplyingTo(null);
     } catch (err) {
       console.error(err);
+      if (err.response?.status === 403) {
+        setBanModal({ message: err.response?.data?.message || 'Kênh của bạn đã bị đình chỉ.' });
+      }
     }
   };
 
@@ -363,6 +370,21 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
 
   return (
     <div className={`w-full h-full flex items-center justify-center select-none relative overflow-hidden transition-all duration-300 ease-in-out ${showComments ? 'pr-[340px]' : 'pr-0'}`}>
+      {/* Ban Modal */}
+      {banModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4 text-center shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+            <p className="text-gray-400 mb-8">{banModal.message}</p>
+            <button onClick={() => setBanModal(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-end gap-5 w-full max-w-[1400px] justify-center px-2 sm:px-4">
         <div className="flex flex-col gap-3 flex-1 min-w-[150px] max-w-[360px] pb-2">
           <div className="flex items-center gap-2 flex-wrap">

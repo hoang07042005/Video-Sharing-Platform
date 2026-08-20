@@ -110,7 +110,7 @@ public class DonationsController : ControllerBase
         var livestream = await _db.Livestreams.FindAsync(dto.LivestreamId);
         if (livestream == null) return NotFound("Livestream không tìm thấy");
 
-        // Deduct coins
+        // Deduct coins from donor
         user.Coins -= (int)dto.Amount;
         _db.Users.Update(user);
 

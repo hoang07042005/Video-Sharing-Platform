@@ -5,6 +5,8 @@ using Video_Platform_Backend.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
+using System.Collections.Generic;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -231,6 +233,7 @@ namespace Video_Platform_Backend.Controllers
                     User = t.Payment.User.Profile != null && !string.IsNullOrWhiteSpace(t.Payment.User.Profile.FullName)
                         ? t.Payment.User.Profile.FullName
                         : t.Payment.User.Email,
+                    UserAvatar = t.Payment.User.Profile != null ? t.Payment.User.Profile.AvatarUrl : null,
                     Type = NormalizeTransactionType(t.TransactionType),
                     Amount = t.Amount,
                     Status = "Thành công",
@@ -480,6 +483,10 @@ namespace Video_Platform_Backend.Controllers
             user.IsBanned = !(user.IsBanned ?? false);
             
             _context.Users.Update(user);
+            
+            var actionStr = user.IsBanned.Value ? "Khóa tài khoản" : "Mở khóa tài khoản";
+            this.AddAuditLog(_context, actionStr, "update", $"User:{user.Email}", $"Trạng thái mới: {(user.IsBanned.Value ? "Banned" : "Active")}");
+            
             await _context.SaveChangesAsync();
 
             return Ok(new { 
@@ -550,10 +557,11 @@ namespace Video_Platform_Backend.Controllers
                 .Include(l => l.User)
                     .ThenInclude(u => u.Profile)
                 .OrderByDescending(l => l.CreatedAt)
-                .Take(50)
+                .Take(500)
                 .Select(l => new {
                     Id = l.Id,
                     Time = l.CreatedAt.ToString("HH:mm dd/MM/yyyy"),
+                    Date = l.CreatedAt,
                     User = l.User != null ? l.User.Email : "Hệ thống",
                     Role = "Quản trị viên", // Assuming only admins can do this for now
                     Avatar = l.User != null && l.User.Profile != null && !string.IsNullOrEmpty(l.User.Profile.AvatarUrl)

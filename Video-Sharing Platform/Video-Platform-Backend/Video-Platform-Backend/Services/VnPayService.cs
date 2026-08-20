@@ -22,9 +22,9 @@ public interface IVnPayService
 public class VnPayService : IVnPayService
 {
     // Cấu hình Sandbox VNPay (bạn cần thay thế bằng config thực tế)
-    private readonly string _tmnCode = "MCLYG8VX";
-    private readonly string _hashSecret = "UMVLCZOYI2THB0WO8NJJJU7LC3I5Z7FE";
-    private readonly string _baseUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+    private readonly string _tmnCode = Environment.GetEnvironmentVariable("VNPAY_TMN_CODE") ?? "";
+    private readonly string _hashSecret = Environment.GetEnvironmentVariable("VNPAY_HASH_SECRET") ?? "";
+    private readonly string _baseUrl = Environment.GetEnvironmentVariable("VNPAY_BASE_URL") ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 
     public string CreatePaymentUrl(HttpContext context, decimal amount, string orderInfo, string returnUrl)
     {

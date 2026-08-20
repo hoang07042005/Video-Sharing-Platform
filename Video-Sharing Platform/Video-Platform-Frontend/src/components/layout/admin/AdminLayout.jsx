@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Video, LogOut, List, MessageSquare, DollarSign, CreditCard, AlertTriangle, ShieldAlert, Settings as SettingsIcon, Shield, Search, Bell, BarChart2, HomeIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Video, LogOut, List, MessageSquare, DollarSign, CreditCard, AlertTriangle, ShieldAlert, Settings as SettingsIcon, Shield, Search, Bell, BarChart2, HomeIcon, Tv, Activity, HandCoins } from 'lucide-react';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 
@@ -67,6 +67,7 @@ export default function AdminLayout() {
       label: 'QUẢN LÝ NGƯỜI DÙNG',
       items: [
         { name: 'Quản lý người dùng', path: '/admin/users', icon: Users },
+        { name: 'Quản lý Kênh', path: '/admin/channels', icon: Tv },
         { name: 'Vai trò & Phân quyền', path: '/admin/roles', icon: Shield },
       ]
     },
@@ -75,6 +76,8 @@ export default function AdminLayout() {
       items: [
         { name: 'Báo cáo & Khiếu nại', path: '/admin/complaints', icon: AlertTriangle },
         { name: 'Vi phạm', path: '/admin/violations', icon: ShieldAlert },
+        { name: 'Phản hồi người dùng', path: '/admin/feedbacks', icon: MessageSquare },
+        { name: 'Yêu cầu rút tiền', path: '/admin/withdrawals', icon: HandCoins },
         { name: 'Doanh thu', path: '/admin/revenue', icon: DollarSign },
         { name: 'Giao dịch', path: '/admin/transactions', icon: CreditCard },
       ]
@@ -82,6 +85,7 @@ export default function AdminLayout() {
     {
       label: 'HỆ THỐNG',
       items: [
+        { name: 'Hoạt động hệ thống', path: '/admin/activities', icon: Activity },
         { name: 'Cài đặt', path: '/admin/settings', icon: SettingsIcon },
       ]
     },

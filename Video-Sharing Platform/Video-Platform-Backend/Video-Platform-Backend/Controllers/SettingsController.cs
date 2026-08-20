@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers;
 
@@ -107,6 +108,8 @@ public class SettingsController : ControllerBase
             }
         }
 
+        this.AddAuditLog(_context, "Cập nhật cài đặt hệ thống", "update", "SystemSettings", $"Đã cập nhật {payload.Count} cài đặt");
+        
         await _context.SaveChangesAsync();
         return NoContent();
     }

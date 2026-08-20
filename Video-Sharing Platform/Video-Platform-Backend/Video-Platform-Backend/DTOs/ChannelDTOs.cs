@@ -24,9 +24,9 @@ namespace Video_Platform_Backend.DTOs
     {
         public string ChannelName { get; set; } = string.Empty;
         public string Handle { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string BannerUrl { get; set; } = string.Empty;
-        public string AvatarUrl { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? BannerUrl { get; set; }
+        public string? AvatarUrl { get; set; }
         public string? ContactEmail { get; set; }
         public string? Country { get; set; }
         public string? SocialLinks { get; set; }

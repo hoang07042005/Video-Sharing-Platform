@@ -153,7 +153,7 @@ function FeaturedVideoCard({ video, categories }) {
           <span className="hover:text-white transition-colors">
             {video.channelName}
           </span>
-          <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
         </div>
         <div className="text-gray-500 text-[11px]">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
@@ -188,7 +188,7 @@ function NormalVideoCard({ video }) {
           <span className="hover:text-white transition-colors">
             {video.channelName}
           </span>
-          <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
         </div>
         <div className="text-gray-500 text-[11px]">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}

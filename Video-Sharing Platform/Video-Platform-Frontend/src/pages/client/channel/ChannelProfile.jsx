@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -78,6 +78,7 @@ function UploadVideoForm({
   const [isShortVideo, setIsShortVideo] = useState(isShortType || false);
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState("");
+  const [bannedError, setBannedError] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const fileInputRef = useRef(null);
@@ -222,9 +223,13 @@ function UploadVideoForm({
       if (onUploadSuccess) onUploadSuccess();
     } catch (err) {
       console.error(err);
-      setError(
-        err.response?.data?.message || "Có lỗi xảy ra khi tải video lên.",
-      );
+      if (err.response?.status === 403) {
+        setBannedError(err.response.data.message || 'Kênh của bạn đã bị cấm tải lên video.');
+      } else {
+        setError(
+          err.response?.data?.message || "Có lỗi xảy ra khi tải video lên.",
+        );
+      }
     } finally {
       setIsUploading(false);
     }
@@ -232,6 +237,22 @@ function UploadVideoForm({
 
   return (
     <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 mb-8 flex flex-col xl:flex-row gap-8 relative">
+      {/* Modal Cấm */}
+      {bannedError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full text-center shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+            <p className="text-gray-400 mb-8">{bannedError}</p>
+            <button onClick={() => setBannedError(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Loading Overlay */}
       {isUploading && (
         <div className="absolute inset-0 z-50 bg-black/60 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm">
@@ -949,6 +970,7 @@ export default function ChannelProfile() {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isChannelSuspended, setIsChannelSuspended] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
@@ -957,6 +979,9 @@ export default function ChannelProfile() {
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameContent, setEditNameContent] = useState("");
+
+  const [isEditingHandle, setIsEditingHandle] = useState(false);
+  const [editHandleContent, setEditHandleContent] = useState("");
 
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [editEmailContent, setEditEmailContent] = useState("");
@@ -1055,9 +1080,13 @@ export default function ChannelProfile() {
           setPlaylists(playlistsRes.data || []);
         }
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Không thể tải thông tin kênh.",
-        );
+        if (err.response?.status === 403 && err.response?.data?.isSuspended) {
+          setIsChannelSuspended(true);
+        } else {
+          setError(
+            err.response?.data?.message || "Không thể tải thông tin kênh.",
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -1231,6 +1260,31 @@ export default function ChannelProfile() {
     );
   }
 
+  if (isChannelSuspended) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen bg-[#0F0F0F]">
+        <div className="text-center max-w-lg px-6">
+          <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+            <AlertTriangle className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-3">Kênh này đã bị đình chỉ</h1>
+          <p className="text-gray-400 mb-2 text-base leading-relaxed">
+            Tài khoản này đã bị tạm ngưng do vi phạm <span className="text-red-400 font-medium">Tiêu chuẩn Cộng đồng</span> của chúng tôi.
+          </p>
+          <p className="text-gray-500 text-sm mb-8">
+            Các video, livestream và nội dung của kênh này hiện không khả dụng.
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-medium transition-colors text-sm"
+          >
+            ← Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (error || !channel) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-screen bg-[#0F0F0F]">
@@ -1276,7 +1330,7 @@ export default function ChannelProfile() {
                 {/* Name */}
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight flex items-center gap-2">
                   {channel.channelName}
-                  {channel.subscriberCount > 10000 && (
+                  {channel.isVerified && (
                     <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-white fill-white/20" />
                   )}
                 </h1>
@@ -1940,6 +1994,39 @@ export default function ChannelProfile() {
             const totalSpent = revenueStats?.coinSpentHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
             const totalDonate = revenueStats?.donateHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
             const totalDonors = new Set(revenueStats?.donateHistory?.map(d => d.donorName)).size;
+            const totalCoinReceived = revenueStats?.totalCoinReceived || 0;
+            const membershipRevenue = revenueStats?.membershipRevenue || 0;
+            const totalDonateVND = revenueStats?.totalDonateVND || 0;
+            
+            // --- Tính toán số dư còn lại sau khi rút ---
+            const FEE_COIN_GIFT = 0.30;
+            const FEE_DONATE = 0.10;
+            const FEE_MEMBERSHIP = 0.30;
+            const COIN_RATE = 100;
+
+            let giftCoins = Math.floor(totalCoinReceived * (1 - FEE_COIN_GIFT));
+            let donateCoins = Math.floor((totalDonateVND / COIN_RATE) * (1 - FEE_DONATE));
+            let membershipCoins = Math.floor((membershipRevenue / COIN_RATE) * (1 - FEE_MEMBERSHIP));
+
+            const withdrawals = revenueStats?.withdrawals || [];
+            const totalWithdrawnCoins = withdrawals.reduce((sum, w) => sum + w.coins, 0);
+            const totalWithdrawnVND = withdrawals.reduce((sum, w) => sum + w.amountVnd, 0); // w.amountVnd from API? Wait, the API maps AmountFiat to AmountVnd.
+
+            let remainingWithdrawn = totalWithdrawnCoins;
+
+            if (remainingWithdrawn >= giftCoins) { remainingWithdrawn -= giftCoins; giftCoins = 0; }
+            else { giftCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+
+            if (remainingWithdrawn >= donateCoins) { remainingWithdrawn -= donateCoins; donateCoins = 0; }
+            else { donateCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+
+            if (remainingWithdrawn >= membershipCoins) { remainingWithdrawn -= membershipCoins; membershipCoins = 0; }
+            else { membershipCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+
+            const remainingDonateVND = Math.floor((donateCoins / (1 - FEE_DONATE)) * COIN_RATE);
+            const remainingGiftCoins = Math.floor(giftCoins / (1 - FEE_COIN_GIFT));
+            const remainingMembershipVND = Math.floor((membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE);
+            const totalRemainingRevenueVND = remainingDonateVND + remainingMembershipVND;
             
             // Timeline processing
             const allActivities = [
@@ -1995,15 +2082,14 @@ export default function ChannelProfile() {
                   <>
                     {/* Top Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                       <DashboardCard title="TỔNG DOANH THU (VNĐ)" value={`${revenueStats.totalDonateVND?.toLocaleString('vi-VN') || '0'} đ`} icon={<Wallet className="w-5 h-5"/>} gradient="from-purple-600/80 to-purple-900/80" color="text-purple-400" trend="+12.5%" />
-                       <DashboardCard title="TỔNG XU NHẬN" value={`${revenueStats.totalCoinReceived?.toLocaleString('vi-VN') || '0'} Xu`} icon={<Star className="w-5 h-5"/>} gradient="from-orange-500/80 to-orange-800/80" color="text-orange-400" trend="+8.3%" />
+                       <DashboardCard title="TỔNG DOANH THU (CÒN LẠI)" value={`${totalRemainingRevenueVND.toLocaleString('vi-VN')} đ`} icon={<Wallet className="w-5 h-5"/>} gradient="from-purple-600/80 to-purple-900/80" color="text-purple-400" trend={totalWithdrawnVND > 0 ? `Đã rút: ${totalWithdrawnVND.toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={totalWithdrawnVND > 0} />
+                       <DashboardCard title="TỔNG XU NHẬN (CÒN LẠI)" value={`${remainingGiftCoins.toLocaleString('vi-VN')} Xu`} icon={<Star className="w-5 h-5"/>} gradient="from-orange-500/80 to-orange-800/80" color="text-orange-400" trend={totalWithdrawnCoins > 0 ? `Đã đổi: ${Math.floor(totalWithdrawnCoins / (1 - FEE_COIN_GIFT)).toLocaleString('vi-VN')} Xu` : 'Chưa rút'} trendDown={totalWithdrawnCoins > 0} />
                        <DashboardCard title="XU ĐÃ NẠP" value={`${totalDeposit.toLocaleString('vi-VN')} Xu`} icon={<Wallet className="w-5 h-5"/>} gradient="from-blue-600/80 to-blue-900/80" color="text-blue-400" trend="+10.2%" />
                        <DashboardCard title="XU ĐÃ TIÊU (QUÀ TẶNG)" value={`${totalSpent.toLocaleString('vi-VN')} Xu`} icon={<Gift className="w-5 h-5"/>} gradient="from-red-600/80 to-red-900/80" color="text-red-400" trend="-5.1%" trendDown />
-                       <DashboardCard title="TỔNG DONATE (VNĐ)" value={`${totalDonate.toLocaleString('vi-VN')} đ`} icon={<Activity className="w-5 h-5"/>} gradient="from-fuchsia-600/80 to-purple-900/80" color="text-purple-400" trend="+12.5%" />
-                       <DashboardCard title="NGƯỜI DONATE" value={totalDonors} icon={<Users className="w-5 h-5"/>} gradient="from-teal-500/80 to-teal-800/80" color="text-teal-400" trend="+7.4%" />
+                       <DashboardCard title="TỔNG DONATE (CÒN LẠI)" value={`${remainingDonateVND.toLocaleString('vi-VN')} đ`} icon={<Activity className="w-5 h-5"/>} gradient="from-fuchsia-600/80 to-purple-900/80" color="text-purple-400" trend={totalDonateVND - remainingDonateVND > 0 ? `Đã rút: ${(totalDonateVND - remainingDonateVND).toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={totalDonateVND - remainingDonateVND > 0} />
+                       <DashboardCard title="TIỀN HỘI VIÊN (CÒN LẠI)" value={`${remainingMembershipVND.toLocaleString('vi-VN')} đ`} icon={<Users className="w-5 h-5"/>} gradient="from-teal-500/80 to-teal-800/80" color="text-teal-400" trend={membershipRevenue - remainingMembershipVND > 0 ? `Đã rút: ${(membershipRevenue - remainingMembershipVND).toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={membershipRevenue - remainingMembershipVND > 0} />
                     </div>
 
-                    
                     {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6">
                       
@@ -2065,7 +2151,7 @@ export default function ChannelProfile() {
                              </select>
                           </div>
                           <div className="mb-6">
-                             <div className="text-3xl font-bold text-white mb-1">{revenueStats.totalDonateVND?.toLocaleString('vi-VN') || '0'} đ</div>
+                             <div className="text-3xl font-bold text-white mb-1">{totalRemainingRevenueVND.toLocaleString('vi-VN')} đ</div>
                              <div className="text-xs text-green-400 font-medium">↑ 12.5% <span className="text-gray-500">so với 7 ngày trước</span></div>
                           </div>
                           <div className="flex-1 w-full min-h-[150px]">
@@ -2160,6 +2246,44 @@ export default function ChannelProfile() {
                         </div>
                       </div>
                       
+                    </div>
+
+                    {/* Members List */}
+                    <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl mt-6">
+                       <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider mb-6">
+                         <Users className="w-4 h-4 text-teal-400" /> 5 HỘI VIÊN MỚI NHẤT
+                       </h4>
+                       {revenueStats.members && revenueStats.members.length > 0 ? (
+                         <div className="overflow-x-auto custom-scrollbar pb-2">
+                           <table className="w-full text-left text-sm text-gray-400">
+                             <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                               <tr>
+                                 <th scope="col" className="px-4 py-3 font-medium rounded-tl-lg">Người dùng</th>
+                                 <th scope="col" className="px-4 py-3 font-medium">Gói hội viên</th>
+                                 <th scope="col" className="px-4 py-3 font-medium">Ngày tham gia</th>
+                                 <th scope="col" className="px-4 py-3 font-medium rounded-tr-lg">Hết hạn</th>
+                               </tr>
+                             </thead>
+                             <tbody>
+                               {revenueStats.members.slice(0, 5).map((member, idx) => (
+                                 <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                   <td className="px-4 py-3 flex items-center gap-3">
+                                     <img src={member.avatarUrl || `https://ui-avatars.com/api/?name=${member.fullName}`} alt={member.fullName} className="w-8 h-8 rounded-full" />
+                                     <span className="font-medium text-white">{member.fullName}</span>
+                                   </td>
+                                   <td className="px-4 py-3">
+                                     <span className="bg-teal-500/20 text-teal-400 px-2 py-1 rounded-md text-xs font-semibold">{member.tier}</span>
+                                   </td>
+                                   <td className="px-4 py-3">{new Date(member.joinedAt + (member.joinedAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN')}</td>
+                                   <td className="px-4 py-3">{member.endDate ? new Date(member.endDate + (member.endDate.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') : 'Không thời hạn'}</td>
+                                 </tr>
+                               ))}
+                             </tbody>
+                           </table>
+                         </div>
+                       ) : (
+                         <div className="text-center text-gray-500 py-6">Kênh chưa có hội viên nào.</div>
+                       )}
                     </div>
 
                   </>
@@ -2458,8 +2582,8 @@ if (activeTab === "videos") {
                     </h4>
                     <ul className="space-y-4 text-gray-400">
                       <li className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-[#4FC3F7]" />
-                        <span>
+                        <CheckCircle2 className={`w-5 h-5 ${channel.isVerified ? 'text-green-500 fill-green-500/20' : 'text-gray-500 hidden'}`} />
+                        <span className={!channel.isVerified ? '-ml-8' : ''}>
                           {formatViews(channel.subscriberCount)} người đăng ký
                         </span>
                       </li>
@@ -2845,11 +2969,59 @@ if (activeTab === "videos") {
                   </div>
 
                   {/* Handle Link */}
-                  <div className="flex items-center gap-4 text-gray-300">
+                  <div className="flex items-center gap-4 text-gray-300 group">
                     <MonitorPlay className="w-5 h-5 shrink-0" />
-                    <span className="text-sm">
-                      www.youtube.com/@{channel.handle}
-                    </span>
+                    {isEditingHandle ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <span className="text-gray-500">www.youtube.com/@</span>
+                        <input
+                          type="text"
+                          value={editHandleContent}
+                          onChange={(e) => setEditHandleContent(e.target.value)}
+                          className="flex-1 bg-[#2A2A2A] text-white px-3 py-1.5 rounded-lg border border-transparent focus:border-[#FF5722] focus:outline-none text-sm"
+                          placeholder="Mã định danh..."
+                        />
+                        <button
+                          onClick={() => setIsEditingHandle(false)}
+                          className="text-gray-400 hover:text-white px-2 text-sm"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleSaveProfile(
+                              "handle",
+                              editHandleContent,
+                              setIsEditingHandle,
+                            )
+                          }
+                          className="text-[#3EA6FF] font-medium px-2 flex items-center text-sm"
+                        >
+                          {isSavingProfile ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Lưu"
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">
+                          www.youtube.com/@{channel.handle}
+                        </span>
+                        {isOwner && (
+                          <button
+                            onClick={() => {
+                              setEditHandleContent(channel.handle || "");
+                              setIsEditingHandle(true);
+                            }}
+                            className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white transition-all"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Country */}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock, Play } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock, Play, AlertTriangle, X } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';
@@ -45,6 +45,7 @@ export default function VideoDetail() {
   const [reportReason, setReportReason] = useState('Nội dung phản cảm');
   const [reportDescription, setReportDescription] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [banModal, setBanModal] = useState(null); // { message: string } | null
 
   // Up Next States
   const [showUpNext, setShowUpNext] = useState(false);
@@ -292,8 +293,12 @@ export default function VideoDetail() {
       setCommentText('');
     } catch (err) {
       console.error(err);
-      const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi bình luận";
-      alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
+      if (err.response?.status === 403) {
+        setBanModal({ message: err.response?.data?.message || 'Kênh của bạn đã bị đình chỉ.' });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi bình luận";
+        alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
+      }
     }
   };
 
@@ -321,8 +326,12 @@ export default function VideoDetail() {
       setReplyingTo(null);
     } catch (err) {
       console.error(err);
-      const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi phản hồi";
-      alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
+      if (err.response?.status === 403) {
+        setBanModal({ message: err.response?.data?.message || 'Kênh của bạn đã bị đình chỉ.' });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data || "Có lỗi xảy ra khi phản hồi";
+        alert(typeof msg === 'string' ? msg : "Có lỗi xảy ra");
+      }
     }
   };
 
@@ -564,6 +573,22 @@ export default function VideoDetail() {
 
   return (
     <div className="flex-1 bg-[#0F0F0F] overflow-y-auto custom-scrollbar flex justify-center">
+      {/* Ban Modal */}
+      {banModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4 text-center shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+            <p className="text-gray-400 mb-8">{banModal.message}</p>
+            <button onClick={() => setBanModal(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row px-2 md:px-4 py-6 gap-3 xl:gap-4 w-full max-w-[1800px]">
         {/* Left Column - Main Video Content */}
         <div className="flex-1 max-w-[1280px] lg:w-[70%] xl:w-[75%]">
@@ -694,7 +719,7 @@ export default function VideoDetail() {
               <div className="flex flex-col">
                 <Link to={`/c/${video.channelHandle}`} className="flex items-center gap-1.5 hover:text-gray-200 transition-colors">
                   <span className="font-bold text-white text-base">{video.channelName}</span>
-                  {video.subscriberCount > 100000 && <CheckCircle2 className="w-4 h-4 text-gray-400 fill-gray-400/20" />}
+                  {video.channelIsVerified && <CheckCircle2 className="w-4 h-4 text-gray-400 fill-gray-400/20" />}
                 </Link>
                 <span className="text-xs text-gray-400">{formatViews(subscriberCount)} người đăng ký</span>
               </div>

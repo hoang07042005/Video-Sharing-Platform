@@ -31,6 +31,14 @@ public partial class Channel
 
     public DateTime? CreatedAt { get; set; }
 
+    public bool IsVerified { get; set; } = false;
+
+    public bool IsSuspended { get; set; } = false;
+
+    public bool CanLivestream { get; set; } = true;
+
+    public bool CanUploadVideo { get; set; } = true;
+
     public virtual ICollection<Follower> Followers { get; set; } = new List<Follower>();
 
     public virtual ICollection<Livestream> Livestreams { get; set; } = new List<Livestream>();

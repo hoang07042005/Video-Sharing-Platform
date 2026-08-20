@@ -4,6 +4,7 @@ import axios from 'axios';
 import LivestreamPlayer from '../../../components/video/LivestreamPlayer';
 import LivestreamChat from '../../../components/video/LivestreamChat';
 import { useSignalRConnection } from '../../../hooks/useSignalRConnection';
+import { AlertTriangle, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 const StudioLive = () => {
@@ -23,6 +24,7 @@ const StudioLive = () => {
   const [streamTime, setStreamTime] = useState(0);
   const [showStreamKey, setShowStreamKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [bannedError, setBannedError] = useState(null);
   const screenStreamRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const videoRef = useRef(null);
@@ -331,11 +333,10 @@ const StudioLive = () => {
       navigate(`/studio/live?id=${created.id}`);
     } catch (err) {
       console.error(err);
-      if (err?.response) {
-        console.error('Server response:', err.response.status, err.response.data);
-        alert(`Tạo livestream thất bại: ${JSON.stringify(err.response.data)}`);
+      if (err?.response?.status === 403) {
+        setBannedError(err.response.data.message || 'Kênh của bạn đã bị cấm phát trực tiếp.');
       } else {
-        alert('Tạo livestream thất bại');
+        alert('Tạo livestream thất bại: ' + (err.response?.data?.message || 'Có lỗi xảy ra'));
       }
     }
   };
@@ -345,8 +346,23 @@ const StudioLive = () => {
   // ── CREATION FORM ──
   if (!idParam && !livestream) {
     return (
-      <div className="p-4 md:p-6 max-w-[1400px] mx-auto min-h-full">
-        
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto min-h-full relative">
+        {/* Modal Cấm */}
+        {bannedError && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full text-center shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+              <p className="text-gray-400 mb-8">{bannedError}</p>
+              <button onClick={() => setBannedError(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-pink-500/10 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-[0_0_15px_rgba(236,72,153,0.15)] relative overflow-hidden">

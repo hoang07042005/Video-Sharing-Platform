@@ -204,7 +204,7 @@ const LivePage = () => {
                       <img src={featuredMain.channel?.avatarUrl || `https://ui-avatars.com/api/?name=${featuredMain.channel?.channelName}`} className="w-8 h-8 rounded-full border border-white/20" alt="avatar" />
                       <span className="text-gray-300 font-medium text-sm flex items-center gap-1">
                         {featuredMain.channel?.channelName || 'Hoàng Nam'}
-                        {(featuredMain.channel?.isVerified !== false) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+                        {(featuredMain.channel?.isVerified === true) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                       </span>
                     </div>
                     <p className="text-gray-400 w-90 text-sm mb-5 line-clamp-2 max-w-lg hidden sm:block">
@@ -240,7 +240,7 @@ const LivePage = () => {
                         <h3 className="text-sm font-bold text-white mb-2 line-clamp-2 leading-snug group-hover:text-purple-400 transition-colors">{stream.title}</h3>
                         <div className="flex items-center gap-1.5 mb-2">
                           <span className="text-gray-400 text-xs truncate">{stream.channel?.channelName}</span>
-                          {(stream.channel?.isVerified !== false) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+                          {(stream.channel?.isVerified === true) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                         </div>
                         <div className="flex items-center justify-between mt-auto">
                           <span className="text-gray-500 text-[11px]">{formatViews(stream.currentViewers)} người xem</span>
@@ -281,7 +281,7 @@ const LivePage = () => {
                         <h3 className="text-sm font-bold text-white leading-tight mb-1 line-clamp-2 group-hover:text-purple-400 transition-colors">{stream.title}</h3>
                         <div className="flex items-center gap-1 mb-1.5">
                           <span className="text-gray-400 text-xs truncate">{stream.channel?.channelName}</span>
-                          {(stream.channel?.isVerified !== false) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+                          {(stream.channel?.isVerified === true) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                         </div>
                         <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-medium px-2 py-0.5 rounded w-fit">
                           {stream.category?.name || 'Khác'}
@@ -329,7 +329,7 @@ const LivePage = () => {
                         <h3 className="text-[13px] font-bold text-white leading-tight mb-1.5 line-clamp-2 group-hover:text-purple-400 transition-colors">{stream.title}</h3>
                         <div className="flex items-center gap-1 mb-2">
                           <span className="text-gray-400 text-[11px] truncate">{stream.channel?.channelName}</span>
-                          {(stream.channel?.isVerified !== false) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+                          {(stream.channel?.isVerified === true) && <LucideIcons.CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                         </div>
                         <div className="flex items-center justify-between mt-auto">
                           <span className="bg-blue-500/10 text-blue-400 text-[10px] font-medium px-1.5 py-0.5 rounded border border-blue-500/20">

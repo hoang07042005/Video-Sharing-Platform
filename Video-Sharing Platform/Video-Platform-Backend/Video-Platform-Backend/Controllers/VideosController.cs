@@ -10,6 +10,9 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Video_Platform_Backend.Extensions;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -52,7 +55,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => v.Visibility == "Public" || v.Visibility == "Private")
+                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && !v.Channel.IsSuspended)
                 .Select(v => new VideoResponseDTO
                 {
                     Id = v.Id,
@@ -92,7 +95,7 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
                 .Include(v => v.Category)
-                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && (v.IsShort == false || v.IsShort == null));
+                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && (v.IsShort == false || v.IsShort == null) && !v.Channel.IsSuspended);
 
             if (!string.IsNullOrWhiteSpace(q))
                 query = query.Where(v => v.Title.Contains(q) || (v.Description != null && v.Description.Contains(q)));
@@ -151,6 +154,11 @@ namespace Video_Platform_Backend.Controllers
             if (video == null)
             {
                 return NotFound(new { message = "Không tìm thấy video" });
+            }
+
+            if (video.Channel.IsSuspended)
+            {
+                return StatusCode(403, new { message = "Kênh này đã bị đình chỉ hoạt động." });
             }
 
             var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
@@ -443,6 +451,12 @@ namespace Video_Platform_Backend.Controllers
             var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = Guid.Parse(userIdString!);
             
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel != null && userChannel.IsSuspended)
+            {
+                return StatusCode(403, new { message = "Kênh của bạn đã bị đình chỉ. Không thể bình luận." });
+            }
+            
             var video = await _context.Videos.FindAsync(id);
             if (video == null) return NotFound(new { message = "Video không tồn tại." });
 
@@ -549,6 +563,12 @@ namespace Video_Platform_Backend.Controllers
 
             var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = Guid.Parse(userIdString!);
+            
+            var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (userChannel != null && userChannel.IsSuspended)
+            {
+                return StatusCode(403, new { message = "Kênh của bạn đã bị đình chỉ. Không thể phản hồi." });
+            }
             
             var comment = await _context.Comments.FindAsync(commentId);
             if (comment == null) return NotFound(new { message = "Bình luận không tồn tại." });
@@ -742,7 +762,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => subscribedChannelIds.Contains(v.ChannelId) && v.Visibility == "Public")
+                .Where(v => subscribedChannelIds.Contains(v.ChannelId) && v.Visibility == "Public" && !v.Channel.IsSuspended)
                 .OrderByDescending(v => v.CreatedAt)
                 .Select(v => new VideoResponseDTO
                 {
@@ -785,7 +805,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(v => v.VideoFiles)
                 .Include(v => v.VideoThumbnails)
                 .Include(v => v.Likes)
-                .Where(v => v.Visibility == "Public" && v.IsShort == true)
+                .Where(v => v.Visibility == "Public" && v.IsShort == true && !v.Channel.IsSuspended)
                 .OrderByDescending(v => v.CreatedAt)
                 .Take(20)
                 .ToListAsync();
@@ -977,6 +997,8 @@ namespace Video_Platform_Backend.Controllers
 
             var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
             if (channel == null) return BadRequest(new { message = "Bạn chưa có kênh." });
+            if (channel.IsSuspended) return StatusCode(403, new { message = "Kênh của bạn đã bị đình chỉ hoạt động." });
+            if (!channel.CanUploadVideo) return StatusCode(403, new { message = "Kênh của bạn đã bị cấm tải lên video." });
 
             var videoId = Guid.NewGuid();
             var video = new Video
@@ -1062,6 +1084,11 @@ namespace Video_Platform_Backend.Controllers
             if (dto.IsShort.HasValue) video.IsShort = dto.IsShort.Value;
             video.UpdatedAt = DateTime.UtcNow;
 
+            if (isAdmin && video.Channel.UserId != userId)
+            {
+                this.AddAuditLog(_context, "Cập nhật video", "update", $"Video:{id}", $"Cập nhật trạng thái công khai, thể loại, tiêu đề");
+            }
+
             // Update thumbnail if provided
             if (!string.IsNullOrWhiteSpace(dto.ThumbnailUrl))
             {
@@ -1100,6 +1127,12 @@ namespace Video_Platform_Backend.Controllers
             if (video.Channel.UserId != userId && !isAdmin) return Forbid();
 
             _context.Videos.Remove(video);
+            
+            if (isAdmin && video.Channel.UserId != userId)
+            {
+                this.AddAuditLog(_context, "Xóa video", "delete", $"Video:{id}", $"Xóa video của user {video.Channel.UserId}");
+            }
+            
             await _context.SaveChangesAsync();
             return Ok(new { message = "Đã xóa video." });
         }
