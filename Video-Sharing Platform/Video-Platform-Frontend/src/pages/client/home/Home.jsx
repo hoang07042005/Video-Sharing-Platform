@@ -511,9 +511,15 @@ export default function Home() {
 
         const results = await Promise.allSettled(promises);
         
-        if (results[0].status === "fulfilled") setVideos(results[0].value.data);
+        if (results[0].status === "fulfilled") {
+          const shuffledVideos = [...results[0].value.data].sort(() => Math.random() - 0.5);
+          setVideos(shuffledVideos);
+        }
         if (results[1].status === "fulfilled") setChannels(results[1].value.data);
-        if (results[2].status === "fulfilled") setShorts(results[2].value.data);
+        if (results[2].status === "fulfilled") {
+          const shuffledShorts = [...results[2].value.data].sort(() => Math.random() - 0.5);
+          setShorts(shuffledShorts);
+        }
         if (results[3].status === "fulfilled") setLiveStreams(results[3].value.data);
         
         if (subPromiseIndex !== -1 && results[subPromiseIndex].status === "fulfilled") {
