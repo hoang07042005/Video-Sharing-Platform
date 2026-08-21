@@ -24,6 +24,9 @@ public class AdminFeedbackController : ControllerBase
         var query = _context.Feedbacks
             .Include(f => f.User)
             .ThenInclude(u => u.Profile)
+            .Include(f => f.User)
+            .ThenInclude(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
             .AsQueryable();
 
         if (status != "All")
@@ -46,7 +49,9 @@ public class AdminFeedbackController : ControllerBase
                 Status = f.Status,
                 AdminReply = f.AdminReply,
                 CreatedAt = f.CreatedAt,
-                UpdatedAt = f.UpdatedAt
+                UpdatedAt = f.UpdatedAt,
+                IsPremium = f.User.UserRoles.Any(ur => ur.Role.Name == "Admin" || ur.Role.Name == "SuperAdmin") || 
+                            (f.User.IsPremium == true && (!f.User.PremiumUntil.HasValue || f.User.PremiumUntil.Value >= DateTime.UtcNow))
             })
             .ToListAsync();
 

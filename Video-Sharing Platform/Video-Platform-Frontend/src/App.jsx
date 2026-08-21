@@ -15,7 +15,6 @@ import Downloads from './pages/client/video/Downloads';
 import Trending from './pages/client/video/Trending';
 import Settings from './pages/client/settings/Settings';
 import Help from './pages/client/help/Help';
-import Feedback from './pages/client/feedback/Feedback';
 import Shorts from './pages/client/shorts/Shorts';
 import LikedVideos from './pages/client/video/LikedVideos';
 import Explore from './pages/client/video/Explore';
@@ -145,8 +144,7 @@ function App() {
           <Route path="/download" element={<Downloads />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/help-feedback" element={<Help />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/liked" element={<LikedVideos />} />
           <Route path="/explore" element={<Explore />} />

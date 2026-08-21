@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, TrendingUp, Library, Settings, HelpCircle,
   MessageSquare, Bell, Compass, Zap, Film, ListVideo,
-  ThumbsUp, Clock, User, Crown, Radio
+  ThumbsUp, Clock, User, Crown, Radio, Download
 } from 'lucide-react';
 
 // Social icons (SVG inline vì lucide-react không có)
@@ -74,6 +74,7 @@ export default function Sidebar({ isOpen }) {
       items: [
         { name: 'Video đã xem', icon: Clock, path: '/history' },
         { name: 'Video đã thích', icon: ThumbsUp, path: '/liked' },
+        { name: 'Video đã tải', icon: Download, path: '/download'},
         { name: 'Xem sau', icon: Library, path: '/saved' },
       ],
     },
@@ -88,8 +89,7 @@ export default function Sidebar({ isOpen }) {
 
   const bottomLinks = [
     { name: 'Cài đặt', icon: Settings, path: '/settings' },
-    { name: 'Trợ giúp', icon: HelpCircle, path: '/help' },
-    { name: 'Phản hồi', icon: MessageSquare, path: '/feedback' },
+    { name: 'Trợ giúp & phản hồi', icon: HelpCircle, path: '/help-feedback' },
   ];
 
   const socialLinks = [

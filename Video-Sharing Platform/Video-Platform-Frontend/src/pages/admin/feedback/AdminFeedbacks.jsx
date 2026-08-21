@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { MessageSquare, Send, X, Loader2, CheckCircle, Clock } from 'lucide-react';
+import { MessageSquare, Send, X, Loader2, CheckCircle, Clock, Crown } from 'lucide-react';
 import moment from 'moment';
 import 'moment/locale/vi';
 
@@ -110,8 +110,11 @@ export default function AdminFeedbacks() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {feedbacks.map((f) => (
-                  <tr key={f.id} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4">
+                  <tr key={f.id} className={`transition-colors ${f.isPremium && f.status !== 'Resolved' ? 'bg-orange-500/5 hover:bg-orange-500/10' : 'hover:bg-white/5'}`}>
+                    <td className="p-4 relative">
+                      {f.isPremium && f.status !== 'Resolved' && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                      )}
                       <div className="flex items-center gap-3">
                         {f.userAvatarUrl ? (
                           <img src={f.userAvatarUrl} className="w-10 h-10 rounded-full object-cover" />
@@ -121,7 +124,14 @@ export default function AdminFeedbacks() {
                           </div>
                         )}
                         <div>
-                          <div className="font-medium text-white">{f.userFullName}</div>
+                          <div className="font-medium text-white flex items-center gap-1.5">
+                            {f.userFullName}
+                            {f.isPremium && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-[10px] uppercase font-bold border border-orange-500/20">
+                                <Crown className="w-3 h-3" fill="currentColor" /> VIP
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-gray-500">{f.userEmail}</div>
                         </div>
                       </div>

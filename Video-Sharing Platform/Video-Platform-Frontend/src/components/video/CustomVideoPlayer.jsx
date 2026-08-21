@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { Play, Pause, Volume2, VolumeX, FastForward, Rewind, Maximize, PictureInPicture, Settings, Check, ChevronRight } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, FastForward, Rewind, Maximize, PictureInPicture, Settings, Check, ChevronRight, Lock } from 'lucide-react';
 
 const formatTime = (seconds) => {
   if (isNaN(seconds) || seconds < 0) return '0:00';
@@ -12,7 +12,7 @@ const formatTime = (seconds) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl, onResolutionChange, ...props }) => {
+const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl, onResolutionChange, tier = 0, ...props }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const containerRef = useRef(null);
@@ -387,23 +387,37 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
                       <ChevronRight className="w-4 h-4 rotate-180 text-white/70" /> Trở lại
                     </button>
                     <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                      {resolutions && resolutions.length > 0 ? resolutions.map((res) => (
-                        <button
-                          type="button"
-                          key={res.id}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors text-left"
-                          onClick={() => {
-                            onResolutionChange(res.fileUrl);
-                            setActiveSettingsTab('main');
-                            setShowSettingsMenu(false);
-                          }}
-                        >
-                          <div className="w-4 flex justify-center">
-                            {currentResolutionUrl === res.fileUrl && <Check className="w-4 h-4 text-white" />}
-                          </div>
-                          <span>{res.resolution}</span>
-                        </button>
-                      )) : (
+                      {resolutions && resolutions.length > 0 ? resolutions.map((res) => {
+                        const isLocked = (() => {
+                          const name = res.resolution.toLowerCase();
+                          if ((name.includes('1080')) && tier < 1) return true;
+                          if ((name.includes('4k') || name.includes('1440') || name.includes('2160') || name.includes('2k')) && tier < 2) return true;
+                          return false;
+                        })();
+                        
+                        return (
+                          <button
+                            type="button"
+                            key={res.id}
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${isLocked ? 'text-gray-500 hover:bg-transparent cursor-not-allowed' : 'hover:bg-white/10'}`}
+                            onClick={() => {
+                              if (isLocked) {
+                                alert(`Chất lượng ${res.resolution} yêu cầu gói ${tier < 1 ? 'PLUS' : 'PREMIUM'} trở lên!`);
+                                return;
+                              }
+                              onResolutionChange(res.fileUrl);
+                              setActiveSettingsTab('main');
+                              setShowSettingsMenu(false);
+                            }}
+                          >
+                            <div className="w-4 flex justify-center">
+                              {currentResolutionUrl === res.fileUrl && !isLocked && <Check className="w-4 h-4 text-white" />}
+                            </div>
+                            <span className="flex-1">{res.resolution}</span>
+                            {isLocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
+                          </button>
+                        );
+                      }) : (
                         <div className="px-4 py-3 text-white/50 text-center">Chưa có dữ liệu</div>
                       )}
                     </div>

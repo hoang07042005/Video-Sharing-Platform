@@ -273,8 +273,17 @@ public class PaymentController : ControllerBase
 
         if (Guid.TryParse(userIdStr, out var userId))
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+                
             if (user == null) return NotFound();
+
+            if (user.UserRoles.Any(ur => ur.Role.Name.Equals("Admin", StringComparison.OrdinalIgnoreCase) || ur.Role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)))
+            {
+                return Ok(new { plan = "Premium", cycle = "Unlimited", premiumUntil = (DateTime?)null, coins = user.Coins });
+            }
 
             if (user.IsPremium != true || (user.PremiumUntil.HasValue && user.PremiumUntil.Value < DateTime.UtcNow))
             {

@@ -40,7 +40,7 @@ export default function Premium() {
     if (currentPlan === 'Free' && targetPlan !== 'Free') return 'upgrade';
     if (currentPlan === 'Free' && targetPlan === 'Free') return 'current';
     
-    const ranks = { 'Free': 0, 'Family': 1, 'Premium': 2 };
+    const ranks = { 'Free': 0, 'Pro': 1, 'Premium': 2 };
     const currentRank = ranks[currentPlan] || 0;
     const targetRank = ranks[targetPlan] || 0;
 
@@ -186,7 +186,7 @@ export default function Premium() {
             </button>
             <div className="space-y-4 flex-1">
               <FeatureItem text="Xem video với quảng cáo" active={true} />
-              <FeatureItem text="Chất lượng tối đa 1080p" active={true} />
+              <FeatureItem text="Chất lượng tối đa 720p" active={true} />
               <FeatureItem text="Tải video" active={false} />
               <FeatureItem text="Xem trên nhiều thiết bị" active={false} />
               <FeatureItem text="Phát trong nền" active={false} />
@@ -200,41 +200,35 @@ export default function Premium() {
             </div>
           </div>
 
-          {/* Family Card */}
-          <div className={`bg-gradient-to-b from-[#1E112B] to-[#111111] rounded-3xl p-8 border border-[#9C27B0]/30 flex flex-col h-full hover:border-[#9C27B0]/60 transition-all relative ${getPlanStatus('Family', isYearly) === 'downgrade' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+          {/* Plus Card */}
+          <div className={`bg-gradient-to-b from-[#1E112B] to-[#111111] rounded-3xl p-8 border border-[#9C27B0]/30 flex flex-col h-full hover:border-[#9C27B0]/60 transition-all relative ${getPlanStatus('Pro', isYearly) === 'downgrade' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#9C27B0] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               Phổ biến
             </div>
             <div className="text-center mb-6 mt-2">
-              <h3 className="text-xl font-bold text-white mb-1">GIA ĐÌNH</h3>
-              <p className="text-gray-400 text-xs">Chia sẻ cùng gia đình bạn</p>
+              <h3 className="text-xl font-bold text-white mb-1">PLUS</h3>
+              <p className="text-gray-400 text-xs">Dành cho mọt phim</p>
             </div>
             <div className="text-center mb-6">
-              <span className="text-4xl font-bold text-white">{isYearly ? '758.000' : '79.000'}</span>
+              <span className="text-4xl font-bold text-white">{isYearly ? '470.000' : '49.000'}</span>
               <span className="text-xl text-white">đ</span>
               <span className="text-gray-400 text-sm">{isYearly ? ' / năm' : ' / tháng'}</span>
             </div>
             <button 
-              onClick={() => handlePayment('Family', isYearly ? 758000 : 79000)}
-              disabled={isLoading || getPlanStatus('Family', isYearly) !== 'upgrade'}
+              onClick={() => handlePayment('Pro', isYearly ? 470000 : 49000)}
+              disabled={isLoading || getPlanStatus('Pro', isYearly) !== 'upgrade'}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-bold mb-8 hover:opacity-90 transition-opacity shadow-[0_0_15px_rgba(94,53,177,0.4)] disabled:opacity-50"
             >
-              {getPlanStatus('Family', isYearly) === 'current' ? (premiumUntil ? `HSD: ${premiumUntil.toLocaleDateString('vi-VN')}` : 'Gói hiện tại') : (getPlanStatus('Family', isYearly) === 'upgrade' && currentPlan === 'Family') ? 'Nâng cấp lên Năm' : 'Dùng thử 7 ngày'}
+              {getPlanStatus('Pro', isYearly) === 'current' ? (premiumUntil ? `HSD: ${premiumUntil.toLocaleDateString('vi-VN')}` : 'Gói hiện tại') : (getPlanStatus('Pro', isYearly) === 'upgrade' && currentPlan === 'Pro') ? 'Nâng cấp lên Năm' : 'Nâng cấp ngay'}
             </button>
             <div className="space-y-4 flex-1">
               <FeatureItem text="Không quảng cáo" active={true} color="text-purple-400" />
-              <FeatureItem text="Chất lượng tối đa 2K (1440p)" active={true} color="text-purple-400" />
+              <FeatureItem text="Chất lượng tối đa 1080p" active={true} color="text-purple-400" />
               <FeatureItem text="Tải video xem offline" active={true} color="text-purple-400" />
-              <FeatureItem text="Xem trên 5 thiết bị" active={true} color="text-purple-400" />
-              <FeatureItem text="Phát trong nền" active={true} color="text-purple-400" />
-              <FeatureItem text="Video độc quyền cho gia đình" active={true} color="text-purple-400" />
-              <FeatureItem text="Hỗ trợ ưu tiên" active={true} color="text-purple-400" />
-            </div>
-            <div className="mt-8 pt-4 border-t border-white/5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              </div>
-              <p className="text-gray-400 text-xs leading-snug">Tối đa 5 thành viên trong cùng một gia đình</p>
+              <FeatureItem text="Huy hiệu PLUS" active={true} color="text-purple-400" />
+              <FeatureItem text="Tăng dung lượng Upload (2GB/file)" active={true} color="text-purple-400" />
+              <FeatureItem text="Video độc quyền" active={false} />
+              <FeatureItem text="Hỗ trợ ưu tiên" active={false} />
             </div>
           </div>
 
@@ -266,10 +260,10 @@ export default function Premium() {
               <FeatureItem text="Không quảng cáo" active={true} color="text-[#FF9800]" />
               <FeatureItem text="Chất lượng tối đa 4K UHD" active={true} color="text-[#FF9800]" />
               <FeatureItem text="Tải video xem offline" active={true} color="text-[#FF9800]" />
-              <FeatureItem text="Xem trên không giới hạn thiết bị" active={true} color="text-[#FF9800]" />
-              <FeatureItem text="Phát trong nền" active={true} color="text-[#FF9800]" />
-              <FeatureItem text="Nội dung & video độc quyền" active={true} color="text-[#FF9800]" />
-              <FeatureItem text="Hỗ trợ ưu tiên 24/7" active={true} color="text-[#FF9800]" />
+              <FeatureItem text="Huy hiệu PREMIUM 👑 và Tên nổi bật" active={true} color="text-[#FF9800]" />
+              <FeatureItem text="Bình luận ưu tiên (Ghim lên đầu)" active={true} color="text-[#FF9800]" />
+              <FeatureItem text="Tăng dung lượng Upload Khổng lồ (10GB)" active={true} color="text-[#FF9800]" />
+              <FeatureItem text="Hỗ trợ ưu tiên 24/7 (Khẩn cấp)" active={true} color="text-[#FF9800]" />
             </div>
             <div className="mt-8 pt-4 border-t border-white/5 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">

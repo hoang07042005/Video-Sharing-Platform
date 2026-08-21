@@ -404,9 +404,16 @@ namespace Video_Platform_Backend.Controllers
             var comments = await _context.Comments
                 .Include(c => c.User)
                     .ThenInclude(u => u.Profile)
+                .Include(c => c.User)
+                    .ThenInclude(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .Include(c => c.CommentReplies)
                     .ThenInclude(cr => cr.User)
                         .ThenInclude(u => u.Profile)
+                .Include(c => c.CommentReplies)
+                    .ThenInclude(cr => cr.User)
+                        .ThenInclude(u => u.UserRoles)
+                        .ThenInclude(ur => ur.Role)
                 .Where(c => c.VideoId == id && c.FilterStatus != "Blocked")
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new CommentResponseDTO
@@ -420,6 +427,7 @@ namespace Video_Platform_Backend.Controllers
                                ? c.User.Profile.FullName 
                                : "Anonymous",
                     AvatarUrl = c.User.Profile != null ? (c.User.Profile.AvatarUrl ?? "") : "",
+                    IsPremium = c.User.UserRoles.Any(ur => ur.Role.Name == "Admin" || ur.Role.Name == "SuperAdmin") || (c.User.IsPremium == true && (!c.User.PremiumUntil.HasValue || c.User.PremiumUntil.Value >= DateTime.UtcNow)),
                     Replies = c.CommentReplies.OrderBy(cr => cr.CreatedAt).Select(cr => new CommentReplyDTO
                     {
                         Id = cr.Id,
@@ -430,7 +438,8 @@ namespace Video_Platform_Backend.Controllers
                         FullName = cr.User.Profile != null && !string.IsNullOrEmpty(cr.User.Profile.FullName)
                                    ? cr.User.Profile.FullName
                                    : "Anonymous",
-                        AvatarUrl = cr.User.Profile != null ? (cr.User.Profile.AvatarUrl ?? "") : ""
+                        AvatarUrl = cr.User.Profile != null ? (cr.User.Profile.AvatarUrl ?? "") : "",
+                        IsPremium = cr.User.UserRoles.Any(ur => ur.Role.Name == "Admin" || ur.Role.Name == "SuperAdmin") || (cr.User.IsPremium == true && (!cr.User.PremiumUntil.HasValue || cr.User.PremiumUntil.Value >= DateTime.UtcNow))
                     }).ToList()
                 })
                 .ToListAsync();

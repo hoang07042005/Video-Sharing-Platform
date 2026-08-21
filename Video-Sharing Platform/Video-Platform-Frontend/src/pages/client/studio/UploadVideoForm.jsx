@@ -20,6 +20,8 @@ export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCanc
   const [categoryId, setCategoryId] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [bannedError, setBannedError] = useState(null);
+  
+  const tier = parseInt(localStorage.getItem("subscriptionTier") || "0", 10);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -70,6 +72,26 @@ export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCanc
         setError('Vui lòng chọn file video hợp lệ.');
         return;
       }
+      
+      // Check file size based on subscription tier
+      // Tier 0 (Free): 100MB, Tier 1 (Plus): 2GB, Tier 2 (Premium): 10GB
+      const MAX_FREE_SIZE = 100 * 1024 * 1024; // 100MB
+      const MAX_PLUS_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+      const MAX_PREMIUM_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
+      
+      let maxSize = MAX_FREE_SIZE;
+      if (tier === 1) maxSize = MAX_PLUS_SIZE;
+      if (tier === 2) maxSize = MAX_PREMIUM_SIZE;
+      
+      if (file.size > maxSize) {
+        let sizeMsg = '100MB';
+        if (tier === 1) sizeMsg = '2GB';
+        if (tier === 2) sizeMsg = '10GB';
+        
+        setError(`File quá lớn. Giới hạn của gói hiện tại là ${sizeMsg}. Vui lòng nâng cấp gói để tải lên file lớn hơn.`);
+        return;
+      }
+
       setVideoFile(file);
       const url = URL.createObjectURL(file);
       setVideoPreview(url);
@@ -318,7 +340,7 @@ export function UploadVideoForm({ onUploadSuccess, channel, editingVideo, onCanc
         {/* Video */}
         <div>
           <label className="block text-white text-sm font-medium mb-1">Video {editingVideo ? '' : '*'}</label>
-          <p className="text-gray-400 text-xs mb-3">Tải lên video của bạn. {editingVideo ? 'Chỉ chọn nếu bạn muốn thay thế video hiện tại.' : 'Định dạng hỗ trợ: MP4, MOV, AVI, WMV, FLV, WebM. Kích thước tối đa: 10GB.'}</p>
+          <p className="text-gray-400 text-xs mb-3">Tải lên video của bạn. {editingVideo ? 'Chỉ chọn nếu bạn muốn thay thế video hiện tại.' : `Định dạng hỗ trợ: MP4, MOV, AVI, WMV, FLV, WebM. Kích thước tối đa: ${tier === 2 ? '10GB' : tier === 1 ? '2GB' : '100MB'}.`}</p>
           <input type="file" accept="video/*" ref={fileInputRef} className="hidden" onChange={handleVideoSelect} />
           
           <div 

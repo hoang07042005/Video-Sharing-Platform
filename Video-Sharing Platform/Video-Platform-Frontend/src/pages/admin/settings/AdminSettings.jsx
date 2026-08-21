@@ -168,6 +168,13 @@ export default function AdminSettings() {
                   className="w-2/3 bg-[#0F0F0F] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-white/8 focus:border-slate-700 outline-none" 
                 />
               </div>
+              <div className="flex items-center justify-between pt-2">
+                <label className="text-[12px] text-gray-400">Hotline hỗ trợ</label>
+                <input 
+                  type="text" value={settings.supportPhone} onChange={e => handleChange('supportPhone', e.target.value)}
+                  className="w-2/3 bg-[#0F0F0F] rounded-md px-3 py-2 text-[13px] text-gray-200 border border-white/8 focus:border-slate-700 outline-none" 
+                />
+              </div>
             </div>
           </Card>
 

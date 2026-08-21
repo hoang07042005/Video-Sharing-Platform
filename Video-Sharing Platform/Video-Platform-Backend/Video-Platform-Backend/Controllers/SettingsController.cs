@@ -52,7 +52,7 @@ public class SettingsController : ControllerBase
     public async Task<ActionResult<Dictionary<string, object>>> GetPublicSettings()
     {
         var settings = await _context.SystemSettings
-            .Where(s => s.Key == "siteName" || s.Key == "logoUrl" || s.Key == "faviconUrl" || s.Key == "allowRegistration" || s.Key == "allowDownloads" || s.Key == "maintenanceMode" || s.Key == "maxUploadSize")
+            .Where(s => s.Key == "siteName" || s.Key == "logoUrl" || s.Key == "faviconUrl" || s.Key == "allowRegistration" || s.Key == "allowDownloads" || s.Key == "maintenanceMode" || s.Key == "maxUploadSize" || s.Key == "contactEmail" || s.Key == "supportPhone")
             .ToListAsync();
         
         var result = new Dictionary<string, object>();
@@ -67,6 +67,8 @@ public class SettingsController : ControllerBase
         if (!result.ContainsKey("allowRegistration")) result["allowRegistration"] = true;
         if (!result.ContainsKey("allowDownloads")) result["allowDownloads"] = true;
         if (!result.ContainsKey("maxUploadSize")) result["maxUploadSize"] = 1024;
+        if (!result.ContainsKey("contactEmail")) result["contactEmail"] = "support@videosharing.vn";
+        if (!result.ContainsKey("supportPhone")) result["supportPhone"] = "1900 1234";
         
         return Ok(result);
     }

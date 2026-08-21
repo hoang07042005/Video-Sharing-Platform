@@ -28,4 +28,5 @@ public class FeedbackResponseDto
     public string? AdminReply { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public bool IsPremium { get; set; }
 }

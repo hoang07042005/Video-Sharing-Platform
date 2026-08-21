@@ -46,6 +46,7 @@ export default function Header({ toggleSidebar }) {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState(null);
+  const [tier, setTier] = useState(parseInt(localStorage.getItem("subscriptionTier") || "0", 10));
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -91,6 +92,14 @@ export default function Header({ toggleSidebar }) {
           });
           if (res.data && res.data.plan) {
             setCurrentPlan(res.data.plan);
+            localStorage.setItem("plan", res.data.plan);
+            
+            let currentTier = 0;
+            if (res.data.plan === 'Pro' || res.data.plan === 'Family') currentTier = 1;
+            if (res.data.plan === 'Premium') currentTier = 2;
+            localStorage.setItem("subscriptionTier", currentTier);
+            setTier(currentTier);
+
             if (res.data.premiumUntil) {
               setPremiumUntil(new Date(res.data.premiumUntil));
             }
@@ -533,17 +542,24 @@ export default function Header({ toggleSidebar }) {
                 onClick={() =>
                   setActiveDropdown(activeDropdown === "user" ? null : "user")
                 }
-                className="flex items-center gap-3 cursor-pointer text-left group"
+                className="flex items-center gap-3 cursor-pointer text-left group relative"
               >
-                <div className="w-11 h-11 rounded-full overflow-hidden border-[1px] border-[#272727] group-hover:border-gray-500 transition-colors">
-                  <img
-                    src={avatar}
-                    alt="Ảnh đại diện"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative">
+                  <div className={`w-11 h-11 rounded-full overflow-hidden border-[2px] transition-colors ${tier === 2 ? 'border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]' : tier === 1 ? 'border-purple-500' : 'border-[#272727] group-hover:border-gray-500'}`}>
+                    <img
+                      src={avatar}
+                      alt="Ảnh đại diện"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {tier >= 1 && (
+                    <div className="absolute -top-2 -right-1 bg-[#1a1a1a] rounded-full p-0.5">
+                      <Crown className={`w-4 h-4 ${tier === 2 ? 'text-orange-500' : 'text-purple-400'}`} fill="currentColor" />
+                    </div>
+                  )}
                 </div>
                 <div className="hidden md:flex flex-col">
-                  <span className="text-[15px] font-bold text-white leading-tight">
+                  <span className={`text-[15px] font-bold leading-tight ${tier === 2 ? 'text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500' : 'text-white'}`}>
                     {handle || "Người dùng"}
                   </span>
                   <span className="text-[12px] text-gray-400 mt-0.5 group-hover:text-gray-300 transition-colors">
