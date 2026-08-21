@@ -495,7 +495,7 @@ export default function Settings() {
                     icon={MonitorPlay}
                     iconColor="text-red-400"
                     title="Tên ứng dụng"
-                    description="Video Sharing Platform (VividStream)"
+                    description="Video Sharing Platform"
                   >
                     <span className="text-xs text-gray-500 bg-white/5 px-3 py-1 rounded-full">v1.0.0</span>
                   </SettingItem>

@@ -44,7 +44,7 @@ export default function Register() {
           {/* Header row: Logo + Title */}
           <div className="flex items-center gap-6 mb-10">
             <Link to="/" className="block shrink-0">
-              <img src="/logotrang.png" alt="VividStream" className="h-22 object-contain object-left" />
+              <img src="/logotrang.png" alt="Video Sharing Platform" className="h-22 object-contain object-left" />
             </Link>
                       <h2 className="text-[23px] font-medium text-white tracking-tight">
               Đăng ký <span className="text-[#FF5722] font-semibold">tài khoản</span>

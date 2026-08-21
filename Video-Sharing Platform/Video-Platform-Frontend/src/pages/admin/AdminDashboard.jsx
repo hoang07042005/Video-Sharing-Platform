@@ -395,7 +395,7 @@ export default function AdminDashboard() {
         {/* Phân bố doanh thu */}
         <div className="bg-[#141418] p-4 rounded-xl border border-white/5 h-full">
           <h3 className="text-xs font-semibold text-white mb-2">Phân bố doanh thu</h3>
-          <div className="w-full h-[150px] relative">
+          <div className="w-full h-[160px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={chartData?.revenue} cx="50%" cy="50%" innerRadius={45} outerRadius={68} paddingAngle={2} dataKey="value" stroke="none">

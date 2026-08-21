@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import axios from 'axios';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -27,8 +29,10 @@ import SearchResults from './pages/client/search/SearchResults';
 import LiveWatch from './pages/client/live/LiveWatch';
 import VideoManagement from './pages/admin/video/VideoManagement';
 import MembershipPage from './pages/client/channel/MembershipPage';
+import CommunityPage from './pages/client/channel/CommunityPage';
 import BuyCoins from './pages/client/Coins/BuyCoins';
 import LivePages from './pages/client/live/LivePage';
+import NotificationsPage from './pages/client/notifications/NotificationsPage';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -54,7 +58,71 @@ import NotFound from './pages/error/NotFound';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
+// Configure global interceptor to handle token expiration from API responses
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('handle');
+      localStorage.removeItem('avatar');
+      
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 function App() {
+  useEffect(() => {
+    const checkTokenExpiration = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const expTime = payload.exp * 1000;
+          const currentTime = Date.now();
+          
+          if (currentTime >= expTime) {
+            // Token is already expired on load
+            localStorage.removeItem('token');
+            localStorage.removeItem('roles');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('handle');
+            localStorage.removeItem('avatar');
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+          } else {
+            // Set a timeout to log out automatically when exactly 1 week passes
+            const timeout = expTime - currentTime;
+            if (timeout < 2147483647) {
+              const timer = setTimeout(() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('roles');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('handle');
+                localStorage.removeItem('avatar');
+                if (window.location.pathname !== '/login') {
+                  window.location.href = '/login';
+                }
+              }, timeout);
+              return () => clearTimeout(timer);
+            }
+          }
+        } catch (e) {
+          console.error("Invalid token format", e);
+        }
+      }
+    };
+    
+    return checkTokenExpiration();
+  }, []);
+
   return (
     <BrowserRouter>
       <ToastContainer position="bottom-right" theme="dark" />
@@ -68,6 +136,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/c/:handle" element={<ChannelProfile />} />
           <Route path="/c/:handle/membership" element={<MembershipPage />} />
+          <Route path="/c/:handle/community" element={<CommunityPage />} />
           <Route path="/watch/:id" element={<VideoDetail />} />
           <Route path="/live/:id" element={<LiveWatch />} />
           <Route path="/history" element={<WatchHistory />} />
@@ -92,6 +161,7 @@ function App() {
           <Route path="/studio/revenue" element={<StudioRevenue />} />
           <Route path="/video/livestreams" element={<LivePages />} />
           <Route path="/results" element={<SearchResults />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           {/* 404 Catch-all */}
           <Route path="*" element={<NotFound />} />

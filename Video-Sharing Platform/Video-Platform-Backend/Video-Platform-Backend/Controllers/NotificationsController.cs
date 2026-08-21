@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
 using Video_Platform_Backend.Services;
@@ -31,7 +32,7 @@ public class NotificationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetNotifications(int limit = 50, bool unreadOnly = false)
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var query = _db.Notifications
@@ -47,6 +48,7 @@ public class NotificationsController : ControllerBase
             {
                 n.Id,
                 n.Type,
+                n.Title,
                 n.Message,
                 n.TargetUrl,
                 n.IsRead,
@@ -64,7 +66,7 @@ public class NotificationsController : ControllerBase
     [HttpGet("unread-count")]
     public async Task<IActionResult> GetUnreadCount()
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var count = await _db.Notifications
@@ -79,7 +81,7 @@ public class NotificationsController : ControllerBase
     [HttpPut("{notificationId}/read")]
     public async Task<IActionResult> MarkAsRead(Guid notificationId)
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var notification = await _db.Notifications.FindAsync(notificationId);
@@ -99,7 +101,7 @@ public class NotificationsController : ControllerBase
     [HttpPut("read-all")]
     public async Task<IActionResult> MarkAllAsRead()
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var notifications = await _db.Notifications
@@ -121,7 +123,7 @@ public class NotificationsController : ControllerBase
     [HttpDelete("{notificationId}")]
     public async Task<IActionResult> DeleteNotification(Guid notificationId)
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var notification = await _db.Notifications.FindAsync(notificationId);
@@ -140,7 +142,7 @@ public class NotificationsController : ControllerBase
     [HttpGet("preferences")]
     public async Task<IActionResult> GetPreferences()
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var prefs = await _db.NotificationPreferences.FirstOrDefaultAsync(p => p.UserId == userGuid);
@@ -173,7 +175,7 @@ public class NotificationsController : ControllerBase
     [HttpPut("preferences")]
     public async Task<IActionResult> UpdatePreferences([FromBody] UpdatePreferencesDTO dto)
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var prefs = await _db.NotificationPreferences.FirstOrDefaultAsync(p => p.UserId == userGuid);
@@ -210,7 +212,7 @@ public class NotificationsController : ControllerBase
     [HttpPost("subscribe")]
     public async Task<IActionResult> Subscribe([FromBody] PushSubscriptionDTO dto)
     {
-        var userId = User.FindFirst("id")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out var userGuid)) return Unauthorized();
 
         var prefs = await _db.NotificationPreferences.FirstOrDefaultAsync(p => p.UserId == userGuid);

@@ -70,8 +70,9 @@ public class AdminFeedbackController : ControllerBase
         var notification = new Notification
         {
             UserId = feedback.UserId,
+            Title = "📩 Phản hồi từ Quản trị viên",
             Type = "FeedbackReply",
-            Message = $"Quản trị viên đã trả lời phản hồi của bạn: {dto.ReplyContent}",
+            Message = $"Xin chào, Quản trị viên đã xem xét và phản hồi yêu cầu hỗ trợ của bạn với nội dung: \"{dto.ReplyContent}\". Cảm ơn bạn đã đóng góp ý kiến để chúng tôi phát triển nền tảng tốt hơn!",
             TargetUrl = "/feedback", // Or a specific feedback detail page if they have one
             IsRead = false,
             CreatedAt = DateTime.UtcNow

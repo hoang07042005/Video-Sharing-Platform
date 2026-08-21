@@ -15,10 +15,16 @@ import {
   Crown,
   Users,
   Coins,
-  DollarSign
+  DollarSign,
+  PlayCircle,
+  MessageSquare,
+  X,
+  Clock,
+  CheckCircle2
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import moment from "moment";
 
 export default function Header({ toggleSidebar }) {
   const navigate = useNavigate();
@@ -36,6 +42,10 @@ export default function Header({ toggleSidebar }) {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [premiumUntil, setPremiumUntil] = useState(null);
   const [coins, setCoins] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const [selectedNotif, setSelectedNotif] = useState(null);
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -62,6 +72,15 @@ export default function Header({ toggleSidebar }) {
     };
     fetchPublicSettings();
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      // Fetch unread count
+      axios.get("/api/notifications/unread-count", { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => setUnreadCount(res.data.unreadCount || 0))
+        .catch(err => console.error("Error fetching unread count", err));
+    }
+  }, [token]);
 
   useEffect(() => {
     if (token) {
@@ -139,6 +158,88 @@ export default function Header({ toggleSidebar }) {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  const toggleNotifications = async () => {
+    if (activeDropdown === "notifications") {
+      setActiveDropdown(null);
+      return;
+    }
+    setActiveDropdown("notifications");
+    setLoadingNotifs(true);
+    try {
+      const res = await axios.get("/api/notifications?limit=10", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      try {
+        await axios.put(`/api/notifications/${notif.id}/read`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        // Update local state to reflect it's read
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setActiveDropdown(null);
+    setSelectedNotif(notif);
+  };
+
+  const closeNotifModal = () => setSelectedNotif(null);
+
+  const getNotificationIcon = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'subscribe':
+      case 'follow': return <UserPlus className="w-5 h-5 text-blue-400" />;
+      case 'comment': return <MessageSquare className="w-5 h-5 text-green-400" />;
+      case 'donation': return <DollarSign className="w-5 h-5 text-yellow-400" />;
+      case 'stream': return <PlayCircle className="w-5 h-5 text-purple-400" />;
+      case 'communitypost': return <MessageSquare className="w-5 h-5 text-orange-400" />;
+      case 'system': return <Bell className="w-5 h-5 text-red-400" />;
+      case 'feedbackreply': return <CheckCircle2 className="w-5 h-5 text-teal-400" />;
+      default: return <Bell className="w-5 h-5 text-gray-400" />;
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'subscribe':
+      case 'follow': return "bg-blue-500/10 border-blue-500/20";
+      case 'comment': return "bg-green-500/10 border-green-500/20";
+      case 'donation': return "bg-yellow-500/10 border-yellow-500/20";
+      case 'stream': return "bg-purple-500/10 border-purple-500/20";
+      case 'communitypost': return "bg-orange-500/10 border-orange-500/20";
+      case 'system': return "bg-red-500/10 border-red-500/20";
+      case 'feedbackreply': return "bg-teal-500/10 border-teal-500/20";
+      default: return "bg-gray-500/10 border-gray-500/20";
+    }
+  };
+
+  const getNotificationGlowColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'subscribe':
+      case 'follow': return "bg-blue-500";
+      case 'comment': return "bg-green-500";
+      case 'donation': return "bg-yellow-500";
+      case 'stream': return "bg-purple-500";
+      case 'communitypost': return "bg-orange-500";
+      case 'system': return "bg-red-500";
+      case 'feedbackreply': return "bg-teal-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  const getNotificationBorderColor = (type) => getNotificationGlowColor(type).replace('bg-', 'border-');
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -176,7 +277,7 @@ export default function Header({ toggleSidebar }) {
         <Link to="/" className="flex items-center h-18 w-28 ml-2">
           <img
             src={logoUrl}
-            alt="VividStream"
+            alt="Video Sharing Platform"
             className="w-full h-full object-contain"
           />
         </Link>
@@ -281,13 +382,71 @@ export default function Header({ toggleSidebar }) {
               )}
             </div>
 
-            <div className="flex flex-col items-center gap-1.5 group cursor-pointer relative">
-              <div className="w-[52px] h-[48px] rounded-[18px] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5 relative">
+            <div 
+              className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
+              ref={activeDropdown === "notifications" ? headerRef : null}
+            >
+              <div 
+                onClick={toggleNotifications}
+                className="w-[52px] h-[48px] rounded-[18px] group-hover:bg-[#252525] transition-colors flex items-center justify-center border border-transparent group-hover:border-white/5 relative"
+              >
                 <Bell className="w-[22px] h-[22px] text-[#FF8A65]" />
-                <span className="absolute top-1 right-2 w-[18px] h-[18px] bg-[#FF1E46] rounded-full flex items-center justify-center text-[10px] font-bold text-white translate-x-1/2 -translate-y-1/2 border-2 border-[#1A1A1A]">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-2 w-[18px] h-[18px] bg-[#FF1E46] rounded-full flex items-center justify-center text-[10px] font-bold text-white translate-x-1/2 -translate-y-1/2 border-2 border-[#1A1A1A]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </div>
+              
+              {activeDropdown === "notifications" && (
+                <div className="absolute right-0 top-full bg-[#151515] mt-4 w-[360px] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col">
+                  <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                    <h3 className="font-semibold text-white">Thông báo</h3>
+                    <span className="text-xs text-gray-400">{unreadCount} chưa đọc</span>
+                  </div>
+                  
+                  <div className="max-h-[400px] overflow-y-auto hide-scrollbar flex flex-col">
+                    {loadingNotifs ? (
+                      <div className="p-8 text-center text-gray-400 text-sm">Đang tải...</div>
+                    ) : notifications.length > 0 ? (
+                      notifications.map(notif => (
+                        <div 
+                          key={notif.id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`flex items-start gap-3 p-4 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-b-0 ${!notif.isRead ? 'bg-white/[0.02]' : ''}`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-[#252525] flex items-center justify-center shrink-0">
+                            {getNotificationIcon(notif.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm line-clamp-1 ${!notif.isRead ? 'text-white font-medium' : 'text-gray-300'}`}>
+                              {notif.title}
+                            </p>
+                            <span className="text-xs text-gray-500 mt-1 block">
+                              {moment.utc(notif.createdAt).local().locale('vi').fromNow()}
+                            </span>
+                          </div>
+                          {!notif.isRead && (
+                            <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-gray-400 text-sm">Không có thông báo nào</div>
+                    )}
+                  </div>
+                  
+                  <div className="p-2 border-t border-white/5">
+                    <Link 
+                      to="/notifications" 
+                      onClick={() => setActiveDropdown(null)}
+                      className="block w-full py-2.5 text-center text-sm text-[#FF8A65] hover:bg-[#FF8A65]/10 rounded-xl transition-colors font-medium"
+                    >
+                      Xem tất cả thông báo
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="w-[1px] h-10 bg-white/10 mx-1"></div>
@@ -466,6 +625,94 @@ export default function Header({ toggleSidebar }) {
           </div>
         )}
       </div>
+      {/* Search Mobile (Optional) */}
+      
+      {/* Notification Detail Modal */}
+      {selectedNotif && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#151515] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            <button 
+              onClick={closeNotifModal}
+              className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6 overflow-y-auto custom-scrollbar relative">
+              <div className="flex items-center gap-3 mb-6 mt-2 relative z-10">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 border border-white/10 ${getNotificationColor(selectedNotif.type)} relative group`}>
+                  <div className={`absolute inset-0 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-lg ${getNotificationGlowColor(selectedNotif.type)}`} />
+                  <div className="scale-110 relative z-10">
+                    {getNotificationIcon(selectedNotif.type)}
+                  </div>
+                  {/* Decorative dot */}
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-[2px] border-[#151515] ${getNotificationGlowColor(selectedNotif.type)} z-20`} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white leading-tight pr-6">
+                    {selectedNotif.title}
+                  </h2>
+                  <span className="text-xs text-gray-400 flex items-center gap-1.5 mt-1">
+                    <Clock className="w-3 h-3" />
+                    {moment.utc(selectedNotif.createdAt).local().locale('vi').format('DD/MM/YYYY - HH:mm')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className={`relative bg-gradient-to-br from-[#1C1C1C] to-[#151515] p-5 rounded-2xl border border-white/5 border-l-4 shadow-xl mb-6 ${getNotificationBorderColor(selectedNotif.type)} overflow-hidden`}>
+                <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none scale-[2.5]">
+                  {getNotificationIcon(selectedNotif.type)}
+                </div>
+                <div className="relative z-10 flex gap-3 w-full">
+                  <div className="mt-0.5 opacity-60 shrink-0">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {['system', 'feedbackreply'].includes(selectedNotif.type?.toLowerCase()) ? (
+                      <div className="flex flex-col h-full">
+                        <div className="uppercase tracking-[0.15em] text-[10px] font-bold mb-3 pb-2 border-b border-white/10 opacity-70 flex items-center gap-1.5">
+                          <Bell className="w-3 h-3" />
+                          Thông báo chính thức từ Video Sharing Platform
+                        </div>
+                        <p className="text-gray-200 text-[15px] leading-[1.7] whitespace-pre-wrap flex-1">
+                          {selectedNotif.message}
+                        </p>
+                        <div className="mt-4 pt-3 border-t border-white/5 flex flex-col gap-0.5">
+                          <p className="text-xs text-gray-500 italic">Trân trọng,</p>
+                          <p className="text-xs font-semibold text-gray-400">Đội ngũ Quản trị Video Sharing Platform</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-200 text-[15px] leading-[1.7] whitespace-pre-wrap">
+                        {selectedNotif.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={closeNotifModal}
+                  className="flex-1 py-3 rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white font-medium transition-colors"
+                >
+                  Đóng
+                </button>
+                {selectedNotif.targetUrl && (
+                  <button 
+                    onClick={() => {
+                      closeNotifModal();
+                      navigate(selectedNotif.targetUrl);
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-white text-black hover:bg-gray-100 font-bold transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
+                  >
+                    Xem chi tiết
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

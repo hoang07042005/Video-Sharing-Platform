@@ -99,6 +99,17 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
+    public virtual DbSet<CommunityPost> CommunityPosts { get; set; }
+    
+    public virtual DbSet<CommunityPostComment> CommunityPostComments { get; set; }
+    
+    public virtual DbSet<CommunityPostCommentLike> CommunityPostCommentLikes { get; set; }
+
+    public virtual DbSet<CommunityPostImage> CommunityPostImages { get; set; }
+    public virtual DbSet<CommunityPostPollOption> CommunityPostPollOptions { get; set; }
+    public virtual DbSet<CommunityPostVote> CommunityPostVotes { get; set; }
+    public virtual DbSet<CommunityPostLike> CommunityPostLikes { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Channel>(entity =>
@@ -797,6 +808,80 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Video).WithMany(p => p.VideoResolutions)
                 .HasForeignKey(d => d.VideoId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommunityPost>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Channel).WithMany()
+                .HasForeignKey(d => d.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Author).WithMany()
+                .HasForeignKey(d => d.AuthorId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CommunityPostImage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Post).WithMany(p => p.CommunityPostImages)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommunityPostPollOption>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Post).WithMany(p => p.CommunityPostPollOptions)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommunityPostVote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.PollOption).WithMany(p => p.CommunityPostVotes)
+                .HasForeignKey(d => d.PollOptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CommunityPostLike>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Post).WithMany(p => p.CommunityPostLikes)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CommunityPostComment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Post).WithMany(p => p.CommunityPostComments)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(d => d.ParentComment).WithMany(p => p.Replies)
+                .HasForeignKey(d => d.ParentCommentId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CommunityPostCommentLike>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.Comment).WithMany(p => p.Likes)
+                .HasForeignKey(d => d.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         OnModelCreatingPartial(modelBuilder);

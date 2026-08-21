@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Video_Platform_Backend.Models;
 
@@ -11,9 +12,11 @@ using Video_Platform_Backend.Models;
 namespace Video_Platform_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260821012527_AddCommunityTab")]
+    partial class AddCommunityTab
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -317,9 +320,6 @@ namespace Video_Platform_Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AuthorId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ChannelId")
                         .HasColumnType("uniqueidentifier");
 
@@ -333,18 +333,10 @@ namespace Video_Platform_Backend.Migrations
                     b.Property<bool>("IsMembersOnly")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsPinned")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("VideoUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
 
                     b.HasIndex("ChannelId");
 
@@ -388,33 +380,6 @@ namespace Video_Platform_Backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("CommunityPostComments");
-                });
-
-            modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostCommentLike", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CommentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsLike")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CommunityPostCommentLikes");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostImage", b =>
@@ -2035,18 +2000,11 @@ namespace Video_Platform_Backend.Migrations
 
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPost", b =>
                 {
-                    b.HasOne("Video_Platform_Backend.Models.User", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Video_Platform_Backend.Models.Channel", "Channel")
                         .WithMany()
                         .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Author");
 
                     b.Navigation("Channel");
                 });
@@ -2073,25 +2031,6 @@ namespace Video_Platform_Backend.Migrations
                     b.Navigation("ParentComment");
 
                     b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostCommentLike", b =>
-                {
-                    b.HasOne("Video_Platform_Backend.Models.CommunityPostComment", "Comment")
-                        .WithMany("Likes")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Video_Platform_Backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
 
                     b.Navigation("User");
                 });
@@ -2660,8 +2599,6 @@ namespace Video_Platform_Backend.Migrations
 
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostComment", b =>
                 {
-                    b.Navigation("Likes");
-
                     b.Navigation("Replies");
                 });
 

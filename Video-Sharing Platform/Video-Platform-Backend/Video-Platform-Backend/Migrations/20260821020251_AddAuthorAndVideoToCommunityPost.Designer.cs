@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Video_Platform_Backend.Models;
 
@@ -11,9 +12,11 @@ using Video_Platform_Backend.Models;
 namespace Video_Platform_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260821020251_AddAuthorAndVideoToCommunityPost")]
+    partial class AddAuthorAndVideoToCommunityPost
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -333,9 +336,6 @@ namespace Video_Platform_Backend.Migrations
                     b.Property<bool>("IsMembersOnly")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsPinned")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -388,33 +388,6 @@ namespace Video_Platform_Backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("CommunityPostComments");
-                });
-
-            modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostCommentLike", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CommentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsLike")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CommunityPostCommentLikes");
                 });
 
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostImage", b =>
@@ -2077,25 +2050,6 @@ namespace Video_Platform_Backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostCommentLike", b =>
-                {
-                    b.HasOne("Video_Platform_Backend.Models.CommunityPostComment", "Comment")
-                        .WithMany("Likes")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Video_Platform_Backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostImage", b =>
                 {
                     b.HasOne("Video_Platform_Backend.Models.CommunityPost", "Post")
@@ -2660,8 +2614,6 @@ namespace Video_Platform_Backend.Migrations
 
             modelBuilder.Entity("Video_Platform_Backend.Models.CommunityPostComment", b =>
                 {
-                    b.Navigation("Likes");
-
                     b.Navigation("Replies");
                 });
 

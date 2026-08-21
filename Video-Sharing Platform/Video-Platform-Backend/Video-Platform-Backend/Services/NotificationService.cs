@@ -56,6 +56,7 @@ public class NotificationService : INotificationService
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
+                Title = title ?? "Thông báo",
                 Type = type,
                 Message = message,
                 TargetUrl = actionUrl,

@@ -1423,7 +1423,10 @@ export default function ChannelProfile() {
                     </button>
                   )}
                   {channelBtnSettings.showCommunityButton && (
-                    <button className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors">
+                    <button 
+                      onClick={() => navigate(`/c/${channel.handle}/community`)}
+                      className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
+                    >
                       Cộng đồng
                     </button>
                   )}

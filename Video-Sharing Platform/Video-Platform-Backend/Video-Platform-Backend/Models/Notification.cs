@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Video_Platform_Backend.Models;
@@ -8,6 +8,8 @@ public partial class Notification
     public Guid Id { get; set; }
 
     public Guid UserId { get; set; }
+
+    public string Title { get; set; } = null!;
 
     public string Type { get; set; } = null!;
 

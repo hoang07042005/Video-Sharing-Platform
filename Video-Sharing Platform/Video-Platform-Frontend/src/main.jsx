@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import './index.css'
 import App from './App.jsx'
+import moment from 'moment'
+import 'moment/dist/locale/vi'
+
+moment.locale('vi')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

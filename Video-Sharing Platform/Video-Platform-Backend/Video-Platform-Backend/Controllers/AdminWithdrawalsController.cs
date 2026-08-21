@@ -137,8 +137,8 @@ namespace Video_Platform_Backend.Controllers
                         // In-app Notification
                         await _notificationService.SendNotificationAsync(
                             request.UserId,
-                            "Yêu cầu rút tiền đã được duyệt",
-                            $"Số tiền {request.AmountFiat:N0} VNĐ đã được chuyển vào tài khoản {request.BankName} của bạn.",
+                            "✅ Yêu cầu rút tiền thành công",
+                            $"Kính gửi Quý khách hàng,\n\nHệ thống Video Sharing Platform xin trân trọng thông báo yêu cầu rút tiền của quý khách đã được xử lý thành công. Chi tiết giao dịch như sau:\n\n- Mã giao dịch: #{request.Id.ToString().Substring(0, 8).ToUpper()}\n- Số tiền: {request.AmountFiat:N0} VNĐ\n- Phương thức: {request.BankName}\n- Thời gian duyệt: {DateTime.UtcNow.AddHours(7):dd/MM/yyyy HH:mm}\n- Trạng thái: Đã chuyển khoản thành công\n\nCảm ơn quý khách đã đồng hành cùng Video Sharing Platform. Nếu cần thêm sự hỗ trợ, vui lòng liên hệ bộ phận Chăm sóc khách hàng.",
                             "system",
                             null,
                             request.Id,
@@ -252,8 +252,8 @@ namespace Video_Platform_Backend.Controllers
                         // In-app Notification
                         await _notificationService.SendNotificationAsync(
                             request.UserId,
-                            "Yêu cầu rút tiền bị từ chối",
-                            $"Yêu cầu rút {request.AmountFiat:N0} VNĐ của bạn đã bị từ chối. Lý do: {dto.Note}",
+                            "❌ Yêu cầu rút tiền bị từ chối",
+                            $"Kính gửi Quý khách hàng,\n\nHệ thống Video Sharing Platform rất tiếc phải thông báo yêu cầu rút tiền của quý khách đã bị từ chối. Chi tiết giao dịch như sau:\n\n- Mã giao dịch: #{request.Id.ToString().Substring(0, 8).ToUpper()}\n- Số tiền yêu cầu: {request.AmountFiat:N0} VNĐ\n- Phương thức: {request.BankName}\n- Thời gian từ chối: {DateTime.UtcNow.AddHours(7):dd/MM/yyyy HH:mm}\n- Lý do từ chối: {dto.Note}\n\nSố V-Coin tương ứng đã được hoàn lại vào ví của quý khách. Xin vui lòng kiểm tra lại thông tin và thử lại sau. Nếu cần thêm sự hỗ trợ, vui lòng liên hệ bộ phận Chăm sóc khách hàng.",
                             "system",
                             null,
                             request.Id
