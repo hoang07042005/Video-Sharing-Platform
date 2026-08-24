@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
   Heart, MessageCircle, Share2, Bookmark,
   Volume2, VolumeX, Play, Pause, Music2, ChevronDown, ChevronUp,
-  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical, User, Send, AlertTriangle
+  X, ThumbsUp, ThumbsDown, ListFilter, MoreVertical, User, Send, AlertTriangle, CheckCircle
 } from 'lucide-react';
 
 
@@ -395,6 +395,9 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
               <span className="text-white/80 text-sm font-medium group-hover:text-white transition-colors">
                 {short.channelHandle}
               </span>
+              {(short.channelIsVerified === true || short.channelIsVerified === "true" || short.isVerified === true) && (
+                <CheckCircle className="w-3 h-3 text-green-500 fill-green-500 shrink-0" />
+              )}
             </Link>
             {!followed ? (
               <button

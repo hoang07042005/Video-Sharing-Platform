@@ -114,7 +114,7 @@ function SmallVideoCard({ video }) {
           className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
         >
           {video.channelName}
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
         </Link>
           <p className="text-gray-500 text-[11px]">
             {formatViews(video.viewsCount)} lượt xem •{" "}
@@ -182,7 +182,7 @@ function HorizontalVideoCard({ video }) {
           className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
         >
           {video.channelName}
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
         </Link>
         <p className="text-gray-500 text-xs mt-0.5">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}

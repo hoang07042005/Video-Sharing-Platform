@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import LivestreamPlayer from '../../../components/video/LivestreamPlayer';
 import LivestreamChat from '../../../components/video/LivestreamChat';
-import { useSignalRConnection } from '../../../hooks/useSignalRConnection';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 const StudioLive = () => {
@@ -13,6 +12,7 @@ const StudioLive = () => {
   const params = new URLSearchParams(search);
   const idParam = params.get('id');
   const [livestream, setLivestream] = useState(null);
+  const [livestreamError, setLivestreamError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState('');
@@ -134,7 +134,7 @@ const StudioLive = () => {
           let recorder;
           try {
              recorder = new MediaRecorder(stream, options);
-          } catch(e) {
+          } catch {
              console.warn('vp8 not supported, falling back to default webm');
              recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
           }
@@ -264,6 +264,7 @@ const StudioLive = () => {
           });
         } catch (_err) {
           console.error(_err);
+          setLivestreamError('Không thể tải thông tin livestream. Vui lòng thử lại.');
         }
       };
 
@@ -342,6 +343,28 @@ const StudioLive = () => {
   };
 
   const hasPlayableSource = Boolean(livestream?.hlsUrl || livestream?.vodUrl || livestream?.streamUrl || livestream?.playbackUrl);
+
+  if (idParam && !livestream && !livestreamError) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-[#0F0F13] text-gray-400">
+        Đang tải thông tin livestream...
+      </div>
+    );
+  }
+
+  if (idParam && livestreamError) {
+    return (
+      <div className="min-h-full flex flex-col items-center justify-center gap-4 bg-[#0F0F13] text-center px-4">
+        <p className="text-red-400">{livestreamError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   // ── CREATION FORM ──
   if (!idParam && !livestream) {

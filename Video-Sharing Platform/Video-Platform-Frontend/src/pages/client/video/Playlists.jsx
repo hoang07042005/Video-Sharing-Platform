@@ -379,7 +379,7 @@ export default function Playlists() {
       {/* ── Toast ── */}
       {toast && (
         <div className="fixed top-20 right-6 z-50 flex items-center gap-2 bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 shadow-2xl text-sm text-white">
-          <CheckCircle className="w-4 h-4 text-green-400" />{toast}
+          <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />{toast}
         </div>
       )}
 

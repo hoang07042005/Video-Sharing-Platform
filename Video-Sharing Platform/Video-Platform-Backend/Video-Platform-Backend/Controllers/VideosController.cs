@@ -75,7 +75,8 @@ namespace Video_Platform_Backend.Controllers
                     ChannelHandle = v.Channel.Handle,
                     ChannelAvatarUrl = v.Channel.User.Profile != null 
                         ? (v.Channel.User.Profile.AvatarUrl ?? "") 
-                        : ""
+                        : "",
+                    ChannelIsVerified = v.Channel.IsVerified
                 })
                 .OrderByDescending(v => v.ViewsCount)
                 .ToListAsync();
@@ -131,7 +132,8 @@ namespace Video_Platform_Backend.Controllers
                     ChannelHandle = v.Channel.Handle,
                     ChannelAvatarUrl = v.Channel.User.Profile != null
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
-                        : ""
+                        : "",
+                    ChannelIsVerified = v.Channel.IsVerified
                 })
                 .ToListAsync();
 
@@ -259,6 +261,7 @@ namespace Video_Platform_Backend.Controllers
                 ChannelName = video.Channel.ChannelName,
                 ChannelHandle = video.Channel.Handle,
                 ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
+                ChannelIsVerified = video.Channel.IsVerified,
                 SubscriberCount = subscriberCount,
                 OwnerUserId = video.Channel.UserId,
                 IsMembersOnly = !canWatch,
@@ -706,6 +709,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = h.Video.Channel.User.Profile != null 
                         ? (h.Video.Channel.User.Profile.AvatarUrl ?? "") 
                         : "",
+                    ChannelIsVerified = h.Video.Channel.IsVerified,
                     IsShort = h.Video.IsShort ?? false,
                     WatchedDuration = h.WatchedDuration ?? 0
                 })
@@ -792,7 +796,8 @@ namespace Video_Platform_Backend.Controllers
                     ChannelHandle = v.Channel.Handle,
                     ChannelAvatarUrl = v.Channel.User.Profile != null
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
-                        : ""
+                        : "",
+                    ChannelIsVerified = v.Channel.IsVerified
                 })
                 .ToListAsync();
 
@@ -859,6 +864,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelName = video.Channel.ChannelName,
                     ChannelHandle = video.Channel.Handle,
                     ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
+                    ChannelIsVerified = video.Channel.IsVerified,
                     SubscriberCount = subscriberCount,
                     OwnerUserId = video.Channel.UserId,
                     IsLiked = isLiked,
@@ -916,7 +922,8 @@ namespace Video_Platform_Backend.Controllers
                 ChannelId = v.ChannelId,
                 ChannelName = v.Channel.ChannelName,
                 ChannelHandle = v.Channel.Handle,
-                ChannelAvatarUrl = v.Channel.User?.Profile?.AvatarUrl ?? ""
+                ChannelAvatarUrl = v.Channel.User?.Profile?.AvatarUrl ?? "",
+                ChannelIsVerified = v.Channel.IsVerified
             }).ToList();
 
             return Ok(result);

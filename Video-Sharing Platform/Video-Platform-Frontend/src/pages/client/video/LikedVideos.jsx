@@ -161,7 +161,7 @@ const LikedVideos = () => {
                           )}
                           <div className="truncate max-w-[100%] flex items-center gap-1">
                             {video.channelName}
-                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                           </div>
                         </div>
                         <div>{formatViews(video.viewsCount)}</div>
@@ -196,7 +196,7 @@ const LikedVideos = () => {
                         )}
                         <div className="truncate max-w-[100%] flex items-center gap-1">
                           {v.channelName}
-                          {v.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                          {v.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                         </div>
                       </div>
                       <div className="text-xs shrink-0">{formatViews(v.viewsCount)}</div>

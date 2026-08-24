@@ -194,7 +194,8 @@ namespace Video_Platform_Backend.Controllers
                 ChannelId = pv.Video.ChannelId,
                 ChannelName = pv.Video.Channel.ChannelName,
                 ChannelHandle = pv.Video.Channel.Handle,
-                ChannelAvatarUrl = pv.Video.Channel.User.Profile?.AvatarUrl ?? ""
+                ChannelAvatarUrl = pv.Video.Channel.User.Profile?.AvatarUrl ?? "",
+                ChannelIsVerified = pv.Video.Channel.IsVerified
             }).ToList();
 
             return Ok(result);
@@ -418,7 +419,8 @@ namespace Video_Platform_Backend.Controllers
                 ChannelId = pv.Video.ChannelId,
                 ChannelName = pv.Video.Channel.ChannelName,
                 ChannelHandle = pv.Video.Channel.Handle,
-                ChannelAvatarUrl = pv.Video.Channel.User?.Profile?.AvatarUrl ?? ""
+                ChannelAvatarUrl = pv.Video.Channel.User?.Profile?.AvatarUrl ?? "",
+                ChannelIsVerified = pv.Video.Channel.IsVerified
             }).ToList();
 
             return Ok(new {

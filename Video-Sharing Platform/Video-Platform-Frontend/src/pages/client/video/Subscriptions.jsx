@@ -133,7 +133,7 @@ export default function Subscriptions() {
               <div className="text-center">
                 <p className="text-white font-medium text-sm md:text-base line-clamp-1 group-hover:text-[#FF5722] transition-colors flex items-center justify-center gap-1">
                   {channel.channelName}
-                  {channel.isVerified && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                  {channel.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                 </p>
                 <p className="text-gray-400 text-xs mt-0.5">
                   {formatSubscribers(channel.subscriberCount)}

@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Loader2,
   Bell,
-  CheckCircle2,
+  CheckCircle,
   Share2,
   Search,
   Users,
@@ -63,21 +63,21 @@ function UploadVideoForm({
   onCancelEdit,
   isShortType,
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState("Public");
+  const [title, setTitle] = useState(() => editingVideo?.title || "");
+  const [description, setDescription] = useState(() => editingVideo?.description || "");
+  const [visibility, setVisibility] = useState(() => editingVideo?.visibility || "Public");
   const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(() => editingVideo?.thumbnailUrl || null);
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(() => editingVideo?.duration || 0);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
-  const [isShortVideo, setIsShortVideo] = useState(isShortType || false);
+  const [isShortVideo, setIsShortVideo] = useState(() => editingVideo?.isShort || isShortType || false);
   const [categories, setCategories] = useState([]);
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState(() => editingVideo?.categoryId || "");
   const [bannedError, setBannedError] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
@@ -1354,8 +1354,8 @@ export default function ChannelProfile() {
                 {/* Name */}
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight flex items-center gap-2">
                   {channel.channelName}
-                  {channel.isVerified && (
-                    <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-white fill-white/20" />
+                  {(channel.isVerified === true || channel.isVerified === "true" || channel.channelIsVerified === true) && (
+                    <CheckCircle className="w-6 h-6 text-white fill-green-500 shrink-0 mt-3" />
                   )}
                 </h1>
 

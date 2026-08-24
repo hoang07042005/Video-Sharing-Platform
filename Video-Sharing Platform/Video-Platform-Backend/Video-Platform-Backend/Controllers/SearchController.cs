@@ -101,8 +101,9 @@ namespace Video_Platform_Backend.Controllers
                     ChannelName = v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
                     ChannelAvatarUrl = v.Channel.User.Profile != null 
-                        ? (v.Channel.User.Profile.AvatarUrl ?? "") 
-                        : ""
+                        ? (v.Channel.User.Profile.AvatarUrl ?? "")
+                        : "",
+                    ChannelIsVerified = v.Channel.IsVerified
                 })
                 .OrderByDescending(v => v.ViewsCount)
                 .Take(limit)

@@ -24,7 +24,37 @@ public class LivestreamsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var list = await _db.Livestreams.Include(l => l.Channel).Where(l => !l.Channel.IsSuspended).OrderByDescending(l => l.ActualStartTime).ToListAsync();
+        var list = await _db.Livestreams
+            .Where(l => l.Channel != null && !l.Channel.IsSuspended)
+            .OrderByDescending(l => l.ActualStartTime)
+            .Select(l => new
+            {
+                l.Id,
+                l.ChannelId,
+                l.Title,
+                l.StreamKey,
+                l.Description,
+                l.ThumbnailUrl,
+                l.HlsUrl,
+                l.VodUrl,
+                l.TotalViews,
+                l.Tags,
+                l.Status,
+                l.ScheduledStartTime,
+                l.ActualStartTime,
+                l.EndTime,
+                l.CurrentViewers,
+                l.Likes,
+                l.CategoryId,
+                Category = l.Category == null ? null : new { l.Category.Id, l.Category.Name },
+                Channel = l.Channel == null ? null : new
+                {
+                    l.Channel.Id,
+                    l.Channel.ChannelName,
+                    l.Channel.AvatarUrl
+                }
+            })
+            .ToListAsync();
         return Ok(list);
     }
 
@@ -222,7 +252,7 @@ public class LivestreamsController : ControllerBase
 
         _db.Livestreams.Add(model);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = model.Id }, model);
+        return CreatedAtAction(nameof(Get), new { id = model.Id }, new { id = model.Id });
     }
 
     [HttpPost("{id}/end")]

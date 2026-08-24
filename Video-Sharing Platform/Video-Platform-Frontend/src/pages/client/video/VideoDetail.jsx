@@ -726,7 +726,7 @@ export default function VideoDetail() {
               <div className="flex flex-col">
                 <Link to={`/c/${video.channelHandle}`} className="flex items-center gap-1.5 hover:text-gray-200 transition-colors">
                   <span className="font-bold text-white text-base">{video.channelName}</span>
-                  {video.channelIsVerified && <CheckCircle2 className="w-4 h-4 text-gray-400 fill-gray-400/20" />}
+                  {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                 </Link>
                 <span className="text-xs text-gray-400">{formatViews(subscriberCount)} người đăng ký</span>
               </div>

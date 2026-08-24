@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import * as LucideIcons from 'lucide-react';
@@ -10,61 +10,6 @@ const formatViews = (views) => {
   if (views >= 1000) return (views / 1000).toFixed(1) + 'K';
   return views;
 };
-
-// Fallback Mock Data for UI aesthetics if DB is empty
-const MOCK_LIVE_NOW = [
-  {
-    id: 'mock-1',
-    title: 'Cuộc chiến sinh tồn trong rừng sâu',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800',
-    currentViewers: 9200,
-    channel: { channelName: 'Nam Blue', handle: 'namblue', isVerified: true },
-    category: { name: 'Game' }
-  },
-  {
-    id: 'mock-2',
-    title: 'Đêm nhạc acoustic nhẹ nhàng',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1516280440502-6902b93ff513?auto=format&fit=crop&q=80&w=800',
-    currentViewers: 6300,
-    channel: { channelName: 'Hà My', handle: 'hamy', isVerified: true },
-    category: { name: 'Âm nhạc' }
-  },
-  {
-    id: 'mock-3',
-    title: 'Talkshow: Gen Z và những câu chuyện',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800',
-    currentViewers: 4700,
-    channel: { channelName: 'Vinh & Mai', handle: 'vinhmai', isVerified: true },
-    category: { name: 'Giải trí' }
-  },
-  {
-    id: 'mock-4',
-    title: 'Vào bếp cùng Thư - Món ngon mỗi ngày',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1556910103-1c02745a872f?auto=format&fit=crop&q=80&w=800',
-    currentViewers: 3100,
-    channel: { channelName: 'Minh Thư', handle: 'minhthu', isVerified: true },
-    category: { name: 'Ẩm thực' }
-  }
-];
-
-const MOCK_UPCOMING = [
-  {
-    id: 'mock-u1',
-    title: 'Đánh giá iPhone 15 Pro Max chi tiết',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1605236453806-6ff36851218e?auto=format&fit=crop&q=80&w=300',
-    scheduledStartTime: '2026-05-16T14:00:00Z',
-    channel: { channelName: 'Thế Anh', handle: 'theanh', isVerified: true },
-    category: { name: 'Công nghệ' }
-  },
-  {
-    id: 'mock-u2',
-    title: 'Bình luận trận đấu đỉnh cao',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1518605368461-1ee711128c73?auto=format&fit=crop&q=80&w=300',
-    scheduledStartTime: '2026-05-17T11:00:00Z',
-    channel: { channelName: 'Minh Sports', handle: 'minhsports', isVerified: true },
-    category: { name: 'Thể thao' }
-  }
-];
 
 const POPULAR_TOPICS = [
   '# PUBG Mobile', '# Liên Minh Huyền Thoại', '# Valorant', '# Acoustic',
@@ -95,17 +40,28 @@ const LivePage = () => {
     fetchData();
   }, []);
 
-  // Filter streams
-  const liveStreams = livestreams.filter(s => s.status === 'live');
-  const scheduledStreams = livestreams.filter(s => s.status === 'scheduled');
-
-  // Use real data if available, else mock data for demonstration aesthetics
-  const displayLive = liveStreams.length >= 4 ? liveStreams : MOCK_LIVE_NOW;
-  const displayScheduled = scheduledStreams.length > 0 ? scheduledStreams : MOCK_UPCOMING;
+  // Filter the real streams returned by the API.
+  const liveStreams = livestreams.filter(
+    (stream) => stream.status === 'live' &&
+      (activeCategory === 'Tất cả' || stream.category?.name === activeCategory),
+  );
+  const displayScheduled = livestreams.filter(
+    (stream) => stream.status === 'scheduled' &&
+      (activeCategory === 'Tất cả' || stream.category?.name === activeCategory),
+  );
+  const displayLive = liveStreams;
 
   const featuredMain = displayLive[0];
   const featuredSide = displayLive.slice(1, 4);
-  const liveGrid = displayLive.slice(4).length > 0 ? displayLive.slice(4) : displayLive; 
+  const liveGrid = displayLive.slice(4);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0F0F13] flex items-center justify-center text-gray-400">
+        Đang tải livestream...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0F0F13] font-sans pb-12">
@@ -290,6 +246,11 @@ const LivePage = () => {
                     </div>
                   </Link>
                 ))}
+                {liveGrid.length === 0 && !featuredMain && (
+                  <p className="col-span-full py-12 text-center text-gray-500">
+                    Hiện chưa có livestream đang diễn ra.
+                  </p>
+                )}
               </div>
 
               <div className="mt-8 flex justify-center">
@@ -341,6 +302,11 @@ const LivePage = () => {
                     </div>
                   );
                 })}
+                {displayScheduled.length === 0 && (
+                  <p className="py-6 text-center text-gray-500 text-sm">
+                    Chưa có lịch livestream sắp diễn ra.
+                  </p>
+                )}
               </div>
 
               <button className="w-full mt-5 flex items-center justify-center gap-2 border border-white/10 hover:bg-white/5 text-gray-300 py-2.5 rounded-xl text-xs font-medium transition-colors">

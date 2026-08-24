@@ -20,6 +20,7 @@ import {
   MessageSquare,
   X,
   Clock,
+  CheckCircle,
   CheckCircle2
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -46,8 +47,28 @@ export default function Header({ toggleSidebar }) {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState(null);
+  const [isChannelVerified, setIsChannelVerified] = useState(false);
   const [tier, setTier] = useState(parseInt(localStorage.getItem("subscriptionTier") || "0", 10));
   const headerRef = useRef(null);
+
+  useEffect(() => {
+    if (!token || !handle) {
+      return;
+    }
+
+    axios.get("/api/channels/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        setIsChannelVerified(res.data?.isVerified === true || res.data?.isVerified === "true");
+      })
+      .catch((err) => {
+        if (err.response?.status !== 404) {
+          console.error("Lỗi khi tải trạng thái xác minh kênh:", err);
+        }
+        setIsChannelVerified(false);
+      });
+  }, [token, handle]);
 
   useEffect(() => {
     const fetchPublicSettings = async () => {
@@ -555,6 +576,11 @@ export default function Header({ toggleSidebar }) {
                   {tier >= 1 && (
                     <div className="absolute -top-2 -right-1 bg-[#1a1a1a] rounded-full p-0.5">
                       <Crown className={`w-4 h-4 ${tier === 2 ? 'text-orange-500' : 'text-purple-400'}`} fill="currentColor" />
+                    </div>
+                  )}
+                  {isChannelVerified && (
+                    <div className="absolute -bottom-1 -right-1 bg-[#1a1a1a] rounded-full p-0.5">
+                      <CheckCircle className="w-4 h-4 text-white fill-green-500 shrink-0" fill="currentColor" />
                     </div>
                   )}
                 </div>

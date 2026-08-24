@@ -320,7 +320,7 @@ const SavedVideos = () => {
                           )}
                           <span className="flex items-center gap-1">
                             {video.channelName}
-                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />}
+                            {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
                           </span>
                         </Link>
                         <span>•</span>

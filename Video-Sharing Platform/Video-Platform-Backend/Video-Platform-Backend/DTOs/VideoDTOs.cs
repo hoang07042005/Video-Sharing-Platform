@@ -27,6 +27,7 @@ namespace Video_Platform_Backend.DTOs
         public string ChannelName { get; set; } = string.Empty;
         public string ChannelHandle { get; set; } = string.Empty;
         public string ChannelAvatarUrl { get; set; } = string.Empty;
+        public bool ChannelIsVerified { get; set; }
     }
 
     public class VideoDetailDTO
@@ -48,6 +49,7 @@ namespace Video_Platform_Backend.DTOs
         public string ChannelName { get; set; } = string.Empty;
         public string ChannelHandle { get; set; } = string.Empty;
         public string ChannelAvatarUrl { get; set; } = string.Empty;
+        public bool ChannelIsVerified { get; set; }
         public int SubscriberCount { get; set; }
         public Guid OwnerUserId { get; set; }
         

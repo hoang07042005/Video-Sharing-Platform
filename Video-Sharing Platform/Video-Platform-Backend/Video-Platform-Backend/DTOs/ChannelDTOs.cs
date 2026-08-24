@@ -18,6 +18,7 @@ namespace Video_Platform_Backend.DTOs
         public string? SocialLinks { get; set; }
         public decimal? MembershipFee { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsVerified { get; set; }
     }
 
     public class ChannelUpdateDTO
@@ -40,6 +41,7 @@ namespace Video_Platform_Backend.DTOs
         public string Handle { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
         public int SubscriberCount { get; set; }
+        public bool IsVerified { get; set; }
     }
 
     public class ChannelMemberDTO

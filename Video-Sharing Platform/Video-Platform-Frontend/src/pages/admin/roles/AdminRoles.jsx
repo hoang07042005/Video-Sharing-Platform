@@ -779,7 +779,7 @@ export default function AdminRoles() {
       {/* MODAL THÊM / SỬA VAI TRÒ */}
       {showRoleModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#141418] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-[#141418] border border-white/10 rounded-1xl w-full max-w-2xl max-h-[100vh] flex flex-col shadow-2xl overflow-hidden">
             
             {/* Modal Header */}
             <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#141418]">
