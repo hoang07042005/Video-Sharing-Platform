@@ -269,14 +269,14 @@ export default function AdminRevenue() {
       </div>
 
       {/* History Table */}
-      <div className="bg-[#0F0F0F] border border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-[#141418] border border-white/5 rounded-xl overflow-hidden">
         <div className="p-5 border-b border-white/5">
           <h3 className="text-white font-medium text-lg">Lịch sử thu phí</h3>
           <p className="text-xs text-gray-400 mt-1">Chi tiết các khoản phí thu được từ các lệnh rút tiền hoàn tất</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-400">
-            <thead className="bg-[#0A0A0C] text-gray-400 border-b border-white/5">
+            <thead className="bg-[#141418] text-gray-400 border-b border-white/5">
               <tr>
                 <th className="px-5 py-3 font-medium whitespace-nowrap">Thời gian</th>
                 <th className="px-5 py-3 font-medium whitespace-nowrap">Streamer</th>

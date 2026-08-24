@@ -503,8 +503,8 @@ export default function VideoDetail() {
     const containerMargin = level === 1 ? "ml-[44px]" : "ml-[40px]";
     
     return (
-      <div className={`relative mt-3 ${containerMargin} z-0`}>
-        <div className="flex flex-col gap-3">
+      <div className={`relative ${containerMargin} z-0`}>
+        <div className="flex flex-col">
           {replies.map((reply, index) => {
             const isLast = index === replies.length - 1;
 

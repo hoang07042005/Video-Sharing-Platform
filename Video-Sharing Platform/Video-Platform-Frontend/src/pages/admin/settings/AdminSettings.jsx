@@ -107,7 +107,7 @@ export default function AdminSettings() {
 
       <div className="max-w-[1600px] mx-auto">
         {/* Grid Bố cục 3 Cột */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-24 ">
           
           {/* THÔNG TIN WEBSITE */}
           <Card 
@@ -116,7 +116,7 @@ export default function AdminSettings() {
             title="THÔNG TIN WEBSITE" 
             subtitle="Thông tin cơ bản về website của bạn"
           >
-            <div className="space-y-4">
+            <div className="space-y-4 ">
               <InputGroup label="Tên website (Brand name)" value={settings.siteName} onChange={v => handleChange('siteName', v)} />
               <InputGroup label="Tiêu đề SEO (Meta Title)" value={settings.siteTitle} onChange={v => handleChange('siteTitle', v)} />
               <InputGroup label="Mô tả SEO (Meta Description)" value={settings.siteDescription} onChange={v => handleChange('siteDescription', v)} />
@@ -320,7 +320,7 @@ export default function AdminSettings() {
 
 function Card({ icon, iconBg, title, subtitle, children }) {
   return (
-    <div className="bg-[#0F0F0F]  p-6 shadow-md flex flex-col h-full">
+    <div className="bg-[#141418] border border-white/5 p-6 shadow-md flex flex-col h-full">
       <div className="flex items-center gap-4 mb-6">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
           {icon}

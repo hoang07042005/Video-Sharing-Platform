@@ -65,7 +65,7 @@ export default function MainLayout() {
       )}
       <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <Sidebar isOpen={isSidebarOpen} />
-      <main className={`pt-16 transition-all duration-300 ${isSidebarOpen ? 'pl-56' : 'pl-0'}`}>
+      <main className={`pt-12 transition-all duration-300 ${isSidebarOpen ? 'pl-56' : 'pl-0'}`}>
         {/* Shorts dùng layout riêng, không cần p-4 wrapper */}
         {isShorts ? (
           <Outlet />

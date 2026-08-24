@@ -244,7 +244,7 @@ const VideoManagement = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5 mb-8">
-        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-[#141418] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center"><FileVideo className="w-5 h-5 text-purple-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Tổng video</span>
@@ -253,7 +253,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-green-400 font-medium">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
         
-        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-[#141418] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center"><Check className="w-5 h-5 text-green-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Video công khai</span>
@@ -262,7 +262,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-green-400 font-medium">↑ {publicPercent}% <span className="text-gray-500 font-normal">tổng số video</span></p>
         </div>
 
-        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-[#141418] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center"><ClockIcon className="w-5 h-5 text-yellow-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Chờ duyệt</span>
@@ -271,7 +271,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-yellow-400 font-medium">↑ 3 <span className="text-gray-500 font-normal">video mới</span></p>
         </div>
 
-        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-[#141418] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><Ban className="w-5 h-5 text-red-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Bị từ chối</span>
@@ -280,7 +280,7 @@ const VideoManagement = () => {
           <p className="text-[11px] text-red-400 font-medium">↓ 2 <span className="text-gray-500 font-normal">video</span></p>
         </div>
 
-        <div className="bg-bg-[#0F0F0F] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+        <div className="bg-[#141418] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"><Eye className="w-5 h-5 text-blue-400" /></div>
             <span className="text-gray-300 text-sm font-medium">Tổng lượt xem</span>
@@ -311,7 +311,7 @@ const VideoManagement = () => {
               <select 
                 value={filterVisibility}
                 onChange={(e) => setFilterVisibility(e.target.value)}
-                className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44"
+                className="appearance-none bg-[#141418] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="Public">Công khai</option>
@@ -339,7 +339,7 @@ const VideoManagement = () => {
 
       {/* ─── Table / Grid ─── */}
       {viewMode === 'list' ? (
-      <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden">
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead>
@@ -441,7 +441,7 @@ const VideoManagement = () => {
       ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 min-h-[400px]">
         {paginatedVideos.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-gray-500 bg-bg-[#0F0F0F] rounded-2xl border border-white/5 flex items-center justify-center">
+          <div className="col-span-full py-20 text-center text-gray-500 bg-[#141418] rounded-2xl border border-white/5 flex items-center justify-center">
             Không tìm thấy video nào.
           </div>
         ) : (
@@ -454,7 +454,7 @@ const VideoManagement = () => {
               video.visibility === 'Private' ? 'Chờ duyệt' : 'Bị từ chối';
 
             return (
-              <div key={video.id} className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden group hover:border-white/10 transition-colors flex flex-col">
+              <div key={video.id} className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden group hover:border-white/10 transition-colors flex flex-col">
                 <div className="relative aspect-video flex items-center justify-center bg-black/50 overflow-hidden">
                   {video.isShort ? (
                     <>

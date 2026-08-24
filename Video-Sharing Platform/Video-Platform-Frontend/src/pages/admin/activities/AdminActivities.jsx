@@ -208,7 +208,7 @@ const AdminActivities = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 bg-[#0F0F0F] min-h-screen font-sans text-gray-200">
+    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 min-h-screen font-sans text-gray-200">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -228,7 +228,7 @@ const AdminActivities = () => {
       {/* Top Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1 */}
-        <div className="bg-[#0F0F0F] border border-white/5 rounded-xl p-5 flex items-center justify-between">
+        <div className="bg-[#141418] border border-white/5 rounded-xl p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -246,7 +246,7 @@ const AdminActivities = () => {
         </div>
 
         {/* Card 2 */}
-        <div className="bg-[#0F0F0F] border border-white/5 rounded-xl p-5 flex items-center justify-between">
+        <div className="bg-[#141418] border border-white/5 rounded-xl p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -261,7 +261,7 @@ const AdminActivities = () => {
         </div>
 
         {/* Card 3 */}
-        <div className="bg-[#0F0F0F] border border-white/5 rounded-xl p-5 flex items-center justify-between">
+        <div className="bg-[#141418] border border-white/5 rounded-xl p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
@@ -276,7 +276,7 @@ const AdminActivities = () => {
         </div>
 
         {/* Card 4 */}
-        <div className="bg-[#0F0F0F] border border-white/5 rounded-xl p-5 flex items-center justify-between">
+        <div className="bg-[#141418] border border-white/5 rounded-xl p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
@@ -292,7 +292,7 @@ const AdminActivities = () => {
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-col md:flex-row gap-4 items-center bg-[#0F0F0F] p-2 rounded-xl border border-white/5">
+      <div className="flex flex-col md:flex-row gap-4 items-center bg-[#141418] p-2 rounded-xl border border-white/5">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
@@ -311,7 +311,7 @@ const AdminActivities = () => {
               <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-[#0F0F0F] border border-white/5 rounded-lg text-sm text-gray-300 appearance-none focus:outline-none focus:border-purple-500 transition-colors cursor-pointer hover:bg-white/5"
+                className="w-full pl-9 pr-8 py-2 bg-[#141418] border border-white/5 rounded-lg text-sm text-gray-300 appearance-none focus:outline-none focus:border-purple-500 transition-colors cursor-pointer hover:bg-white/5"
               >
                 <option value="all">Tất cả thời gian</option>
                 <option value="3days">3 ngày qua</option>
@@ -329,7 +329,7 @@ const AdminActivities = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-[#0F0F0F] border border-white/5 rounded-lg text-sm text-gray-300 appearance-none focus:outline-none focus:border-purple-500 transition-colors cursor-pointer hover:bg-white/5"
+              className="w-full pl-9 pr-8 py-2 bg-[#141418] border border-white/5 rounded-lg text-sm text-gray-300 appearance-none focus:outline-none focus:border-purple-500 transition-colors cursor-pointer hover:bg-white/5"
             >
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -340,7 +340,7 @@ const AdminActivities = () => {
 
           <button 
             onClick={fetchActivities}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5 bg-[#0F0F0F] hover:bg-white/5 transition-colors text-sm text-gray-300 ml-2"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5 bg-[#141418] hover:bg-white/5 transition-colors text-sm text-gray-300 ml-2"
           >
             <RefreshCw className="w-4 h-4 text-gray-400" />
             Làm mới
@@ -349,7 +349,7 @@ const AdminActivities = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-[#0F0F0F] border border-white/5 rounded-xl overflow-hidden shadow-xl">
+      <div className="bg-[#141418] border border-white/5 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

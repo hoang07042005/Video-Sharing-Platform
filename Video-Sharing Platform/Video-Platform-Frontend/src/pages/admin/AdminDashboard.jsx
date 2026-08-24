@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import { Users, Video, Eye, DollarSign, Loader2, Database, ThumbsUp, Heart, AlertTriangle, Flag, Video as VideoIcon, Calendar, MessageSquare } from 'lucide-react';
+import { Users, Video, Eye, DollarSign, Loader2, Database, Heart, AlertTriangle, Flag, Video as VideoIcon, Calendar } from 'lucide-react';
 
 const toInputValue = (date) => {
   if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) return date.slice(0, 10);
@@ -179,9 +179,9 @@ export default function AdminDashboard() {
       return (
         <div className="flex justify-between items-end h-full w-full px-4 pb-2">
           <svg width="50%" height="100%" viewBox="-2 0 104 100" preserveAspectRatio="none" className="opacity-60">
-            {points.slice(0, 5).map((p, i) => { 
-              const [x, y] = p.split(',').map(Number); 
-              return <rect key={i} x={(i/4)*100 - 8} y={y} width="16" height={100 - y} fill={color} rx="2" />; 
+            {points.slice(0, 5).map((p, i) => {
+              const [x, y] = p.split(',').map(Number);
+              return <rect key={i} x={(i/4)*100 - 8} y={y} width="16" height={100 - y} fill={color} rx="2" />;
             })}
           </svg>
           <div className="relative w-12 h-11 flex items-center justify-center">
@@ -615,16 +615,16 @@ export default function AdminDashboard() {
             {stats?.topVideos?.map((video, idx) => (
               <div key={idx} className="flex flex-col gap-1.5 group cursor-pointer">
                 <div className="relative">
-                  <div className="w-full aspect-video bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="w-full aspect-video bg-gray-800 rounded overflow-hidden">
                     <img src={video.thumbnailUrl||'https://via.placeholder.com/320x180?text=Video'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Thumb"/>
                   </div>
                   <div className="absolute top-1 left-1 w-4 h-4 rounded bg-purple-600/80 text-white flex items-center justify-center text-[9px] font-bold">{idx+1}</div>
-                  <div className="absolute bottom-1 left-0 right-0 px-1">
-                    <span className="text-[8px] text-gray-200 bg-black/60 px-1 py-0.5 rounded">{video.views?.toLocaleString()} lượt xem</span>
-                  </div>
                 </div>
-                <p className="text-[10px] font-medium text-gray-300 line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">{video.title}</p>
-                <p className="text-[9px] text-gray-500">{video.channelName}</p>
+                <p className="text-[9px] font-medium text-gray-300 line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">{video.title}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[8px] text-gray-500">{video.channelName}</p>
+                  <span className="text-[8px] text-gray-200">{video.views?.toLocaleString()} lượt xem</span>
+                </div>
               </div>
             ))}
           </div>
@@ -636,7 +636,7 @@ export default function AdminDashboard() {
             <h3 className="text-xs font-semibold text-white">Top 5 kênh hàng đầu</h3>
             <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">Xem tất cả →</span>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 p-3">
             {stats?.topChannels?.map((channel, idx) => (
               <div key={idx} className="flex items-center gap-2.5 group">
                 <div className="w-4 text-[11px] font-bold text-gray-500 text-center shrink-0">{idx+1}</div>
@@ -646,8 +646,8 @@ export default function AdminDashboard() {
                   <p className="text-[9px] text-gray-500">@{channel.channelName?.replace(/\s+/g,'').toLowerCase()}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[11px] font-semibold text-white">{(channel.subscribers??0).toLocaleString()} <span className="text-[9px] text-gray-500 font-normal">người đăng ký</span></p>
-                  <p className="text-[9px] text-purple-300">{channel.videoCount??0} video</p>
+                  <p className="text-[11px] font-semibold text-white">{(channel.subscribers??0).toLocaleString()} <span className="text-[9px] text-gray-500 font-normal"> - người đăng ký</span></p>
+                  <p className="text-[9px] text-purple-300">{channel.videoCount??0} - video</p>
                 </div>
               </div>
             ))}
@@ -660,14 +660,14 @@ export default function AdminDashboard() {
             <h3 className="text-xs font-semibold text-white">Hoạt động hệ thống</h3>
             <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">Xem tất cả →</span>
           </div>
-          <div className="flex flex-col gap-3 relative before:absolute before:inset-y-0 before:left-[10px] before:w-[1px] before:bg-white/10">
+          <div className="flex flex-col gap-3 p-3 relative before:absolute before:inset-y-0 before:left-[28px] before:w-[1px] before:bg-white/10">
             {stats?.recentActivities?.map((activity, idx) => {
               const IconType = activity.type==='user' ? Users : (activity.type==='video' ? VideoIcon : DollarSign);
               const color = activity.type==='user' ? 'text-purple-400 border-purple-500/40' : (activity.type==='video' ? 'text-pink-400 border-pink-500/40' : 'text-orange-400 border-orange-500/40');
               return (
                 <div key={idx} className="flex gap-3 relative z-10">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-[#141418] border ${color}`}>
-                    <IconType className="w-2.5 h-2.5"/>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-[#141418] border ${color}`}>
+                    <IconType className="w-3 h-3"/>
                   </div>
                   <div className="pt-0.5">
                     <p className="text-[11px] text-gray-300 leading-snug">{activity.action}</p>

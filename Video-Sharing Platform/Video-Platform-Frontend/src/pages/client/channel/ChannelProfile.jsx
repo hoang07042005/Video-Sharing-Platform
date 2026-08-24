@@ -879,7 +879,7 @@ function LivestreamsTab({ channelId }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 mt-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {livestreams.map((ls) => (
         <Link
           key={ls.id}
@@ -1000,6 +1000,8 @@ export default function ChannelProfile() {
   const [loadingRevenue, setLoadingRevenue] = useState(false);
   const [coinReceivedDateFilter, setCoinReceivedDateFilter] = useState("");
   const [coinSpentDateFilter, setCoinSpentDateFilter] = useState("");
+  const [topCommunityPosts, setTopCommunityPosts] = useState([]);
+  const [loadingCommunityPosts, setLoadingCommunityPosts] = useState(false);
 
   const [membershipStatus, setMembershipStatus] = useState({ isMember: false });
 
@@ -1125,6 +1127,28 @@ export default function ChannelProfile() {
       fetchRevenue();
     }
   }, [activeTab, isOwner, revenueStats, channel]);
+
+  // Fetch top community posts when channel loads
+  useEffect(() => {
+    if (!channel?.id) return;
+    const fetchTopPosts = async () => {
+      setLoadingCommunityPosts(true);
+      try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await axios.get(
+          `/api/channels/${channel.id}/community?page=1&limit=1&filter=popular`,
+          { headers }
+        );
+        setTopCommunityPosts(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error("Lỗi khi tải bài viết cộng đồng", err);
+      } finally {
+        setLoadingCommunityPosts(false);
+      }
+    };
+    fetchTopPosts();
+  }, [channel?.id]);
 
   const handleSaveSuccess = (newHandle) => {
     if (newHandle !== handle) {
@@ -1503,12 +1527,6 @@ export default function ChannelProfile() {
               >
                 Danh sách phát
               </button>
-              <button
-                onClick={() => setActiveTab("about")}
-                className={`pb-3 whitespace-nowrap transition-colors text-sm md:text-base font-semibold ${activeTab === "about" ? "text-[#FF4E00] border-b-[3px] border-[#FF4E00]" : "text-gray-400 hover:text-white"}`}
-              >
-                Giới thiệu
-              </button>
               {isOwner && (
                 <button
                   onClick={() => setActiveTab("revenue")}
@@ -1546,6 +1564,67 @@ export default function ChannelProfile() {
 
             return (
               <div className="space-y-12">
+
+
+                {/* 0. Giới thiệu về kênh (Compact & Premium) */}
+                <div className="bg-gradient-to-br mt-10 from-[#1A1A1A] to-[#121212] rounded-2xl border border-white/5 p-6 md:p-8 flex flex-col lg:flex-row gap-8 items-center shadow-2xl relative overflow-hidden group">
+                  {/* Background glow effects */}
+                  <div className="absolute -right-32 -top-32 w-96 h-96 bg-[#FF4E00]/10 rounded-full blur-3xl group-hover:bg-[#FF4E00]/15 transition-colors duration-500 pointer-events-none"></div>
+                  <div className="absolute -left-32 -bottom-32 w-96 h-96 bg-[#4FC3F7]/5 rounded-full blur-3xl group-hover:bg-[#4FC3F7]/10 transition-colors duration-500 pointer-events-none"></div>
+
+                  {/* Left: Description */}
+                  <div className="flex-1 w-full z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-[#FF4E00]/10 flex items-center justify-center">
+                        <Info className="w-4 h-4 text-[#FF4E00]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white tracking-tight">Giới thiệu</h3>
+                    </div>
+                    <p className="text-gray-400 text-sm md:text-base leading-relaxed whitespace-pre-wrap line-clamp-7 relative z-10">
+                      {channel.description || "Kênh này chưa có mô tả nào. Hãy cập nhật để người xem hiểu rõ hơn về bạn nhé!"}
+                    </p>
+                  </div>
+
+                  {/* Right: Stats grid */}
+                  <div className="w-full lg:w-[400px] grid grid-cols-2 gap-3 shrink-0 z-10">
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                      <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
+                        <Clock className="w-3.5 h-3.5 group-hover/card:text-[#4FC3F7] transition-colors" /> Đã tham gia
+                      </span>
+                      <span className="text-white font-bold text-sm">
+                        {new Date(channel.createdAt).toLocaleDateString("vi-VN")}
+                      </span>
+                    </div>
+
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                      <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
+                        <Globe className="w-3.5 h-3.5 group-hover/card:text-green-400 transition-colors" /> Quốc gia
+                      </span>
+                      <span className="text-white font-bold text-sm">
+                        {channel.country || "Chưa cập nhật"}
+                      </span>
+                    </div>
+
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                      <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 group-hover/card:text-purple-400 transition-colors" /> Tổng lượt xem
+                      </span>
+                      <span className="text-white font-bold text-sm">
+                        {formatViews(channel.totalViews || 0)}
+                      </span>
+                    </div>
+
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                      <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
+                        <Users className="w-3.5 h-3.5 group-hover/card:text-yellow-400 transition-colors" /> Người đăng ký
+                      </span>
+                      <span className="text-white font-bold text-sm">
+                        {formatViews(channel.subscriberCount || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 1. Nổi bật */}
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
                   {/* Left side: Featured Video */}
@@ -1770,7 +1849,7 @@ export default function ChannelProfile() {
                       </button>
                     </div>
                     <div className="grid grid-cols-3 gap-3 relative flex-1">
-                      {shortVideos.slice(0, 3).map((short) => (
+                      {shortVideos.slice(0, 6).map((short) => (
                         <Link
                           to={`/shorts?id=${short.id}`}
                           key={short.id}
@@ -1818,47 +1897,73 @@ export default function ChannelProfile() {
                     </div>
                   </div>
 
-                  {/* Community Mock */}
-                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg">
-                    <div className="flex items-center gap-2 text-white font-bold mb-5 text-lg">
-                      <span className="text-[#FF4E00]">{"<"}</span> Cộng đồng
+                  {/* Community - Real posts */}
+                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg flex flex-col">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2 text-white font-bold text-lg">
+                        <span className="text-[#FF4E00]">{"<"}</span> Cộng đồng
+                      </div>
+                      <Link
+                        to={`/c/${channel.handle}/community`}
+                        className="text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        Xem tất cả {'>'}
+                      </Link>
                     </div>
-                    <div className="space-y-4">
-                      <div className="bg-[#2A2A2A]/50 border border-white/5 rounded-xl p-4">
-                        <div className="flex gap-3 mb-3">
-                          <img
-                            src={
-                              channel?.avatarUrl ||
-                              "https://via.placeholder.com/40"
-                            }
-                            className="w-9 h-9 rounded-full shrink-0"
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-white font-medium">
-                                {channel?.channelName}
-                              </span>
-                              <span className="text-[10px] text-gray-500">
-                                2 ngày trước
+
+                    {loadingCommunityPosts ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-5 h-5 text-[#FF4E00] animate-spin" />
+                      </div>
+                    ) : topCommunityPosts.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                        <Users className="w-8 h-8 text-white/10" />
+                        <p className="text-gray-500 text-sm">Chưa có bài viết nào.</p>
+                      </div>
+                    ) : (() => {
+                      const post = topCommunityPosts[0];
+                      return (
+                        <Link
+                          to={`/c/${channel.handle}/community`}
+                          className="block bg-[#2A2A2A]/50 border border-white/5 rounded-xl p-4 hover:bg-[#2A2A2A]/80 hover:border-white/10 transition-all group"
+                        >
+                          <div className="flex gap-3 mb-3">
+                            <img
+                              src={post.authorAvatarUrl || channel?.avatarUrl || "https://via.placeholder.com/36"}
+                              className="w-9 h-9 rounded-full shrink-0 object-cover"
+                              alt={post.authorName}
+                            />
+                            <div>
+                              <span className="text-white text-sm font-semibold block">{post.authorName || channel?.channelName}</span>
+                              <span className="text-gray-500 text-[11px]">
+                                {post.createdAt ? new Date(post.createdAt).toLocaleDateString("vi-VN") : ""}
                               </span>
                             </div>
+                            {post.isMembersOnly && (
+                              <span className="ml-auto text-[10px] text-purple-400 font-medium px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20 self-start">
+                                Hội viên
+                              </span>
+                            )}
                           </div>
-                        </div>
-                        <p className="text-xs md:text-sm text-gray-300 mb-4 leading-relaxed">
-                          Bạn đang gặp vấn đề gì trong lập trình?
-                          <br />
-                          Hãy để lại bình luận, mình sẽ giải đáp nhé! 👇
-                        </p>
-                        <div className="flex items-center gap-5 text-gray-400 text-xs">
-                          <button className="flex items-center gap-1.5 hover:text-white transition-colors">
-                            👍 512
-                          </button>
-                          <button className="flex items-center gap-1.5 hover:text-white transition-colors">
-                            💬 128
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                          <p className="text-gray-300 text-sm leading-relaxed line-clamp-3 mb-3 group-hover:text-white transition-colors">
+                            {post.content || "Bài viết cộng đồng"}
+                          </p>
+                          {post.images && post.images.length > 0 && (
+                            <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-black/30">
+                              <img src={post.images[0]} className="w-full h-full object-cover" alt="" />
+                            </div>
+                          )}
+                          <div className="flex items-center gap-5 text-gray-400 text-xs pt-2 border-t border-white/5">
+                            <span className="flex items-center gap-1.5">
+                              👍 <span className="font-semibold text-white">{post.likesCount || 0}</span>
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              💬 <span className="font-semibold text-white">{post.commentsCount || 0}</span>
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })()}
                   </div>
 
                   {/* Recommended Channels Mock */}
@@ -1967,6 +2072,8 @@ export default function ChannelProfile() {
                     </div>
                   </div>
                 </div>
+
+                
               </div>
             );
           }
@@ -2062,7 +2169,7 @@ export default function ChannelProfile() {
             const topDonators = Array.from(topDonatorsMap.entries()).map(([name, data]) => ({name, ...data})).sort((a, b) => b.amount - a.amount).slice(0, 8);
 
             return (
-              <div className="space-y-6 animate-fade-in text-white pb-10">
+              <div className="space-y-6 animate-fade-in text-white pb-10 mt-10">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-2xl font-bold">Tổng quan</h3>
                   <div className="flex items-center gap-3">
@@ -2311,7 +2418,7 @@ if (activeTab === "videos") {
                     onCancelEdit={() => setEditingVideo(null)}
                   />
                 )}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <div className="flex flex-col mt-10 sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4">
                     <h3 className="text-xl font-bold text-white">
                       Tất cả video
@@ -2403,7 +2510,7 @@ if (activeTab === "videos") {
                     isShortType={true}
                   />
                 )}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <div className="flex flex-col mt-10 sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4">
                     <h3 className="text-xl font-bold text-white">
                       Tất cả video ngắn
@@ -2515,7 +2622,7 @@ if (activeTab === "videos") {
 
           if (activeTab === "playlists") {
             return (
-              <div className="w-full">
+              <div className="w-full mt-10">
                 {playlists.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-6">
                     {playlists.map((playlist) => (
@@ -2564,69 +2671,6 @@ if (activeTab === "videos") {
             return (
               <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
                 Bạn chưa thích video nào trên kênh này.
-              </div>
-            );
-          }
-
-          if (activeTab === "about") {
-            return (
-              <div className="bg-[#1A1A1A]/50 rounded-2xl border border-white/5 p-8 max-w-4xl">
-                <h3 className="text-xl font-bold text-white mb-6">
-                  Giới thiệu về kênh
-                </h3>
-                <p className="text-gray-300 whitespace-pre-wrap leading-relaxed mb-8 text-lg">
-                  {channel.description || "Kênh này chưa có mô tả nào."}
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-white/10 pt-8 mt-4">
-                  <div>
-                    <h4 className="text-white font-medium mb-4 text-lg">
-                      Chi tiết kênh
-                    </h4>
-                    <ul className="space-y-4 text-gray-400">
-                      <li className="flex items-center gap-3">
-                        <CheckCircle2 className={`w-5 h-5 ${channel.isVerified ? 'text-green-500 fill-green-500/20' : 'text-gray-500 hidden'}`} />
-                        <span className={!channel.isVerified ? '-ml-8' : ''}>
-                          {formatViews(channel.subscriberCount)} người đăng ký
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-[#4FC3F7]" />
-                        <span>
-                          {formatViews(channel.followingCount || 0)} đang theo
-                          dõi
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="text-white font-medium mb-4 text-lg">
-                      Thống kê chung
-                    </h4>
-                    <ul className="space-y-4 text-gray-400">
-                      <li className="flex items-center gap-3">
-                        <span className="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full text-xs">
-                          i
-                        </span>
-                        <span>
-                          Đã tham gia{" "}
-                          {new Date(channel.createdAt).toLocaleDateString(
-                            "vi-VN",
-                          )}
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <span className="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full text-xs">
-                          👁
-                        </span>
-                        <span>
-                          {formatViews(channel.totalViews || 0)} lượt xem
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
               </div>
             );
           }

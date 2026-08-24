@@ -10,6 +10,23 @@ export default function StudioRevenue() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+
+  const BANK_OPTIONS = [
+    { name: "Ví MoMo", value: "MoMo", logo: "/public/images/bank-logos/Icon-Momo.png" },
+    { name: "Ví ZaloPay", value: "ZaloPay", logo: "/public/images/bank-logos/Icon-ZaloPay.png" },
+    { name: "Ví VNPay", value: "VNPay", logo: "/public/images/bank-logos/Icon-VnPay.png" },
+    { name: "Vietcombank", value: "Vietcombank", logo: "/public/images/bank-logos/Icon-Vietcombank.png" },
+    { name: "Techcombank", value: "Techcombank", logo: "/public/images/bank-logos/Icon-Techcombank-TCB.png" },
+    { name: "MB Bank", value: "MB Bank", logo: "/public/images/bank-logos/Icon-MB-Bank-MBB.png" },
+    { name: "VietinBank", value: "VietinBank", logo: "/public/images/bank-logos/Icon-VietinBank-CTG.png" },
+    { name: "BIDV", value: "BIDV", logo: "/public/images/bank-logos/Icon-BIDV.png" },
+    { name: "Agribank", value: "Agribank", logo: "/public/images/bank-logos/Icon-Agribank.png" },
+    { name: "TPBank", value: "TPBank", logo: "/public/images/bank-logos/Icon-TPBank.png" },
+    { name: "VPBank", value: "VPBank", logo: "/public/images/bank-logos/Icon-VPBank.png" },
+    { name: "Sacombank", value: "Sacombank", logo: "/public/images/bank-logos/Icon-Sacombank.png" },
+  ];
+
   const [formData, setFormData] = useState({
     amountVnd: '',
     bankName: '',
@@ -417,16 +434,58 @@ export default function StudioRevenue() {
                 </div>
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Ngân hàng thụ hưởng</label>
-                <input
-                  type="text"
-                  name="bankName"
-                  value={formData.bankName}
-                  onChange={handleChange}
-                  className="w-full bg-[#0F0F13] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors text-sm"
-                  placeholder="Chọn ngân hàng"
-                />
+                <div 
+                  onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
+                  className="w-full bg-[#0F0F13] border border-white/10 rounded-xl px-4 py-3 text-white flex items-center justify-between cursor-pointer transition-colors hover:border-purple-500/50"
+                >
+                  {formData.bankName ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-white rounded-md p-0.5 flex shrink-0">
+                        <img 
+                          src={BANK_OPTIONS.find(b => b.value === formData.bankName)?.logo} 
+                          alt={formData.bankName} 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="text-sm">{BANK_OPTIONS.find(b => b.value === formData.bankName)?.name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500 text-sm">Chọn ngân hàng</span>
+                  )}
+                  <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isBankDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                {/* Danh sách thả xuống (Menu Dropdown) */}
+                {isBankDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsBankDropdownOpen(false)}
+                    ></div>
+                    
+                    <div className="absolute z-50 w-full mt-2 bg-[#141418] border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto  [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-[#141418] [&::-webkit-scrollbar-thumb]:bg-[#374151] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#4b5563] [scrollbar-width:thin] [scrollbar-color:#374151_#141418]">
+                      {BANK_OPTIONS.map((bank) => (
+                        <div
+                          key={bank.value}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, bankName: bank.value }));
+                            setIsBankDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 transition-colors ${formData.bankName === bank.value ? 'bg-purple-500/10 text-purple-400' : 'text-gray-300'}`}
+                        >
+                          <div className="w-8 h-8 bg-white rounded-md flex shrink-0">
+                            <img src={bank.logo} alt={bank.name} className="w-full h-full object-contain" />
+                          </div>
+                          <span className="text-sm font-medium">{bank.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div>

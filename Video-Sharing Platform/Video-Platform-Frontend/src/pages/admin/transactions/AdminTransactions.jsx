@@ -104,7 +104,7 @@ export default function AdminTransactions() {
     <div className="min-h-screen p-2 md:p-2">
       <div className="max-w-[1600px] mx-auto space-y-8">
         {/* Premium Transactions */}
-        <div className="bg-[#111111] rounded-2xl border border-[#FF4E00]/30 overflow-hidden shadow-[0_0_20px_rgba(255,78,0,0.05)]">
+        <div className="bg-[#141418] rounded-2xl border border-[#FF4E00]/30 overflow-hidden shadow-[0_0_20px_rgba(255,78,0,0.05)]">
           {/* Header & Filters */}
           <div className="p-6 border-b border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-gradient-to-r from-[#FF4E00]/5 to-transparent">
             <div className="flex items-center gap-4">
@@ -140,7 +140,7 @@ export default function AdminTransactions() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="border-b border-white/5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0f0f0f]/50">
+                <tr className="border-b border-white/5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-[#141418]/50">
                   <th className="px-6 py-5 whitespace-nowrap">Người dùng</th>
                   <th className="px-6 py-5 whitespace-nowrap">Gói nâng cấp</th>
                   <th className="px-6 py-5 whitespace-nowrap">Thời hạn</th>
@@ -288,7 +288,7 @@ export default function AdminTransactions() {
         </div>
 
         {/* Membership Transactions */}
-        <div className="bg-[#111111] rounded-2xl border border-[#9C27B0]/30 overflow-hidden shadow-[0_0_20px_rgba(156,39,176,0.05)] mt-8">
+        <div className="bg-[#141418] rounded-2xl border border-[#9C27B0]/30 overflow-hidden shadow-[0_0_20px_rgba(156,39,176,0.05)] mt-8">
           {/* Header & Filters */}
           <div className="p-6 border-b border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-gradient-to-r from-[#9C27B0]/5 to-transparent">
             <div className="flex items-center gap-4">
@@ -306,19 +306,19 @@ export default function AdminTransactions() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 w-44 cursor-pointer hover:bg-white/5 transition-colors">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-44 cursor-pointer hover:bg-white/5 transition-colors">
                 <span>Tất cả trạng thái</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </div>
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
                 <span>Tất cả phương thức</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </div>
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
                 <span>Tất cả kênh đăng ký</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </div>
-              <button className="p-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+              <button className="p-2.5 bg-[#141418] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
                 <Calendar className="w-5 h-5" />
               </button>
             </div>
@@ -328,7 +328,7 @@ export default function AdminTransactions() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="border-b border-white/5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0f0f0f]/50">
+                <tr className="border-b border-white/5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-[#141418]/50">
                   <th className="px-6 py-3 whitespace-nowrap text-center">Người dùng</th>
                   <th className="px-4 py-3 whitespace-nowrap text-center">Gói hội viên</th>
                   <th className="px-4 py-3 whitespace-nowrap text-center">TG bắt đầu</th>

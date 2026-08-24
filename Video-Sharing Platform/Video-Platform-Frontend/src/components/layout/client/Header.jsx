@@ -274,7 +274,7 @@ export default function Header({ toggleSidebar }) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 bg-[#0F0F0F]  border-white/5 flex items-center justify-between px-3 z-50">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-[#0F0F0F]  border-white/5 flex items-center justify-between px-3 z-50">
       {/* Left Area: Menu & Logo */}
       <div className="flex items-center gap-2">
         <button

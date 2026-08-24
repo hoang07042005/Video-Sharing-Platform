@@ -144,7 +144,7 @@ const AdminVideoCategory = () => {
           <p className="text-gray-400 text-sm">Tạo, chỉnh sửa và quản lý danh mục video dễ dàng.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-[#0F0F0F] p-1 rounded-xl border border-white/5">
+          <div className="flex bg-[#141418] p-1 rounded-xl border border-white/5">
             <button 
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-lg transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white' : 'text-gray-400 hover:text-white'}`}
@@ -168,7 +168,7 @@ const AdminVideoCategory = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-[#141418] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20">
             <FolderOpen className="w-6 h-6 text-purple-400" />
           </div>
@@ -179,7 +179,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
         
-        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-[#141418] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
             <FolderOpen className="w-6 h-6 text-emerald-400" />
           </div>
@@ -190,7 +190,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
 
-        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-[#141418] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20">
             <EyeOff className="w-6 h-6 text-orange-400" />
           </div>
@@ -201,7 +201,7 @@ const AdminVideoCategory = () => {
           </div>
         </div>
 
-        <div className="bg-bg-[#0F0F0F] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+        <div className="bg-[#141418] border border-white/5 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
             <LucideIcons.PlaySquare className="w-6 h-6 text-blue-400" />
           </div>
@@ -222,7 +222,7 @@ const AdminVideoCategory = () => {
               placeholder="Tìm kiếm danh mục..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:border-purple-500 focus:outline-none transition-colors"
+              className="w-full bg-[#141418] border border-white/10 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:border-purple-500 focus:outline-none transition-colors"
             />
             <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
           </div>
@@ -231,7 +231,7 @@ const AdminVideoCategory = () => {
             <select 
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none transition-colors cursor-pointer"
+              className="appearance-none bg-[#141418] border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none transition-colors cursor-pointer"
             >
               <option value="all">Trạng thái: Tất cả</option>
               <option value="active">Trạng thái: Hiển thị</option>
@@ -240,16 +240,16 @@ const AdminVideoCategory = () => {
             <LucideIcons.ChevronDown className="w-4 h-4 text-gray-400 absolute right-3.5 top-3 pointer-events-none" />
           </div>
 
-          <button onClick={() => {setSearchTerm(''); setFilterStatus('all');}} className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors shrink-0">
+          <button onClick={() => {setSearchTerm(''); setFilterStatus('all');}} className="flex items-center gap-2 px-4 py-2.5 bg-[#141418] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors shrink-0">
             <LucideIcons.RotateCcw className="w-4 h-4" /> Làm mới
           </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#141418] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
             <Download className="w-4 h-4" /> Xuất dữ liệu
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#141418] hover:bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm font-medium rounded-xl transition-colors">
             <Filter className="w-4 h-4" /> Bộ lọc
           </button>
         </div>
@@ -257,11 +257,11 @@ const AdminVideoCategory = () => {
 
       {/* Content */}
       {viewMode === 'list' ? (
-        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden">
+        <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden">
         <div className="w-full">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/5 bg-[#0F0F0F]/50">
+              <tr className="border-b border-white/5 bg-[#141418]/50">
                 <th className="px-6 py-4 font-semibold text-gray-400 text-xs w-10">
                   <input type="checkbox" className="rounded border-white/20 bg-transparent text-purple-600 focus:ring-purple-600/50 cursor-pointer" />
                 </th>

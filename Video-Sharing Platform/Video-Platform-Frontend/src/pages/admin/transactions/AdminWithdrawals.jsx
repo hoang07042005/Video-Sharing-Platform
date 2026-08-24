@@ -14,6 +14,7 @@ export default function AdminWithdrawals() {
   const [allWithdrawals, setAllWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
   const [processingId, setProcessingId] = useState(null);
   const [actionModal, setActionModal] = useState({
     isOpen: false,
@@ -28,6 +29,8 @@ export default function AdminWithdrawals() {
   useEffect(() => {
     fetchWithdrawals();
   }, []);
+
+  const uniqueBanks = Array.from(new Set(allWithdrawals.map(w => w.bankName).filter(Boolean)));
 
   const fetchWithdrawals = async () => {
     try {
@@ -45,9 +48,11 @@ export default function AdminWithdrawals() {
     }
   };
 
-  const withdrawals = allWithdrawals.filter(
-    (w) => filter === "all" || w.status === filter,
-  );
+  const withdrawals = allWithdrawals.filter((w) => {
+    const matchStatus = filter === "all" || w.status === filter;
+    const matchBank = bankFilter === "all" || w.bankName === bankFilter;
+    return matchStatus && matchBank;
+  });
 
   // Calculate Stats
   const totalRequests = allWithdrawals.length;
@@ -140,6 +145,47 @@ export default function AdminWithdrawals() {
         );
     }
   };
+
+  const getBankLogo = (bankName) => {
+    if (!bankName) return null;
+    const name = bankName.toLowerCase();
+
+    // 1. Xử lý riêng các Ví điện tử (Do link ảnh khác thư mục)
+    if (name.includes('momo')) return '/public/images/bank-logos/Icon-Momo.png';
+    if (name.includes('zalo')) return '/public/images/bank-logos/Icon-ZaloPay.png';
+    if (name.includes('vnpay')) return '/public/images/bank-logos/Icon-VnPay.png';
+
+    // 2. Danh sách map từ khóa ngân hàng với tên file Logo
+    const bankLogos = {
+      'vietcombank': 'Icon-Vietcombank.png',
+      'vcb': 'Icon-Vietcombank.png',
+      'techcombank': 'Icon-Techcombank-TCB.png',
+      'tcb': 'Icon-Techcombank-TCB.png',
+      'mb': 'Icon-MB-Bank-MBB.png',
+      'mbbank': 'Icon-MB-Bank-MBB.png',
+      'vietinbank': 'Icon-VietinBank-CTG.png',
+      'ctg': 'Icon-VietinBank-CTG.png',
+      'bidv': 'Icon-BIDV.png',
+      'agribank': 'Icon-Agribank.png',
+      'vib': 'Icon-VIB.png',
+      'tpbank': 'Icon-TPBank.png',
+      'tpb': 'Icon-TPBank.png',
+      'vpbank': 'Icon-VPBank.png',
+      'vpb': 'Icon-VPBank.png',
+      'sacombank': 'Icon-Sacombank.png',
+      'stb': 'Icon-Sacombank.png',
+    };
+
+    for (const [key, filename] of Object.entries(bankLogos)) {
+      if (name.includes(key)) {
+        // Trả về đường dẫn trỏ tới thư mục public của bạn
+        return `/public/images/bank-logos/${filename}`;
+      }
+    }
+
+    return null;
+  };
+
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
@@ -333,7 +379,7 @@ export default function AdminWithdrawals() {
       </div>
 
       {/* Filters & Table */}
-      <div className="bg-[#0F0F0F] border border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-[#141418] border border-white/5 rounded-xl overflow-hidden">
         {/* Toolbar */}
         <div className="p-4 border-b border-white/5 flex flex-wrap gap-4 items-center justify-between">
           {/* Tabs */}
@@ -379,46 +425,35 @@ export default function AdminWithdrawals() {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-2 bg-transparent border border-white/10 rounded-lg px-3 py-2">
-              <span className="text-sm text-gray-400">Tất cả ngân hàng</span>
+            <div className="relative">
+              <select
+                value={bankFilter}
+                onChange={(e) => setBankFilter(e.target.value)}
+                className="appearance-none flex items-center bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-2 text-sm text-gray-400 outline-none focus:border-purple-500 cursor-pointer min-w-[150px]"
+              >
+                <option value="all" className="bg-[#141418]">Tất cả ngân hàng</option>
+                {uniqueBanks.map((bank, index) => (
+                  <option key={index} value={bank} className="bg-[#141418]">
+                    {bank}
+                  </option>
+                ))}
+              </select>
               <svg
-                className="w-4 h-4 text-gray-500"
+                className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
-            <button className="flex items-center gap-2 bg-transparent border border-white/10 rounded-lg px-4 py-2 hover:bg-white/5">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-400">Bộ lọc</span>
-              <svg
-                className="w-4 h-4 text-gray-500 ml-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-400">
-            <thead className="bg-[#0A0A0C] text-gray-400 border-b border-white/5">
+            <thead className="bg-[#141418] text-gray-400 border-b border-white/5">
               <tr>
                 <th className="px-2 py-2  font-medium font-semibold cursor-pointer whitespace-nowrap">
                   Thời gian
@@ -636,11 +671,21 @@ export default function AdminWithdrawals() {
                         </div>
                       )}
                     </td>
-                    <td className="px-2 py-2 align-middle">
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 mt-0.5 rounded-sm bg-blue-600 flex items-center justify-center shrink-0">
-                          <Landmark className="w-2.5 h-2.5 text-white" />
-                        </div>
+                    <td className="px-0 py-0 align-middle">
+                      <div className="flex items-start gap-3">
+                        {getBankLogo(item.bankName) ? (
+                          <div className="w-10 h-10 mt-0.5 bg-white rounded-lg flex items-center justify-center shrink-0 ">
+                            <img 
+                              src={getBankLogo(item.bankName)} 
+                              alt={item.bankName} 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 mt-0.5 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                            <Landmark className="w-4 h-4 text-white" />
+                          </div>
+                        )}
                         <div>
                           <div className="text-sm text-gray-300 font-medium">
                             {item.bankName}

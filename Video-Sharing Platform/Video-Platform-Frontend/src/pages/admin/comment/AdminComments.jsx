@@ -166,7 +166,7 @@ const AdminComments = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 p-4 flex flex-col justify-between h-[100px]">
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-6 flex flex-col justify-between h-[150px]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                   <MessageSquare className="w-4 h-4 text-purple-400" />
@@ -181,7 +181,7 @@ const AdminComments = () => {
               </div>
             </div>
 
-            <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 p-4 flex flex-col justify-between h-[100px]">
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-6 flex flex-col justify-between h-[150px]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                   <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -196,7 +196,7 @@ const AdminComments = () => {
               </div>
             </div>
 
-            <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 p-4 flex flex-col justify-between h-[100px]">
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-6 flex flex-col justify-between h-[150px]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
                   <Clock className="w-4 h-4 text-yellow-400" />
@@ -211,7 +211,7 @@ const AdminComments = () => {
               </div>
             </div>
 
-            <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 p-4 flex flex-col justify-between h-[100px]">
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-6 flex flex-col justify-between h-[150px]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20">
                   <ShieldBan className="w-4 h-4 text-red-400" />
@@ -226,7 +226,7 @@ const AdminComments = () => {
               </div>
             </div>
 
-            <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 p-4 flex flex-col justify-between h-[100px]">
+            <div className="bg-[#141418] rounded-2xl border border-white/5 p-6 flex flex-col justify-between h-[150px]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                   <Flag className="w-4 h-4 text-blue-400" />
@@ -245,35 +245,35 @@ const AdminComments = () => {
       {/* Filters Toolbar */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
             <div className="relative flex-1">
-              <input type="text" placeholder="Tìm kiếm bình luận, tên video, người dùng..." className="w-full bg-bg-[#0F0F0F] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" />
+              <input type="text" placeholder="Tìm kiếm bình luận, tên video, người dùng..." className="w-full bg-[#141418] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" />
               <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
             </div>
             
             <div className="flex gap-3 overflow-x-auto scrollbar-hide">
               <div className="relative shrink-0">
-                <select className="appearance-none bg-bg-[#0F0F0F] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
+                <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
                   <option>Tất cả video</option>
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
               </div>
               <div className="relative shrink-0">
-                <select className="appearance-none bg-bg-[#0F0F0F] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
+                <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
                   <option>Tất cả trạng thái</option>
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
               </div>
               <div className="relative shrink-0">
-                <select className="appearance-none bg-bg-[#0F0F0F] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
+                <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
                   <option>Tất cả thời gian</option>
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
               </div>
-              <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#1C1C24] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors cursor-pointer">
+              <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors cursor-pointer">
                 <LucideIcons.RotateCcw className="w-4 h-4" /> Làm mới
               </button>
             </div>
 
-            <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-bg-[#0F0F0F] hover:bg-[#1C1C24] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors md:ml-auto cursor-pointer">
+            <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors md:ml-auto cursor-pointer">
               <Filter className="w-4 h-4" /> Bộ lọc nâng cao
             </button>
           </div>
@@ -284,7 +284,7 @@ const AdminComments = () => {
         <div className="flex-1 flex flex-col min-w-0 h-full">
 
           {/* Main Table */}
-          <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col flex-1">
+          <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col flex-1">
             <div className="w-full">
               <table className="w-full text-left text-sm">
                 <thead>
@@ -484,7 +484,7 @@ const AdminComments = () => {
 
         {/* RIGHT COLUMN: Banned Keywords Sidebar */}
         <div className="w-full xl:w-[380px] shrink-0 h-full">
-          <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col h-full">
+          <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col h-full">
             <div className="p-5 border-b border-white/5 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 Từ khóa bị cấm <LucideIcons.Sparkles className="w-4 h-4 text-gray-500" />

@@ -616,7 +616,7 @@ export default function Trending() {
                                 alt=""
                                 className="w-4 h-4 rounded-full object-cover"
                               />
-                              <span className="truncate max-w-[100px]">
+                              <span className="truncate max-w-[200px]">
                                 {video.channelName}
                               </span>
                               {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}

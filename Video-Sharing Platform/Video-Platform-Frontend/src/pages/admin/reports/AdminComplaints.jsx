@@ -66,6 +66,22 @@ export default function AdminComplaints() {
     }
   };
 
+  const getTargetTypeColor = (type) => {
+    const typeStr = (type || 'Video').toLowerCase();
+    switch (typeStr) {
+      case 'video':
+        return 'bg-blue-500/10 text-blue-400 border border-blue-500/20'; // Màu xanh dương
+      case 'comment':
+        return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'; // Màu xanh lá
+      case 'livemessage':
+        return 'bg-purple-500/10 text-purple-400 border border-purple-500/20'; // Màu tím
+      case 'user':
+        return 'bg-orange-500/10 text-orange-400 border border-orange-500/20'; // Màu cam
+      default:
+        return 'bg-white/10 text-gray-300 border border-white/10'; // Màu mặc định
+    }
+  };
+
   const filteredReports = reports.filter(r => {
     if (filter === 'All') return true;
     if (filter === 'Pending') return r.status === 'Chờ xử lý';
@@ -119,10 +135,10 @@ export default function AdminComplaints() {
             <input 
               type="text" 
               placeholder="Tìm theo ID báo cáo, người dùng..." 
-              className="w-full bg-[#0F0F0F] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-[#141418] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
             />
           </div>
-          <button className="p-2 bg-[#0F0F0F] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
+          <button className="p-2 bg-[#141418] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
             <Filter className="w-5 h-5" />
           </button>
         </div>
@@ -154,7 +170,7 @@ export default function AdminComplaints() {
       </div>
 
       {/* Reports Table */}
-      <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5">
+      <div className="bg-[#141418] p-5 rounded-2xl border border-white/5">
         <div className="w-full">
           <table className="w-full text-left">
             <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5">
@@ -203,7 +219,7 @@ export default function AdminComplaints() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="text-xs text-white font-medium bg-white/10 px-2 py-1 rounded">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-md ${getTargetTypeColor(report.targetType)}`}>
                         {report.targetType || 'Video'}
                       </span>
                     </td>
@@ -270,7 +286,7 @@ export default function AdminComplaints() {
 
       {isDetailOpen && selectedReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onClick={closeReportDetail}>
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#111111] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#141418] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-red-400">Chi tiết báo cáo</p>

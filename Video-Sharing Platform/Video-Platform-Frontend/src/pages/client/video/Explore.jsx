@@ -217,11 +217,6 @@ export default function Explore() {
         <div className="absolute inset-0 bg-[#FF5722]/10 mix-blend-overlay" />
         
         <div className="relative z-10 max-w-[1500px] w-full mx-auto px-6 md:px-10">
-          {/* Tagline */}
-          <div className="flex items-center gap-2 text-[#FF5722] text-xs font-bold uppercase tracking-widest mb-4">
-            <Sparkle className="w-4 h-4 fill-[#FF5722]" /> Khám phá không giới hạn
-          </div>
-          
           {/* Main Title */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] mb-4">
             Khám phá thế giới <br/>

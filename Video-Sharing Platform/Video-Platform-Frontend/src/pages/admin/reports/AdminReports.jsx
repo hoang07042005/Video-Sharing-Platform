@@ -138,7 +138,7 @@ export default function AdminReports() {
       {/* ─── A. KPI Cards ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6">
         {/* Card 1 */}
-        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
+        <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
           <div className="px-5 flex gap-4">
             <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
               <Flag className="w-6 h-6 text-red-500" />
@@ -165,7 +165,7 @@ export default function AdminReports() {
         </div>
         
         {/* Card 2 */}
-        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
+        <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
           <div className="px-5 flex gap-4">
             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20">
               <AlertTriangle className="w-6 h-6 text-orange-400" />
@@ -192,7 +192,7 @@ export default function AdminReports() {
         </div>
 
         {/* Card 3 */}
-        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
+        <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
           <div className="px-5 flex gap-4">
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20">
               <ShieldAlert className="w-6 h-6 text-purple-400" />
@@ -219,7 +219,7 @@ export default function AdminReports() {
         </div>
 
         {/* Card 4 */}
-        <div className="bg-bg-[#0F0F0F] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
+        <div className="bg-[#141418] rounded-2xl border border-white/5 overflow-hidden flex flex-col justify-between pt-5">
           <div className="px-5 flex gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
               <ShieldCheck className="w-6 h-6 text-emerald-400" />
@@ -250,7 +250,7 @@ export default function AdminReports() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         
         {/* Trend Chart */}
-        <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 lg:col-span-2 h-[420px] flex flex-col">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 lg:col-span-2 h-[420px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
               <Activity className="w-5 h-5 text-gray-400" />
@@ -307,7 +307,7 @@ export default function AdminReports() {
         </div>
 
         {/* Action Priority */}
-        <div className="bg-bg-[#0F0F0F] p-6 rounded-2xl border border-white/5 lg:col-span-1 h-[420px] flex flex-col">
+        <div className="bg-[#141418] p-6 rounded-2xl border border-white/5 lg:col-span-1 h-[420px] flex flex-col">
           <h3 className="text-base font-bold text-white mb-6">Mức độ ưu tiên</h3>
           <div className="flex-1 flex flex-col items-center justify-center gap-8">
             
@@ -376,7 +376,7 @@ export default function AdminReports() {
       </div>
 
       {/* ─── C. Recent Reports Table ─── */}
-      <div className="bg-bg-[#0F0F0F] p-5 rounded-2xl border border-white/5">
+      <div className="bg-[#141418] p-5 rounded-2xl border border-white/5">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-base font-bold text-white">Danh sách báo cáo mới nhất</h3>
           <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1c23] border border-white/5 rounded-xl text-xs font-semibold text-gray-300 hover:bg-white/5 transition-colors cursor-pointer">

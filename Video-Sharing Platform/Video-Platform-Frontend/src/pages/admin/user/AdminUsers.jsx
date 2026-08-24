@@ -8,11 +8,12 @@ import {
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // State for Filters & Pagination
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // all, active, banned, admin
+  const [activeTab, setActiveTab] = useState('all'); // all, active, banned
   const [roleFilter, setRoleFilter] = useState('Tất cả');
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   const [dateFilter, setDateFilter] = useState('Tất cả thời gian');
@@ -45,10 +46,15 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(res.data);
+      const requestConfig = { headers: { Authorization: `Bearer ${token}` } };
+      const [usersRes, rolesRes] = await Promise.all([
+        axios.get('/api/admin/users', requestConfig),
+        axios.get('/api/admin/roles', requestConfig)
+      ]);
+      setUsers(usersRes.data);
+      setAvailableRoles(rolesRes.data
+        .map(role => role.name || role.Name)
+        .filter(Boolean));
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -84,14 +90,17 @@ export default function AdminUsers() {
   const newUsers = Math.floor(totalUsers * 0.02) || 0; 
   const activeUsers = users.filter(u => !u.isBanned).length;
   const bannedUsers = users.filter(u => u.isBanned).length;
-  const adminUsers = users.filter(u => u.roles?.includes('Admin')).length;
+  const roleOptions = [...new Set([
+    ...availableRoles,
+    ...users.flatMap(user => user.roles || [])
+  ])].sort((a, b) => a.localeCompare(b));
 
   // Filtering Logic
   const filteredUsers = users.filter(u => {
     // Tab filtering
     if (activeTab === 'active' && u.isBanned) return false;
     if (activeTab === 'banned' && !u.isBanned) return false;
-    if (activeTab === 'admin' && !u.roles?.includes('Admin')) return false;
+    if (activeTab !== 'all' && activeTab !== 'active' && activeTab !== 'banned' && !u.roles?.includes(activeTab)) return false;
 
     // Search filtering
     const matchesSearch = u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -99,9 +108,7 @@ export default function AdminUsers() {
                           u.id?.toString().includes(searchTerm);
     
     // Role filter
-    const matchesRole = roleFilter === 'Tất cả' || 
-                        (roleFilter === 'Admin' && u.roles?.includes('Admin')) || 
-                        (roleFilter === 'User' && (!u.roles || !u.roles.includes('Admin')));
+    const matchesRole = roleFilter === 'Tất cả' || u.roles?.includes(roleFilter);
 
     // Status filter
     const matchesStatus = statusFilter === 'Tất cả' ||
@@ -155,7 +162,7 @@ export default function AdminUsers() {
 
       {/* ─── KPI Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-purple-500/30 transition-colors">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-purple-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-purple-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
@@ -167,7 +174,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 12.5% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-green-500/30 transition-colors">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-green-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-green-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
@@ -179,7 +186,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 18.3% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-orange-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-orange-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.1)]">
@@ -191,7 +198,7 @@ export default function AdminUsers() {
           <p className="text-[11px] text-green-400 font-medium relative z-10">↑ 9.7% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-red-500/30 transition-colors">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-red-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-red-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
@@ -203,16 +210,16 @@ export default function AdminUsers() {
           <p className="text-[11px] text-red-400 font-medium relative z-10">↓ 4.3% <span className="text-gray-500 font-normal">so với tuần trước</span></p>
         </div>
 
-        <div className="bg-[#0F0F0F] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-blue-500/30 transition-colors">
+        <div className="bg-[#141418] p-5 rounded-2xl border border-white/5 flex flex-col justify-center relative overflow-hidden group hover:border-blue-500/30 transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/10 transition-colors"></div>
           <div className="flex items-center gap-4 mb-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
               <Shield className="w-5 h-5 text-blue-400" />
             </div>
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Admin</span>
+            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Vai trò</span>
           </div>
-          <p className="text-3xl font-bold text-white mb-1.5 relative z-10">{adminUsers.toLocaleString()}</p>
-          <p className="text-[11px] text-gray-500 font-medium relative z-10">— không đổi</p>
+          <p className="text-3xl font-bold text-white mb-1.5 relative z-10">{roleOptions.length.toLocaleString()}</p>
+          <p className="text-[11px] text-gray-500 font-medium relative z-10">tự động từ hệ thống</p>
         </div>
       </div>
 
@@ -220,15 +227,18 @@ export default function AdminUsers() {
       <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-6">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           {/* Search */}
-          <div className="relative w-full md:w-80 h-[42px]">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm theo tên, email hoặc ID..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-full bg-[#0F0F0F] border border-white/10 text-white pl-11 pr-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors text-sm"
-            />
-            <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
+          <div className="flex flex-col gap-1.5 w-full md:w-auto">
+            <label className="text-[10px] text-gray-500 font-medium ml-1">Tìm kiếm</label>
+            <div className="relative w-full md:w-80 h-[42px]">
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm theo tên, email hoặc ID..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-full bg-[#141418] border border-white/10 text-white pl-11 pr-4 rounded-xl focus:outline-none focus:border-purple-500 transition-colors text-sm"
+              />
+              <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
+            </div>
           </div>
 
           {/* Role Filter */}
@@ -238,11 +248,10 @@ export default function AdminUsers() {
               <select 
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full md:w-36 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-36 h-full appearance-none bg-[#141418] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả</option>
-                <option>Admin</option>
-                <option>User</option>
+                {roleOptions.map(role => <option key={role}>{role}</option>)}
               </select>
               <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -255,7 +264,7 @@ export default function AdminUsers() {
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full md:w-40 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-40 h-full appearance-none bg-[#141418] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả</option>
                 <option>Đang hoạt động</option>
@@ -272,7 +281,7 @@ export default function AdminUsers() {
               <select 
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full md:w-48 h-full appearance-none bg-[#0F0F0F] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full md:w-48 h-full appearance-none bg-[#141418] border border-white/10 text-gray-300 text-sm rounded-xl pl-4 pr-10 focus:outline-none focus:border-purple-500 cursor-pointer"
               >
                 <option>Tất cả thời gian</option>
                 <option>Tháng này</option>
@@ -284,7 +293,7 @@ export default function AdminUsers() {
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto mt-5 md:mt-0">
-           <button onClick={() => fetchUsers()} className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
+           <button onClick={() => fetchUsers()} className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#141418] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
              <RefreshCw className="w-4 h-4" /> Làm mới
            </button>
            {/* <button className="flex items-center justify-center gap-2 px-5 h-[42px] bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
@@ -294,7 +303,7 @@ export default function AdminUsers() {
       </div>
 
       {/* ─── Main Content ─── */}
-      <div className="bg-[#0F0F0F] rounded-2xl border border-white/5 flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[#141418] rounded-2xl border border-white/5 flex flex-col shadow-2xl overflow-hidden">
         
         {/* Tabs Row */}
         <div className="flex items-center gap-8 px-6 border-b border-white/5 bg-[#0F0F0F]/50 overflow-x-auto">
@@ -302,7 +311,7 @@ export default function AdminUsers() {
             { id: 'all', label: 'Tất cả', count: totalUsers },
             { id: 'active', label: 'Đang hoạt động', count: activeUsers },
             { id: 'banned', label: 'Bị khóa', count: bannedUsers },
-            { id: 'admin', label: 'Admin', count: adminUsers }
+           
           ].map(tab => (
             <button
               key={tab.id}
@@ -349,7 +358,6 @@ export default function AdminUsers() {
                 </tr>
               ) : (
                 paginatedUsers.map(user => {
-                  const isAdmin = user.roles?.includes('Admin');
                   const isBanned = user.isBanned;
 
                   return (
@@ -370,13 +378,13 @@ export default function AdminUsers() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center justify-center px-3 py-1 rounded text-[11px] font-medium ${
-                          isAdmin 
-                            ? 'bg-purple-900/40 text-purple-300' 
-                            : 'bg-white/5 text-gray-300'
-                        }`}>
-                          {isAdmin ? 'Admin' : 'User'}
-                        </span>
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          {(user.roles || []).map(role => (
+                            <span key={role} className="inline-flex items-center justify-center px-3 py-1 rounded bg-purple-900/40 text-purple-300 text-[11px] font-medium">
+                              {role}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -404,13 +412,6 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Xem chi tiết">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Sửa thông tin">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          
                           {/* More Options Dropdown */}
                           <div className="relative" ref={openMenuId === user.id ? menuRef : null}>
                             <button 
@@ -422,9 +423,6 @@ export default function AdminUsers() {
                             
                             {openMenuId === user.id && (
                               <div className="absolute right-0 mt-2 w-48 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-1 z-50">
-                                <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
-                                  <UserCheck className="w-4 h-4" /> Xem lịch sử
-                                </button>
                                 {!user.roles?.includes('Admin') && (
                                   <>
                                     <div className="h-px bg-white/5 my-1"></div>
