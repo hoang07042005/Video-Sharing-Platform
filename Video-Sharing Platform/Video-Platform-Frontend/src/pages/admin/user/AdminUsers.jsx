@@ -21,6 +21,7 @@ export default function AdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [openRoleMenuId, setOpenRoleMenuId] = useState(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -81,6 +82,25 @@ export default function AdminUsers() {
     } catch (error) {
       console.error('Error toggling user ban:', error);
       alert('Có lỗi xảy ra khi thay đổi trạng thái!');
+    }
+  };
+
+  const handleChangeRole = async (userId, newRole) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.put(
+        `/api/admin/users/${userId}/role`,
+        { roles: [newRole] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers(users.map(u =>
+        u.id === userId ? { ...u, roles: res.data.roles ?? [newRole] } : u
+      ));
+      setOpenMenuId(null);
+      setOpenRoleMenuId(null);
+    } catch (error) {
+      console.error('Error changing role:', error);
+      alert('Có lỗi xảy ra khi đổi vai trò!');
     }
   };
 
@@ -379,11 +399,20 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          {(user.roles || []).map(role => (
-                            <span key={role} className="inline-flex items-center justify-center px-3 py-1 rounded bg-purple-900/40 text-purple-300 text-[11px] font-medium">
-                              {role}
-                            </span>
-                          ))}
+                          {(user.roles?.length ? user.roles : ['User']).map(role => {
+                            const roleStyle = {
+                              Admin:     'bg-red-900/40 text-red-300 border border-red-700/30',
+                              Moderator: 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/30',
+                              Support:   'bg-blue-900/40 text-blue-300 border border-blue-700/30',
+                              Creator:   'bg-green-900/40 text-green-300 border border-green-700/30',
+                              User:      'bg-gray-800/60 text-gray-400 border border-white/10',
+                            }[role] ?? 'bg-purple-900/40 text-purple-300 border border-purple-700/30';
+                            return (
+                              <span key={role} className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded text-[11px] font-medium ${roleStyle}`}>
+                                {role}
+                              </span>
+                            );
+                          })}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -422,7 +451,42 @@ export default function AdminUsers() {
                             </button>
                             
                             {openMenuId === user.id && (
-                              <div className="absolute right-0 mt-2 w-48 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-1 z-50">
+                              <div className="absolute right-0 mt-2 w-52 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-1 z-50">
+                                {/* Change Role */}
+                                {!user.roles?.includes('Admin') && (
+                                  <div className="relative">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setOpenRoleMenuId(openRoleMenuId === user.id ? null : user.id); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center justify-between gap-2 text-blue-300 hover:bg-blue-500/10 transition-colors"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <Shield className="w-4 h-4" /> Đổi vai trò
+                                      </span>
+                                      <span className="text-white/40 text-xs">▶</span>
+                                    </button>
+                                    {/* Role submenu */}
+                                    {openRoleMenuId === user.id && (
+                                      <div className="absolute right-full top-0 mr-1 w-44 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-1 z-50">
+                                        <p className="px-4 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider font-semibold border-b border-white/5 mb-1">Chọn vai trò</p>
+                                        {roleOptions.filter(r => r !== 'Admin').map(role => (
+                                          <button
+                                            key={role}
+                                            onClick={() => handleChangeRole(user.id, role)}
+                                            className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                                              user.roles?.includes(role)
+                                                ? 'text-purple-300 bg-purple-500/10'
+                                                : 'text-gray-300 hover:bg-white/10'
+                                            }`}
+                                          >
+                                            {user.roles?.includes(role) && <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />}
+                                            {!user.roles?.includes(role) && <span className="w-1.5 h-1.5 shrink-0" />}
+                                            {role}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                                 {!user.roles?.includes('Admin') && (
                                   <>
                                     <div className="h-px bg-white/5 my-1"></div>
