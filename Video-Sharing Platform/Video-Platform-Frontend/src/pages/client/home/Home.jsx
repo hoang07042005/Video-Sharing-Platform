@@ -301,9 +301,12 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
         <div className="min-w-0 flex-1 flex flex-col items-center text-center">
           <Link
             to={`/c/${channel.handle}`}
-            className="text-white text-[13px] font-bold line-clamp-1 hover:text-white/80 transition-colors block"
+            className="text-white text-[13px] font-bold hover:text-white/80 transition-colors flex items-center justify-center gap-1"
           >
-            {channel.channelName}
+            <span className="line-clamp-1">{channel.channelName}</span>
+            {(channel.isVerified === true || channel.isVerified === "true") && (
+              <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />
+            )}
           </Link>
           {/* <p className="text-gray-400 text-[11px] mt-0.5">{channel.handle}</p> */}
           <p className="text-gray-400 text-[11px] mt-0.5">

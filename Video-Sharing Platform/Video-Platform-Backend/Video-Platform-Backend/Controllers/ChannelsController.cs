@@ -28,6 +28,7 @@ namespace Video_Platform_Backend.Controllers
         public async Task<IActionResult> GetAllChannels([FromQuery] int limit = 10)
         {
             var channels = await _context.Channels
+                .Where(c => !c.IsSuspended)
                 .Include(c => c.User)
                     .ThenInclude(u => u.Profile)
                 .Select(c => new ChannelCardDTO
@@ -39,7 +40,8 @@ namespace Video_Platform_Backend.Controllers
                     SubscriberCount = _context.Followers.Count(f => f.ChannelId == c.Id),
                     IsVerified = c.IsVerified
                 })
-                .OrderByDescending(c => c.SubscriberCount)
+                .OrderByDescending(c => c.IsVerified)
+                .ThenByDescending(c => c.SubscriberCount)
                 .Take(limit)
                 .ToListAsync();
 
@@ -460,6 +462,9 @@ namespace Video_Platform_Backend.Controllers
 
             var channel = await _context.Channels.FindAsync(channelId);
             if (channel == null) return NotFound(new { message = "KÃªnh khÃ´ng tá»“n táº¡i." });
+
+            if (channel.UserId == userId)
+                return BadRequest(new { message = "B\u1ea1n kh\u00f4ng th\u1ec3 \u0111\u0103ng k\u00fd k\u00eanh c\u1ee7a ch\u00ednh m\u00ecnh." });
 
             var existingFollow = await _context.Followers.FirstOrDefaultAsync(f => f.FollowerId == userId && f.ChannelId == channelId);
             bool isSubscribed = false;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock, Play, AlertTriangle, X, Crown } from 'lucide-react';
+import { Loader2, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, CheckCircle, CheckCircle2, ListPlus, Download, Flag, Bell, Zap, ChevronUp, ChevronDown, XCircle, Lock, Play, AlertTriangle, X, Crown } from 'lucide-react';
 import VideoCard from '../../../components/home/VideoCard';
 import { addDownload } from './Downloads';
 import SaveToPlaylistDropdown from '../../../components/video/SaveToPlaylistDropdown';

@@ -30,6 +30,12 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
   const [showControls, setShowControls] = useState(true);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState('main'); // 'main', 'speed', 'resolution'
+
+  // YouTube-style double-click seek
+  const [seekFlash, setSeekFlash] = useState(null); // null | 'left' | 'right'
+  const [seekAmount, setSeekAmount] = useState(10);
+  const clickTimerRef = useRef(null);
+  const seekFlashTimerRef = useRef(null);
   
   const controlsTimeoutRef = useRef(null);
   const progressRef = useRef(null);
@@ -141,8 +147,7 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
   };
 
   // Playback Controls
-  const togglePlay = (e) => {
-    e?.stopPropagation();
+  const togglePlay = () => {
     if (!playerRef.current) return;
     if (playerRef.current.paused()) {
       playerRef.current.play().catch(() => {});
@@ -151,14 +156,47 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
     }
   };
 
-  const skipTime = (amount, e) => {
-    e?.stopPropagation();
+  const skipTime = (amount) => {
     if (!playerRef.current) return;
     const currentVidTime = playerRef.current.currentTime();
     const vidDuration = playerRef.current.duration() || duration;
     const newTime = Math.max(0, Math.min(currentVidTime + amount, vidDuration));
     playerRef.current.currentTime(newTime);
   };
+
+  // YouTube-style click handler: single click = play/pause, double click = seek
+  const handleContainerClick = useCallback((e) => {
+    e.stopPropagation();
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const isLeft = e.clientX - rect.left < rect.width / 2;
+
+    if (clickTimerRef.current) {
+      // Double click detected
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+
+      const amount = isLeft ? -10 : 10;
+      skipTime(amount);
+
+      // Show ripple flash
+      if (seekFlashTimerRef.current) clearTimeout(seekFlashTimerRef.current);
+      setSeekAmount(Math.abs(amount));
+      setSeekFlash(isLeft ? 'left' : 'right');
+      seekFlashTimerRef.current = setTimeout(() => setSeekFlash(null), 700);
+    } else {
+      // First click — wait to see if double click follows
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+        togglePlay();
+      }, 220);
+    }
+  }, [duration, isPlaying]);
+
+  const handleDoubleClick = useCallback((e) => {
+    // Prevent default fullscreen from double-click; handled in handleContainerClick
+    e.stopPropagation();
+  }, []);
 
   const toggleMute = (e) => {
     e?.stopPropagation();
@@ -277,8 +315,8 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
       className={`relative w-full h-full bg-black flex overflow-hidden group select-none ${!showControls && isPlaying ? 'cursor-none' : ''}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onClick={togglePlay}
-      onDoubleClick={toggleFullscreen}
+      onClick={handleContainerClick}
+      onDoubleClick={handleDoubleClick}
     >
       <div ref={videoRef} className="w-full h-full pointer-events-none" />
 
@@ -290,6 +328,52 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
           </div>
         </div>
       )}
+
+      {/* YouTube-style Seek Flash — Left */}
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-1/3 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${seekFlash === 'left' ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <div className="relative flex flex-col items-center gap-1">
+          {/* Ripple circle */}
+          <div
+            className="absolute w-32 h-32 rounded-full bg-white/10"
+            style={{
+              animation: seekFlash === 'left' ? 'yt-ripple 0.6s ease-out forwards' : 'none',
+            }}
+          />
+          <div className="relative z-10 flex flex-col items-center gap-0.5">
+            <div className="flex">
+              {[0,1,2].map(i => (
+                <Rewind key={i} className="w-5 h-5 text-white" style={{ opacity: 1 - i * 0.25 }} />
+              ))}
+            </div>
+            <span className="text-white text-xs font-semibold">{seekAmount} giây</span>
+          </div>
+        </div>
+      </div>
+
+      {/* YouTube-style Seek Flash — Right */}
+      <div
+        className={`absolute right-0 top-0 bottom-0 w-1/3 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${seekFlash === 'right' ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <div className="relative flex flex-col items-center gap-1">
+          {/* Ripple circle */}
+          <div
+            className="absolute w-32 h-32 rounded-full bg-white/10"
+            style={{
+              animation: seekFlash === 'right' ? 'yt-ripple 0.6s ease-out forwards' : 'none',
+            }}
+          />
+          <div className="relative z-10 flex flex-col items-center gap-0.5">
+            <div className="flex">
+              {[2,1,0].map(i => (
+                <FastForward key={i} className="w-5 h-5 text-white" style={{ opacity: 1 - i * 0.25 }} />
+              ))}
+            </div>
+            <span className="text-white text-xs font-semibold">{seekAmount} giây</span>
+          </div>
+        </div>
+      </div>
 
       {/* Controls Overlay */}
       <div 
@@ -317,14 +401,8 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
         <div className="flex items-center justify-between">
           {/* Left Controls */}
           <div className="flex items-center gap-4 text-white">
-            <button type="button" onClick={togglePlay} className="hover:text-white/80 transition-colors focus:outline-none">
+            <button type="button" onClick={(e) => { e.stopPropagation(); togglePlay(); }} className="hover:text-white/80 transition-colors focus:outline-none">
               {isPlaying ? <Pause className="w-6 h-6" fill="currentColor" /> : <Play className="w-6 h-6" fill="currentColor" />}
-            </button>
-            <button type="button" onClick={(e) => skipTime(-10, e)} className="hover:text-white/80 transition-colors focus:outline-none" title="Tua lại 10s">
-              <Rewind className="w-5 h-5" />
-            </button>
-            <button type="button" onClick={(e) => skipTime(10, e)} className="hover:text-white/80 transition-colors focus:outline-none" title="Tua tới 10s">
-              <FastForward className="w-5 h-5" />
             </button>
 
             {/* Volume */}
@@ -352,7 +430,8 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
           {/* Right Controls */}
           <div className="flex items-center gap-4 text-white relative">
             <button 
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowSettingsMenu(!showSettingsMenu);
                 setActiveSettingsTab('main');
               }} 
@@ -448,15 +527,23 @@ const CustomVideoPlayer = ({ options, onReady, resolutions, currentResolutionUrl
               </div>
             )}
 
-            <button onClick={togglePiP} className="hover:text-white/80 transition-colors focus:outline-none" title="Trình phát thu nhỏ">
+            <button onClick={(e) => { e.stopPropagation(); togglePiP(e); }} className="hover:text-white/80 transition-colors focus:outline-none" title="Trình phát thu nhỏ">
               <PictureInPicture className="w-5 h-5" />
             </button>
-            <button onClick={toggleFullscreen} className="hover:text-white/80 transition-colors focus:outline-none" title="Toàn màn hình">
+            <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(e); }} className="hover:text-white/80 transition-colors focus:outline-none" title="Toàn màn hình">
               <Maximize className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Ripple keyframe */}
+      <style>{`
+        @keyframes yt-ripple {
+          0%   { transform: scale(0.5); opacity: 0.5; }
+          100% { transform: scale(2);   opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

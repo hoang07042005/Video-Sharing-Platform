@@ -1002,6 +1002,8 @@ export default function ChannelProfile() {
   const [coinSpentDateFilter, setCoinSpentDateFilter] = useState("");
   const [topCommunityPosts, setTopCommunityPosts] = useState([]);
   const [loadingCommunityPosts, setLoadingCommunityPosts] = useState(false);
+  const [recommendedChannels, setRecommendedChannels] = useState([]);
+  const [recommendedSubscribedIds, setRecommendedSubscribedIds] = useState([]);
 
   const [membershipStatus, setMembershipStatus] = useState({ isMember: false });
 
@@ -1149,6 +1151,60 @@ export default function ChannelProfile() {
     };
     fetchTopPosts();
   }, [channel?.id]);
+
+  useEffect(() => {
+    if (!channel?.id) return;
+
+    let cancelled = false;
+    const fetchRecommendedChannels = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const [channelsRes, subscribedRes] = await Promise.all([
+          axios.get("/api/channels?limit=50"),
+          token ? axios.get("/api/channels/subscribed", { headers }) : Promise.resolve({ data: [] }),
+        ]);
+
+        if (cancelled) return;
+
+        const subscribedIds = (subscribedRes.data || []).map((item) => item.id);
+        const rankedChannels = (channelsRes.data || [])
+          .filter((item) => String(item.id).toLowerCase() !== String(channel.id).toLowerCase())
+          .sort((a, b) => {
+            const verificationDifference = Number(b.isVerified === true || b.isVerified === "true") - Number(a.isVerified === true || a.isVerified === "true");
+            return verificationDifference || (b.subscriberCount || 0) - (a.subscriberCount || 0);
+          })
+          .slice(0, 3);
+
+        setRecommendedSubscribedIds(subscribedIds);
+        setRecommendedChannels(rankedChannels);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to fetch recommended channels", err);
+          setRecommendedChannels([]);
+        }
+      }
+    };
+
+    fetchRecommendedChannels();
+    return () => { cancelled = true; };
+  }, [channel?.id]);
+
+  const toggleRecommendedSubscription = async (channelId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await axios.post(`/api/channels/${channelId}/follow`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRecommendedSubscribedIds((previous) => res.data.isSubscribed
+        ? [...new Set([...previous, channelId])]
+        : previous.filter((id) => id !== channelId));
+    } catch (err) {
+      console.error("Failed to update channel subscription", err);
+    }
+  };
 
   const handleSaveSuccess = (newHandle) => {
     if (newHandle !== handle) {
@@ -1711,10 +1767,7 @@ export default function ChannelProfile() {
                   {/* Right side: Featured List */}
                   <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-5 h-full flex flex-col">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-[16px]">
-                      <span className="text-[#FF4E00] font-black text-lg">
-                        {"<"}
-                      </span>{" "}
-                      Nổi bật
+                      <span className="text-white font-black text-lg">Nổi bật</span>
                     </div>
 
                     <div className="space-y-4 flex-1">
@@ -1741,10 +1794,36 @@ export default function ChannelProfile() {
                             </div>
                           </div>
 
-                          {/* Title */}
-                          <h4 className="text-[13px] font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-white transition-colors">
-                            {v.title}
-                          </h4>
+                          {/* Badge Shorts */}
+                          {v.isShort && (
+                            <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded uppercase tracking-wider z-10">
+                              Shorts
+                            </span>
+                          )}
+                          <div className="flex flex-col gap-0.5">
+                            {/* Title */}
+                            <h4 className="text-[13px] font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-white transition-colors">
+                              {v.title}
+                            </h4>
+                            <span className="text-[12px] text-gray-400 line-clamp-2">
+                              {v.description}
+                            </span>
+
+                            {/* Views & Time */}
+                            <div className="flex items-center gap-1 text-[12px] text-gray-400">
+                              <span className="text-[12px] text-gray-400">
+                                {v.channelName}
+                              </span>
+                              <span> · </span>
+                              {v.isShort ? (
+                                <span>{formatTime(v.duration)} trước</span>
+                              ) : (
+                                <span>{formatViews(v.views)} views</span>
+                              )}
+                              <span>·</span>
+                              <span>{getTimeAgo(v.createdAt)}</span>
+                            </div>
+                          </div>
                         </Link>
                       ))}
                       {featuredList.length === 0 && (
@@ -1966,53 +2045,42 @@ export default function ChannelProfile() {
                     })()}
                   </div>
 
-                  {/* Recommended Channels Mock */}
+                  {/* Recommended Channels */}
                   <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-lg">
                       <span className="text-[#FF4E00]">{"<"}</span> Kênh bạn nên
                       xem
                     </div>
                     <div className="space-y-5">
-                      {[
-                        {
-                          name: "F8 Official",
-                          subs: "1,2 Tr",
-                          avt: "https://ui-avatars.com/api/?name=F8&background=random",
-                        },
-                        {
-                          name: "Vinh Xô",
-                          subs: "892 N",
-                          avt: "https://ui-avatars.com/api/?name=VX&background=random",
-                        },
-                        {
-                          name: "Code With Harry",
-                          subs: "3,1 Tr",
-                          avt: "https://ui-avatars.com/api/?name=CH&background=random",
-                        },
-                      ].map((c, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
+                      {recommendedChannels.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3">
+                          <Link to={`/c/${item.handle}`} className="flex items-center gap-3 min-w-0">
                             <img
-                              src={c.avt}
+                              src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.channelName || "Channel")}`}
                               className="w-10 h-10 rounded-full shrink-0"
+                              alt={item.channelName}
                             />
-                            <div>
-                              <h4 className="text-white text-sm font-medium">
-                                {c.name}
+                            <div className="min-w-0">
+                              <h4 className="text-white text-sm font-medium flex items-center gap-1">
+                                <span className="truncate">{item.channelName}</span>
+                                {(item.isVerified === true || item.isVerified === "true") && <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />}
                               </h4>
                               <p className="text-gray-500 text-xs">
-                                {c.subs} đăng ký
+                                {formatViews(item.subscriberCount || 0)} {"\u0111\u0103ng k\u00fd"}
                               </p>
                             </div>
-                          </div>
-                          <button className="px-4 py-1.5 bg-white/10 hover:bg-[#FF4E00] text-white text-xs font-medium rounded-full transition-colors">
-                            Đăng ký
+                          </Link>
+                          <button
+                            onClick={() => toggleRecommendedSubscription(item.id)}
+                            className="px-4 py-1.5 bg-white/10 hover:bg-[#FF4E00] text-white text-xs font-medium rounded-full transition-colors shrink-0"
+                          >
+                            {recommendedSubscribedIds.includes(item.id) ? "\u0110\u00e3 \u0111\u0103ng k\u00fd" : "\u0110\u0103ng k\u00fd"}
                           </button>
                         </div>
                       ))}
+                      {recommendedChannels.length === 0 && (
+                        <p className="text-gray-500 text-sm">{"Ch\u01b0a c\u00f3 k\u00eanh ph\u00f9 h\u1ee3p \u0111\u1ec3 \u0111\u1ec1 xu\u1ea5t."}</p>
+                      )}
                     </div>
                   </div>
                 </div>

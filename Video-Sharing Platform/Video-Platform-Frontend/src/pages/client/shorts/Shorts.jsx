@@ -185,6 +185,12 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
     }
   };
 
+  const isOwnChannel = (() => {
+    const currentUserId = getCurrentUserId();
+    return Boolean(currentUserId && short.ownerUserId) &&
+      String(currentUserId).toLowerCase() === String(short.ownerUserId).toLowerCase();
+  })();
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const isoString = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
@@ -396,10 +402,10 @@ function ShortItem({ short, isActive, isMuted, onMuteToggle, showComments, onTog
                 {short.channelHandle}
               </span>
               {(short.channelIsVerified === true || short.channelIsVerified === "true" || short.isVerified === true) && (
-                <CheckCircle className="w-3 h-3 text-green-500 fill-green-500 shrink-0" />
+                <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
               )}
             </Link>
-            {!followed ? (
+            {isOwnChannel ? null : !followed ? (
               <button
                 onClick={handleFollow}
                 className="ml-2 px-3 py-1 bg-white text-black text-[13px] font-semibold rounded-full hover:bg-white/90 transition-colors cursor-pointer"

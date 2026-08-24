@@ -66,7 +66,7 @@ export default function FeaturedHero({ video, totalSlides = 4, currentSlide = 0,
       </button>
 
       {/* Content — left side, vertically centered */}
-      <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-8 md:p-12 max-w-[65%] z-10">
+      <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-8 md:p-12 max-w-[80%] z-10">
         {/* Badge */}
         <div className="inline-flex items-center gap-1.5 bg-[#FF5722] text-white text-[11px] font-bold px-3 py-1.5 rounded-full mb-5 uppercase tracking-wider w-fit shadow-lg shadow-[#FF5722]/30">
           <Flame className="w-3.5 h-3.5" />

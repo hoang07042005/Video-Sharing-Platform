@@ -319,7 +319,7 @@ export default function Header({ toggleSidebar }) {
           onSubmit={handleSearchSubmit}
           className="relative flex justify-end"
         >
-          <div className="relative w-[500px] flex justify-end">
+          <div className="relative w-[500px] h-8 flex justify-end">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none">
               <Search className="w-full h-full" />
             </div>
@@ -578,11 +578,7 @@ export default function Header({ toggleSidebar }) {
                       <Crown className={`w-4 h-4 ${tier === 2 ? 'text-orange-500' : 'text-purple-400'}`} fill="currentColor" />
                     </div>
                   )}
-                  {isChannelVerified && (
-                    <div className="absolute -bottom-1 -right-1 bg-[#1a1a1a] rounded-full p-0.5">
-                      <CheckCircle className="w-4 h-4 text-white fill-green-500 shrink-0" fill="currentColor" />
-                    </div>
-                  )}
+                  
                 </div>
                 <div className="hidden md:flex flex-col">
                   <span className={`text-[15px] font-bold leading-tight ${tier === 2 ? 'text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500' : 'text-white'}`}>
@@ -591,6 +587,11 @@ export default function Header({ toggleSidebar }) {
                   <span className="text-[12px] text-gray-400 mt-0.5 group-hover:text-gray-300 transition-colors">
                     Xem kênh của bạn
                   </span>
+                  {isChannelVerified && (
+                    <div className="absolute top-6 right-0 bg-[#1a1a1a] rounded-full p-0.5">
+                      <CheckCircle className="w-4 h-4 text-white fill-green-500 shrink-0" fill="currentColor" />
+                    </div>
+                  )}
                 </div>
               </button>
 
