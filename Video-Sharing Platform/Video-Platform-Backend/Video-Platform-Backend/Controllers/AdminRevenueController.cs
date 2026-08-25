@@ -47,6 +47,7 @@ namespace Video_Platform_Backend.Controllers
                 decimal totalDonateFee = 0;
                 decimal totalMembershipFee = 0;
                 decimal totalOwnCoinsFee = 0;
+                decimal totalPremiumFee = 0;
 
                 var now = DateTime.UtcNow;
                 var currentMonthStart = new DateTime(now.Year, now.Month, 1);
@@ -148,7 +149,62 @@ namespace Video_Platform_Backend.Controllers
                     }
                 }
 
-                history.Reverse(); // Newest first
+                var premiumUpgrades = await _context.Transactions
+                    .Include(t => t.Payment).ThenInclude(p => p.User).ThenInclude(u => u.Profile)
+                    .Where(t => t.TransactionType != null && t.TransactionType.StartsWith("PremiumUpgrade_") && 
+                               (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
+                    .ToListAsync();
+
+                foreach (var pu in premiumUpgrades)
+                {
+                    decimal puFee = pu.Amount;
+                    if (puFee <= 0) continue;
+
+                    totalRevenue += puFee;
+                    totalPremiumFee += puFee;
+
+                    var transactionTime = pu.CreatedAt ?? DateTime.UtcNow;
+
+                    if (transactionTime >= currentMonthStart)
+                    {
+                        currentMonthRevenue += puFee;
+                    }
+                    else if (transactionTime >= lastMonthStart && transactionTime < currentMonthStart)
+                    {
+                        lastMonthRevenue += puFee;
+                    }
+
+                    string dayKey = transactionTime.ToString("yyyy-MM-dd");
+                    if (dailyRevenueDict.ContainsKey(dayKey))
+                    {
+                        dailyRevenueDict[dayKey] += puFee;
+                    }
+
+                        string plan = "PREMIUM";
+                        string cycle = "Tháng";
+                        if (!string.IsNullOrEmpty(pu.TransactionType))
+                        {
+                            var parts = pu.TransactionType.Split('_');
+                            if (parts.Length > 1) plan = parts[1].ToUpper();
+                            if (parts.Length > 2) cycle = parts[2] == "Monthly" ? "Tháng" : "Năm";
+                        }
+                        
+                        history.Add(new
+                        {
+                            Id = pu.Id,
+                            CreatedAt = transactionTime,
+                            StreamerName = pu.Payment?.User?.Profile?.FullName ?? pu.Payment?.User?.Email ?? "Unknown",
+                            StreamerEmail = pu.Payment?.User?.Email ?? "Unknown",
+                            StreamerAvatar = pu.Payment?.User?.Profile?.AvatarUrl,
+                            AmountReceived = 0m,
+                            PlatformFee = puFee,
+                            GrossAmount = puFee,
+                            MainSource = $"Gói {plan} - {cycle}"
+                        });
+                }
+
+                // Sort history by date descending
+                history = history.OrderByDescending(h => ((dynamic)h).CreatedAt).ToList();
 
                 var chartData = dailyRevenueDict.Select(kv => new
                 {
@@ -160,8 +216,9 @@ namespace Video_Platform_Backend.Controllers
                 {
                     new { name = "Từ Quà tặng", value = totalGiftFee },
                     new { name = "Từ Donate", value = totalDonateFee },
-                    new { name = "Từ Hội viên", value = totalMembershipFee },
-                    new { name = "Từ Xu cá nhân", value = totalOwnCoinsFee }
+                    new { name = "Từ Hội viên kênh", value = totalMembershipFee },
+                    new { name = "Từ Xu cá nhân", value = totalOwnCoinsFee },
+                    new { name = "Từ Gói nâng cấp", value = totalPremiumFee }
                 };
 
                 decimal percentChange = 0;

@@ -51,7 +51,7 @@ namespace Video_Platform_Backend.Controllers
             {
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
-                    .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && t.Payment.Status == "Completed")
+                    .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                     .SumAsync(t => t.Amount);
             }
 
@@ -242,7 +242,7 @@ namespace Video_Platform_Backend.Controllers
             {
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
-                    .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && t.Payment.Status == "Completed")
+                    .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                     .SumAsync(t => t.Amount);
             }
 

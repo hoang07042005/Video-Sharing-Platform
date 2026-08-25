@@ -223,7 +223,7 @@ namespace Video_Platform_Backend.Controllers
                          && t.TransactionType != null 
                          && t.TransactionType.StartsWith("ChannelMembership")
                          && t.Payment != null 
-                         && t.Payment.Status == "Completed")
+                         && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                 .SumAsync(t => t.Amount);
 
             return Ok(new { TotalRevenue = totalRevenue });
@@ -285,7 +285,7 @@ namespace Video_Platform_Backend.Controllers
             // 5: Coin Deposit History
             var depositHistory = await _context.Transactions
                 .Include(t => t.Payment)
-                .Where(t => t.Payment.UserId == userId && t.TransactionType == "BuyCoins" && t.Payment.Status == "Success")
+                .Where(t => t.Payment.UserId == userId && t.TransactionType == "BuyCoins" && (t.Payment.Status == "Success" || t.Payment.Status == "Completed"))
                 .OrderByDescending(t => t.CreatedAt)
                 .Select(t => new
                 {
@@ -318,7 +318,7 @@ namespace Video_Platform_Backend.Controllers
                          && t.TransactionType != null 
                          && t.TransactionType.StartsWith("ChannelMembership")
                          && t.Payment != null 
-                         && t.Payment.Status == "Completed")
+                         && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                 .SumAsync(t => t.Amount);
 
             var members = await _context.Subscriptions

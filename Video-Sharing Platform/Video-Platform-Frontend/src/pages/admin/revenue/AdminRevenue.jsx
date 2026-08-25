@@ -418,9 +418,28 @@ export default function AdminRevenue() {
                       </div>
                     </td>
                     <td className="px-5 py-3 align-middle">
-                      <span className="px-2 py-1 bg-white/5 text-gray-300 rounded text-xs border border-white/10">
-                        {item.mainSource}
-                      </span>
+                      {(() => {
+                        const source = item.mainSource;
+                        if (source.includes("Gói") || source.includes("PLUS") || source.includes("PREMIUM")) {
+                          const isPlus = source.includes("PLUS");
+                          const color = isPlus ? "text-[#FF4E00] border-[#FF4E00]/30 bg-[#FF4E00]/10" : "text-purple-400 border-purple-400/30 bg-purple-500/10";
+                          return <span className={`px-2 py-1 rounded text-[11px] font-medium border ${color}`}>{source}</span>;
+                        }
+                        
+                        switch(source) {
+                          case "Nạp Xu":
+                            return <span className="px-2 py-1 rounded text-[11px] font-medium border text-blue-400 border-blue-400/30 bg-blue-500/10">{source}</span>;
+                          case "Hội viên":
+                          case "Hội viên kênh":
+                            return <span className="px-2 py-1 rounded text-[11px] font-medium border text-pink-400 border-pink-400/30 bg-pink-500/10">{source}</span>;
+                          case "Donate":
+                            return <span className="px-2 py-1 rounded text-[11px] font-medium border text-green-400 border-green-400/30 bg-green-500/10">{source}</span>;
+                          case "Quà tặng":
+                            return <span className="px-2 py-1 rounded text-[11px] font-medium border text-yellow-400 border-yellow-400/30 bg-yellow-500/10">{source}</span>;
+                          default:
+                            return <span className="px-2 py-1 rounded text-[11px] font-medium border text-gray-300 border-white/10 bg-white/5">{source}</span>;
+                        }
+                      })()}
                     </td>
                   </tr>
                 ))

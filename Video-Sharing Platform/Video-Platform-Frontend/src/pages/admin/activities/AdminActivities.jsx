@@ -239,6 +239,19 @@ const AdminActivities = () => {
   ];
 
   const filteredActivities = activities.filter((activity) => {
+    // Ẩn nhật ký nâng cấp tài khoản và tham gia hội viên
+    const actionLower = (activity.action || "").toLowerCase();
+    const detailsLower = (activity.details || "").toLowerCase();
+    
+    if (
+      actionLower.includes("nâng cấp") ||
+      actionLower.includes("hội viên") ||
+      detailsLower.includes("nâng cấp") ||
+      detailsLower.includes("hội viên")
+    ) {
+      return false;
+    }
+
     const catInfo = getCategoryInfo(activity.target);
     if (selectedCategory !== "all" && catInfo.id !== selectedCategory) {
       return false;

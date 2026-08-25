@@ -48,6 +48,40 @@ export default function SearchResults() {
   const [shorts, setShorts] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [subscribedChannelIds, setSubscribedChannelIds] = useState([]);
+
+  // Load subscribed channels once on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    axios
+      .get("/api/channels/subscribed", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setSubscribedChannelIds((res.data || []).map((c) => c.id));
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleSubscription = async (channelId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await axios.post(
+        `/api/channels/${channelId}/follow`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSubscribedChannelIds((prev) =>
+        res.data.isSubscribed
+          ? [...new Set([...prev, channelId])]
+          : prev.filter((id) => id !== channelId)
+      );
+    } catch (err) {
+      console.error("Failed to toggle subscription", err);
+    }
+  };
 
   useEffect(() => {
     if (!query.trim()) {
@@ -146,9 +180,18 @@ export default function SearchResults() {
                             {formatViews(channel.subscriberCount)} người đăng ký
                           </span>
                         </div>
-                        <button className="mt-3 bg-white text-black px-4 py-1.5 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer">
-                          Đăng ký
-                        </button>
+                      <button
+                        onClick={() => toggleSubscription(channel.id)}
+                        className={`mt-3 px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+                          subscribedChannelIds.includes(channel.id)
+                            ? "bg-white/10 text-white hover:bg-white/20"
+                            : "bg-white text-black hover:bg-gray-200"
+                        }`}
+                      >
+                        {subscribedChannelIds.includes(channel.id)
+                          ? "Đã đăng ký"
+                          : "Đăng ký"}
+                      </button>
                       </div>
                     </div>
                   ))}

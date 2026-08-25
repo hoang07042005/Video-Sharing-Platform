@@ -234,7 +234,7 @@ export default function Premium() {
 
           {/* Plus Card */}
           <div
-            className={`bg-gradient-to-b from-[#1E112B] to-[#111111] rounded-3xl p-8 border border-[#9C27B0]/30 flex flex-col h-full hover:border-[#9C27B0]/60 transition-all relative ${getPlanStatus("Pro", isYearly) === "downgrade" ? "opacity-50 pointer-events-none grayscale" : ""}`}
+            className={`bg-gradient-to-b from-[#1E112B] to-[#111111] rounded-3xl p-8 border border-[#9C27B0]/30 flex flex-col h-full hover:border-[#9C27B0]/60 transition-all relative ${getPlanStatus("Plus", isYearly) === "downgrade" ? "opacity-50 pointer-events-none grayscale" : ""}`}
           >
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#9C27B0] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               Phổ biến
@@ -253,18 +253,18 @@ export default function Premium() {
               </span>
             </div>
             <button
-              onClick={() => handlePayment("Pro", isYearly ? 470000 : 49000)}
+              onClick={() => handlePayment("Plus", isYearly ? 470000 : 49000)}
               disabled={
-                isLoading || getPlanStatus("Pro", isYearly) !== "upgrade"
+                isLoading || getPlanStatus("Plus", isYearly) !== "upgrade"
               }
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-bold mb-8 hover:opacity-90 transition-opacity shadow-[0_0_15px_rgba(94,53,177,0.4)] disabled:opacity-50"
             >
-              {getPlanStatus("Pro", isYearly) === "current"
+              {getPlanStatus("Plus", isYearly) === "current"
                 ? premiumUntil
                   ? `HSD: ${premiumUntil.toLocaleDateString("vi-VN")}`
                   : "Gói hiện tại"
-                : getPlanStatus("Pro", isYearly) === "upgrade" &&
-                    currentPlan === "Pro"
+                : getPlanStatus("Plus", isYearly) === "upgrade" &&
+                    currentPlan === "Plus"
                   ? "Nâng cấp lên Năm"
                   : "Nâng cấp ngay"}
             </button>

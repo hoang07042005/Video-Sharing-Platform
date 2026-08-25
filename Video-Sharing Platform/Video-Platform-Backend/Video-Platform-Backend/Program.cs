@@ -44,6 +44,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddSingleton<IVideoRecordingService, VideoRecordingService>();
 builder.Services.AddHostedService<VideoRecordingBackgroundService>();
+builder.Services.AddHostedService<SubscriptionExpirationBackgroundService>();
 
 builder.Services.AddAuthentication(options =>
 {

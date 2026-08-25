@@ -1538,7 +1538,20 @@ export default function ChannelProfile() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => setIsSubscribed(!isSubscribed)}
+                      onClick={async () => {
+                        const token = localStorage.getItem("token");
+                        if (!token) return;
+                        try {
+                          const res = await axios.post(
+                            `/api/channels/${channel.id}/follow`,
+                            {},
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          setIsSubscribed(res.data.isSubscribed);
+                        } catch (err) {
+                          console.error("Failed to toggle subscription", err);
+                        }
+                      }}
                       className={`px-5 py-2 rounded-full font-semibold text-sm transition-all flex items-center gap-1.5 ${
                         isSubscribed
                           ? "bg-white/10 text-white hover:bg-white/20"

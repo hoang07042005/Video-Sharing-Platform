@@ -126,13 +126,11 @@ export default function Header({ toggleSidebar }) {
         if (!plan) return;
 
         const normalizedPlan =
-          plan.toLowerCase() === "family"
-            ? "Family"
-            : plan.toLowerCase() === "premium"
-              ? "Premium"
-              : plan.toLowerCase() === "pro"
-                ? "Pro"
-                : "Free";
+          plan.toLowerCase() === "premium"
+            ? "Premium"
+            : plan.toLowerCase() === "plus"
+              ? "Plus"
+              : "Free";
 
         setCurrentPlan(normalizedPlan);
         localStorage.setItem("plan", normalizedPlan);
@@ -140,7 +138,7 @@ export default function Header({ toggleSidebar }) {
         const currentTier =
           normalizedPlan === "Premium"
             ? 2
-            : normalizedPlan === "Pro" || normalizedPlan === "Family"
+            : normalizedPlan === "Plus"
               ? 1
               : 0;
         localStorage.setItem("subscriptionTier", currentTier);
@@ -574,20 +572,15 @@ export default function Header({ toggleSidebar }) {
             {currentPlan && (
               <Link
                 to="/premium"
-                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-full border ${currentPlan === "Premium" ? "border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]" : currentPlan === "Family" ? "border-[#5E35B1]/60 bg-[#0c0a17] shadow-[0_0_15px_rgba(94,53,177,0.3)]" : "border-white/10 bg-[#1A1A1A] hover:bg-[#222]"} transition-colors cursor-pointer mx-1`}
+                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-full border ${currentPlan === "Premium" ? "border-[#FF9800]/60 bg-[#1f130b] shadow-[0_0_15px_rgba(255,152,0,0.3)]" : currentPlan === "Plus" ? "border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]" : "border-white/10 bg-[#1A1A1A] hover:bg-[#222]"} transition-colors cursor-pointer mx-1`}
               >
                 <div className="flex items-center justify-center">
                   {currentPlan === "Premium" ? (
                     <Crown
-                      className="w-[20px] h-[20px] text-[#9C27B0]"
+                      className="w-[20px] h-[20px] text-[#FF9800]"
                       fill="currentColor"
                     />
-                  ) : currentPlan === "Family" ? (
-                    <Users
-                      className="w-[20px] h-[20px] text-[#7E57C2]"
-                      fill="currentColor"
-                    />
-                  ) : currentPlan === "Pro" ? (
+                  ) : currentPlan === "Plus" ? (
                     <User className="w-5 h-5 text-[#9C27B0]" />
                   ) : (
                     <User className="w-5 h-5 text-gray-400" />
@@ -597,9 +590,7 @@ export default function Header({ toggleSidebar }) {
                   <span className="text-[12px] font-bold text-white leading-none">
                     {currentPlan === "Premium"
                       ? "Premium"
-                      : currentPlan === "Family"
-                        ? "Gia đình"
-                        : currentPlan === "Pro"
+                      : currentPlan === "Plus"
                           ? "PLUS"
                           : "Miễn phí"}
                   </span>

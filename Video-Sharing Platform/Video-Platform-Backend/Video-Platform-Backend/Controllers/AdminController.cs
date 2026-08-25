@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using System.Collections.Generic;
 using Video_Platform_Backend.Extensions;
+using System.Text.Json;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -19,6 +20,52 @@ namespace Video_Platform_Backend.Controllers
         public AdminController(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        private class BreakdownDataModel
+        {
+            public int OwnCoins { get; set; }
+            public decimal OwnCoinsVND { get; set; }
+            public decimal GiftVND { get; set; }
+            public decimal DonateVND { get; set; }
+            public decimal MembershipVND { get; set; }
+        }
+
+        private async Task<decimal> CalculatePlatformRevenueAsync(DateTime start, DateTime end)
+        {
+            decimal total = 0;
+            
+            // 1. Premium Upgrades
+            var premiumUpgrades = await _context.Transactions
+                .Include(t => t.Payment)
+                .Where(t => t.TransactionType != null && t.TransactionType.StartsWith("PremiumUpgrade_") &&
+                            (t.Payment.Status == "Completed" || t.Payment.Status == "Success") &&
+                            t.CreatedAt >= start && t.CreatedAt < end)
+                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+                
+            total += premiumUpgrades;
+            
+            // 2. Withdrawal Fees
+            var withdrawals = await _context.WithdrawalRequests
+                .Where(w => w.Status == "Completed" && (w.UpdatedAt ?? w.CreatedAt) >= start && (w.UpdatedAt ?? w.CreatedAt) < end)
+                .ToListAsync();
+                
+            foreach (var w in withdrawals)
+            {
+                if (!string.IsNullOrEmpty(w.BreakdownData))
+                {
+                    try
+                    {
+                        var bd = JsonSerializer.Deserialize<BreakdownDataModel>(w.BreakdownData);
+                        if (bd != null)
+                        {
+                            total += (bd.GiftVND * 3m / 7m) + (bd.DonateVND * 1m / 9m) + (bd.MembershipVND * 3m / 7m) + ((bd.OwnCoins * 100m) - bd.OwnCoinsVND);
+                        }
+                    }
+                    catch { }
+                }
+            }
+            return total;
         }
 
         [HttpGet("stats")]
@@ -77,13 +124,8 @@ namespace Video_Platform_Backend.Controllers
             var storageGrowth = CalculateGrowth((long)currentStorageGB, (long)previousStorageGB);
 
             // --- Doanh thu theo range ---
-            var monthlyRevenue = await _context.Transactions
-                .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEnd)
-                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
-
-            var previousRevenue = await _context.Transactions
-                .Where(t => t.CreatedAt >= prevRangeStart && t.CreatedAt < prevRangeEnd)
-                .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+            var monthlyRevenue = await CalculatePlatformRevenueAsync(rangeStart, rangeEnd);
+            var previousRevenue = await CalculatePlatformRevenueAsync(prevRangeStart, prevRangeEnd);
 
             var revenueGrowth = previousRevenue == 0
                 ? (monthlyRevenue > 0 ? 100m : 0m)
@@ -95,7 +137,7 @@ namespace Video_Platform_Backend.Controllers
                 .GroupBy(v => v.VideoId)
                 .Select(g => new { VideoId = g.Key, ViewCount = g.Count() })
                 .OrderByDescending(g => g.ViewCount)
-                .Take(8)
+                .Take(12)
                 .Join(_context.Videos
                     .Include(v => v.Channel)
                     .Include(v => v.VideoThumbnails),
@@ -117,7 +159,7 @@ namespace Video_Platform_Backend.Controllers
                     .Include(v => v.Channel)
                     .Include(v => v.VideoThumbnails)
                     .OrderByDescending(v => v.ViewsCount)
-                    .Take(8)
+                    .Take(12)
                     .Select(v => new {
                         Id = v.Id,
                         Title = v.Title,
@@ -135,7 +177,7 @@ namespace Video_Platform_Backend.Controllers
                 .GroupBy(channelId => channelId)
                 .Select(g => new { ChannelId = g.Key, ViewCount = g.Count() })
                 .OrderByDescending(g => g.ViewCount)
-                .Take(5)
+                .Take(8)
                 .Join(_context.Channels
                     .Include(c => c.User).ThenInclude(u => u.Profile)
                     .Include(c => c.Subscriptions),
@@ -157,7 +199,7 @@ namespace Video_Platform_Backend.Controllers
                     .Include(c => c.User).ThenInclude(u => u.Profile)
                     .Include(c => c.Subscriptions)
                     .OrderByDescending(c => c.Subscriptions.Count(s => s.Status == "Active" || s.Status == null))
-                    .Take(5)
+                    .Take(8)
                     .Select(c => new {
                         Id = c.Id,
                         ChannelName = c.ChannelName,
@@ -177,7 +219,7 @@ namespace Video_Platform_Backend.Controllers
                 })
                 .Where(c => c.Value > 0)
                 .OrderByDescending(c => c.Value)
-                .Take(5)
+                .Take(8)
                 .ToListAsync();
 
             // Fallback categories nếu không có video mới trong range
@@ -187,7 +229,7 @@ namespace Video_Platform_Backend.Controllers
                     .Select(c => new { Name = c.Name, Value = _context.Videos.Count(v => v.CategoryId == c.Id) })
                     .Where(c => c.Value > 0)
                     .OrderByDescending(c => c.Value)
-                    .Take(5)
+                    .Take(8)
                     .ToListAsync();
             }
 
@@ -241,6 +283,26 @@ namespace Video_Platform_Backend.Controllers
                 })
                 .ToListAsync();
 
+            var recentPremiumUpgrades = await _context.Transactions
+                .Include(t => t.Payment)
+                    .ThenInclude(p => p.User)
+                    .ThenInclude(u => u.Profile)
+                .Where(t => t.TransactionType != null && t.TransactionType.StartsWith("PremiumUpgrade")
+                    && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(8)
+                .Select(t => new {
+                    Id = t.Id,
+                    User = t.Payment.User.Profile != null && !string.IsNullOrWhiteSpace(t.Payment.User.Profile.FullName)
+                        ? t.Payment.User.Profile.FullName
+                        : t.Payment.User.Email,
+                    UserAvatar = t.Payment.User.Profile != null ? t.Payment.User.Profile.AvatarUrl : null,
+                    TransactionType = t.TransactionType,
+                    Amount = t.Amount,
+                    Time = t.CreatedAt != null ? FormatRelativeTime(t.CreatedAt.Value) : "Mới đây"
+                })
+                .ToListAsync();
+
             return Ok(new
             {
                 TotalUsers = currentPeriodUsers,
@@ -261,7 +323,8 @@ namespace Video_Platform_Backend.Controllers
                 CategoryDistribution = categories,
                 RecentReports = recentReports,
                 RecentActivities = recentActivities,
-                RecentTransactions = recentTransactions
+                RecentTransactions = recentTransactions,
+                RecentPremiumUpgrades = recentPremiumUpgrades
             });
         }
 

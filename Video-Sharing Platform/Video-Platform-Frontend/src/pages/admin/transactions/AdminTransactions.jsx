@@ -68,14 +68,23 @@ export default function AdminTransactions() {
 
   const getPremiumPlan = (transactionType) => {
     const plan = transactionType?.split("_")[1];
-    return plan === "Pro" || plan === "Family" || plan === "Premium"
-      ? plan
-      : "Premium";
+    if (plan === "Pro" || plan === "Plus") return "Plus";
+    return plan === "Premium" ? "Premium" : "Premium";
   };
 
   const getPremiumPlanLabel = (transactionType) => {
     const plan = getPremiumPlan(transactionType);
-    return plan === "Pro" ? "PLUS" : plan === "Family" ? "Gia đình" : plan;
+    return plan === "Plus" ? "PLUS" : plan;
+  };
+
+  const getPremiumPlanColor = (transactionType) => {
+    const plan = getPremiumPlan(transactionType);
+    return plan === "Plus" ? "text-[#9C27B0]" : "text-[#FF9800]";
+  };
+
+  const getPremiumPlanBg = (transactionType) => {
+    const plan = getPremiumPlan(transactionType);
+    return plan === "Plus" ? "bg-[#9C27B0]/10 text-[#9C27B0] border-[#9C27B0]/20" : "bg-[#FF9800]/10 text-[#FF9800] border-[#FF9800]/20";
   };
 
   const getPremiumCycleLabel = (transactionType) =>
@@ -211,14 +220,14 @@ export default function AdminTransactions() {
                         <div className="flex flex-col gap-1.5 items-start">
                           <div className="flex items-center gap-1.5">
                             <Crown
-                              className="w-4 h-4 text-[#FF4E00]"
+                              className={`w-4 h-4 ${getPremiumPlanColor(tx.transactionType)}`}
                               fill="currentColor"
                             />
                             <span className="font-semibold text-white text-[13px]">
                               {getPremiumPlanLabel(tx.transactionType)}
                             </span>
                           </div>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#FF4E00]/10 text-[#FF4E00] border border-[#FF4E00]/20">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${getPremiumPlanBg(tx.transactionType)}`}>
                             {getPremiumCycleLabel(tx.transactionType)}
                           </span>
                         </div>
@@ -257,7 +266,7 @@ export default function AdminTransactions() {
                         </div>
                       </td>
                       <td className="px-1 py-1">
-                        {tx.status === "Completed" ? (
+                        {tx.status === "Completed" || tx.status === "Success" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1  text-[11px] font-medium text-green-500">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Thành công
                           </span>
@@ -479,7 +488,7 @@ export default function AdminTransactions() {
                         </div>
                       </td>
                       <td className="px-1 py-1 w-25 text-center">
-                        {tx.status === "Completed" ? (
+                        {tx.status === "Completed" || tx.status === "Success" ? (
                           <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 text-[11px] font-medium text-green-500">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Thành công
                           </span>

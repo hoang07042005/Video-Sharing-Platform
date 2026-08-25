@@ -129,7 +129,7 @@ public class PaymentController : ControllerBase
                         Amount = response.Amount,
                         Currency = "VND",
                         PaymentMethod = "VNPAY",
-                        Status = "Success",
+                        Status = "Completed",
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Payments.Add(payment);
@@ -231,7 +231,7 @@ public class PaymentController : ControllerBase
                     {
                         // Update user premium status
                         user.IsPremium = true;
-                        user.CurrentPlan = plan is "Pro" or "Family" or "Premium" ? plan : "Premium";
+                        user.CurrentPlan = plan is "Plus" or "Premium" ? plan : "Premium";
                         var months = cycle == "Yearly" ? 12 : 1;
                         user.PremiumUntil = user.PremiumUntil.HasValue && user.PremiumUntil > DateTime.UtcNow
                             ? user.PremiumUntil.Value.AddMonths(months)
@@ -291,8 +291,8 @@ public class PaymentController : ControllerBase
                 return Ok(new { plan = "Free", premiumUntil = (DateTime?)null, coins = user.Coins });
             }
 
-            var plan = user.CurrentPlan is "Pro" or "Family" or "Premium"
-                ? user.CurrentPlan
+            var plan = user.CurrentPlan is "Plus" or "Pro" or "Family" or "Premium"
+                ? (user.CurrentPlan is "Pro" or "Family" ? "Plus" : user.CurrentPlan)
                 : "Premium";
             var cycle = "Monthly";
 

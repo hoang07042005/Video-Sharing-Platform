@@ -1331,9 +1331,6 @@ export default function AdminDashboard() {
             <h3 className="text-xs font-semibold text-white">
               Top video thịnh hành
             </h3>
-            <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">
-              Xem tất cả →
-            </span>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {stats?.topVideos?.map((video, idx) => (
@@ -1378,9 +1375,6 @@ export default function AdminDashboard() {
             <h3 className="text-xs font-semibold text-white">
               Top 5 kênh hàng đầu
             </h3>
-            <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">
-              Xem tất cả →
-            </span>
           </div>
           <div className="flex flex-col gap-3 p-3">
             {stats?.topChannels?.map((channel, idx) => (
@@ -1421,48 +1415,64 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Hoạt động hệ thống */}
+        {/* Tài khoản nâng cấp gói gần đây */}
         <div className="bg-[#141418] p-4 rounded-xl border border-white/5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-semibold text-white">
-              Hoạt động hệ thống
+            <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-orange-400" />
+              Tài khoản nâng cấp gói gần đây
             </h3>
-            <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">
-              Xem tất cả →
-            </span>
           </div>
-          <div className="flex flex-col gap-3 p-3 relative before:absolute before:inset-y-0 before:left-[28px] before:w-[1px] before:bg-white/10">
-            {stats?.recentActivities?.map((activity, idx) => {
-              const IconType =
-                activity.type === "user"
-                  ? Users
-                  : activity.type === "video"
-                    ? VideoIcon
-                    : DollarSign;
-              const color =
-                activity.type === "user"
-                  ? "text-purple-400 border-purple-500/40"
-                  : activity.type === "video"
-                    ? "text-pink-400 border-pink-500/40"
-                    : "text-orange-400 border-orange-500/40";
-              return (
-                <div key={idx} className="flex gap-3 relative z-10">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-[#141418] border ${color}`}
-                  >
-                    <IconType className="w-3 h-3" />
+          <div className="flex flex-col gap-2.5">
+            {stats?.recentPremiumUpgrades?.length > 0 ? (
+              stats.recentPremiumUpgrades.map((upgrade, idx) => {
+                const parts = (upgrade.transactionType || "").split("_");
+                const plan = parts[1] || "Premium";
+                const cycle = parts[2] === "Yearly" ? "Năm" : "Tháng";
+                const isPremium = plan === "Premium";
+                const planColor = isPremium
+                  ? "text-[#FF9800] bg-[#FF9800]/10 border-[#FF9800]/25"
+                  : "text-[#9C27B0] bg-[#9C27B0]/10 border-[#9C27B0]/25";
+                const crownColor = isPremium ? "text-[#FF9800]" : "text-[#9C27B0]";
+                return (
+                  <div key={idx} className="flex items-center gap-2.5 group">
+                    <div className="relative shrink-0">
+                      <img
+                        src={
+                          upgrade.userAvatar ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${upgrade.user}`
+                        }
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-transparent group-hover:ring-purple-500/40 transition-all"
+                        alt={upgrade.user}
+                      />
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center ${isPremium ? "bg-[#FF9800]" : "bg-[#9C27B0]"}`}>
+                        <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-gray-200 truncate group-hover:text-white transition-colors">
+                        {upgrade.user}
+                      </p>
+                      <p className="text-[9px] text-gray-500 mt-0.5">{upgrade.time}</p>
+                    </div>
+                    <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${planColor}`}>
+                        {plan === "Plus" ? "PLUS" : "PREMIUM"} · {cycle}
+                      </span>
+                      <span className="text-[10px] font-semibold text-gray-300">
+                        {Number(upgrade.amount).toLocaleString("vi-VN")}đ
+                      </span>
+                    </div>
                   </div>
-                  <div className="pt-0.5">
-                    <p className="text-[11px] text-gray-300 leading-snug">
-                      {activity.action}
-                    </p>
-                    <p className="text-[9px] text-gray-500 mt-0.5">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <p className="text-[11px] text-gray-500 text-center py-4">
+                Chưa có giao dịch nâng cấp nào
+              </p>
+            )}
           </div>
         </div>
       </div>
