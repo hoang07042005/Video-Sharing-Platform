@@ -19,6 +19,7 @@ import {
   Tv,
   Activity,
   HandCoins,
+  Trophy,
 } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect } from "react";
@@ -116,6 +117,7 @@ export default function AdminLayout() {
           icon: HandCoins,
         },
         { name: "Doanh thu", path: "/admin/revenue", icon: DollarSign },
+        { name: "Kiếm tiền", path: "/admin/monetization", icon: Trophy },
         { name: "Giao dịch", path: "/admin/transactions", icon: CreditCard },
       ],
     },

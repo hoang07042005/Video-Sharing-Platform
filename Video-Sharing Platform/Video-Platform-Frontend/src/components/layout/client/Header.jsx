@@ -22,6 +22,7 @@ import {
   Clock,
   CheckCircle,
   CheckCircle2,
+  Trophy,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -688,6 +689,13 @@ export default function Header({ toggleSidebar }) {
                     className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors"
                   >
                     <DollarSign className="w-4 h-4" /> Doanh thu & Rút tiền
+                  </Link>
+                  <Link
+                    to="/studio/monetization"
+                    onClick={() => setActiveDropdown(null)}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-sm text-gray-200 transition-colors"
+                  >
+                    <Trophy className="w-4 h-4" /> Kiếm tiền
                   </Link>
                   {isAdmin && (
                     <Link

@@ -39,6 +39,10 @@ public partial class Channel
 
     public bool CanUploadVideo { get; set; } = true;
 
+    public bool IsMonetized { get; set; } = false;
+
+    public string MonetizationStatus { get; set; } = "None"; // None, Eligible, Pending, Approved, Rejected
+
     public virtual ICollection<Follower> Followers { get; set; } = new List<Follower>();
 
     public virtual ICollection<Livestream> Livestreams { get; set; } = new List<Livestream>();

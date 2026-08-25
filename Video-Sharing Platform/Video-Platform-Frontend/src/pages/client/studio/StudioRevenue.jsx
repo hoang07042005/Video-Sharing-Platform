@@ -15,6 +15,8 @@ export default function StudioRevenue() {
   const [stats, setStats] = useState({
     totalDonatedMoney: 0,
     totalGiftedCoins: 0,
+    totalMembershipRevenue: 0,
+    totalVideoEarnings: 0,
   });
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +102,7 @@ export default function StudioRevenue() {
   const FEE_COIN_GIFT = 0.3; // 30% cho xu được tặng
   const FEE_DONATE = 0.1; // 10% cho tiền donate
   const FEE_MEMBERSHIP = 0.3; // 30% cho tiền hội viên
+  const FEE_VIDEO = 0.3; // 30% cho tiền từ video
 
   useEffect(() => {
     fetchData();
@@ -122,6 +125,7 @@ export default function StudioRevenue() {
         totalDonatedMoney: statsRes.data.totalDonatedMoney || 0,
         totalGiftedCoins: statsRes.data.totalGiftedCoins || 0,
         totalMembershipRevenue: statsRes.data.totalMembershipRevenue || 0,
+        totalVideoEarnings: statsRes.data.totalVideoEarnings || 0,
       });
     } catch (error) {
       toast.error("Lỗi khi tải dữ liệu doanh thu");
@@ -148,6 +152,9 @@ export default function StudioRevenue() {
     );
     let membershipCoins = Math.floor(
       ((stats.totalMembershipRevenue || 0) / COIN_RATE) * (1 - FEE_MEMBERSHIP),
+    );
+    let videoCoins = Math.floor(
+      ((stats.totalVideoEarnings || 0) / COIN_RATE) * (1 - FEE_VIDEO),
     );
 
     const totalWithdrawnCoins = withdrawals
@@ -180,15 +187,25 @@ export default function StudioRevenue() {
       remainingWithdrawn = 0;
     }
 
+    if (remainingWithdrawn >= videoCoins) {
+      remainingWithdrawn -= videoCoins;
+      videoCoins = 0;
+    } else {
+      videoCoins -= remainingWithdrawn;
+      remainingWithdrawn = 0;
+    }
+
     return {
       giftVND: giftCoins * COIN_RATE,
       donateVND: donateCoins * COIN_RATE,
       membershipVND: membershipCoins * COIN_RATE,
+      videoVND: videoCoins * COIN_RATE,
       rawGiftCoins: Math.floor(giftCoins / (1 - FEE_COIN_GIFT)),
       rawDonateVND: Math.floor((donateCoins / (1 - FEE_DONATE)) * COIN_RATE),
       rawMembershipVND: Math.floor(
         (membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE,
       ),
+      rawVideoVND: Math.floor((videoCoins / (1 - FEE_VIDEO)) * COIN_RATE),
     };
   };
 
@@ -201,6 +218,10 @@ export default function StudioRevenue() {
       Math.floor(
         ((stats.totalMembershipRevenue || 0) / COIN_RATE) *
           (1 - FEE_MEMBERSHIP),
+      ) +
+      Math.floor(
+        ((stats.totalVideoEarnings || 0) / COIN_RATE) *
+          (1 - FEE_VIDEO),
       );
 
     const totalWithdrawnCoins = withdrawals
@@ -485,6 +506,16 @@ export default function StudioRevenue() {
                 </div>
                 <div className="text-gray-300 font-medium">
                   {getRemainingVirtualBuckets().membershipVND.toLocaleString()}{" "}
+                  VNĐ <span className="text-red-400 ml-1">(-30%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                  <span className="text-gray-400">Tiền từ Video:</span>
+                </div>
+                <div className="text-gray-300 font-medium">
+                  {getRemainingVirtualBuckets().videoVND.toLocaleString()}{" "}
                   VNĐ <span className="text-red-400 ml-1">(-30%)</span>
                 </div>
               </div>

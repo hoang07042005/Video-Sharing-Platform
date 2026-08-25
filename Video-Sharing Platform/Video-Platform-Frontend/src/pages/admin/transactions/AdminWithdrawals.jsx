@@ -596,7 +596,8 @@ export default function AdminWithdrawals() {
                                 bd.OwnCoinsVND +
                                 bd.GiftVND +
                                 bd.DonateVND +
-                                bd.MembershipVND;
+                                bd.MembershipVND +
+                                (bd.VideoVND || 0);
                               const getPct = (val) =>
                                 total ? ((val / total) * 100).toFixed(2) : 0;
                               return (
@@ -665,6 +666,24 @@ export default function AdminWithdrawals() {
                                       </span>
                                     </div>
                                   </div>
+                                  {bd.VideoVND !== undefined && (
+                                    <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/5">
+                                      <div className="flex gap-2 items-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                        <span className="text-gray-400">
+                                          Từ Video:
+                                        </span>
+                                      </div>{" "}
+                                      <div>
+                                        <span className="text-white font-medium">
+                                          {bd.VideoVND.toLocaleString()}đ
+                                        </span>{" "}
+                                        <span className="text-gray-500 ml-1">
+                                          ({getPct(bd.VideoVND)}%)
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
                                   <div className="flex justify-between items-center pt-1">
                                     <span className="text-white font-semibold">
                                       Tổng cộng:

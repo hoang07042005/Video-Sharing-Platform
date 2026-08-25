@@ -24,6 +24,9 @@ import Premium from './pages/client/premium/Premium';
 import PaymentResult from './pages/client/premium/PaymentResult';
 import StudioUpload from './pages/client/studio/StudioUpload';
 import StudioLive from './pages/client/studio/StudioLive';
+import StudioRevenue from './pages/client/studio/StudioRevenue';
+import StudioMonetization from './pages/client/studio/StudioMonetization';
+import CreatorDashboard from './pages/client/studio/CreatorDashboard';
 import SearchResults from './pages/client/search/SearchResults';
 import LiveWatch from './pages/client/live/LiveWatch';
 import VideoManagement from './pages/admin/video/VideoManagement';
@@ -51,7 +54,7 @@ import AdminFeedbacks from './pages/admin/feedback/AdminFeedbacks';
 import AdminActivities from './pages/admin/activities/AdminActivities';
 import AdminWithdrawals from './pages/admin/transactions/AdminWithdrawals';
 import AdminRevenue from './pages/admin/revenue/AdminRevenue';
-import StudioRevenue from './pages/client/studio/StudioRevenue';
+import AdminMonetization from './pages/admin/monetization/AdminMonetization';
 import NotFound from './pages/error/NotFound';
 
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -159,6 +162,8 @@ function App() {
           <Route path="/studio/revenue" element={<StudioRevenue />} />
           <Route path="/video/livestreams" element={<LivePages />} />
           <Route path="/results" element={<SearchResults />} />
+          <Route path="/studio/monetization" element={<StudioMonetization />} />
+          <Route path="/studio/dashboard" element={<CreatorDashboard />} />
           <Route path="/notifications" element={<NotificationsPage />} />
 
           {/* 404 Catch-all */}
@@ -183,6 +188,7 @@ function App() {
             <Route path="feedbacks" element={<AdminFeedbacks />} />
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="revenue" element={<AdminRevenue />} />
+            <Route path="monetization" element={<AdminMonetization />} />
             {/* Catch-all for Admin */}
             <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>

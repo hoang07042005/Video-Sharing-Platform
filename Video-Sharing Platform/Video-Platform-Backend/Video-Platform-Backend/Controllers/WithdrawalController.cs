@@ -47,12 +47,17 @@ namespace Video_Platform_Backend.Controllers
 
             var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
             decimal totalMembershipRevenue = 0;
+            decimal totalVideoEarnings = 0;
             if (channel != null)
             {
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
                     .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                     .SumAsync(t => t.Amount);
+
+                totalVideoEarnings = await _context.DailyVideoEarnings
+                    .Where(e => e.Video.ChannelId == channel.Id)
+                    .SumAsync(e => (decimal?)e.EarnedAmount) ?? 0;
             }
 
             var totalDonatedMoney = await _context.Donations
@@ -70,11 +75,13 @@ namespace Video_Platform_Backend.Controllers
             decimal feeCoinGift = 0.30m;
             decimal feeDonate = 0.10m;
             decimal feeMembership = 0.30m;
+            decimal feeVideo = 0.30m;
 
             var virtualBalanceCoins = 
                 (int)((decimal)totalGiftedCoins * (1m - feeCoinGift)) + 
                 (int)((totalDonatedMoney / 100m) * (1m - feeDonate)) + 
-                (int)((totalMembershipRevenue / 100m) * (1m - feeMembership));
+                (int)((totalMembershipRevenue / 100m) * (1m - feeMembership)) +
+                (int)((totalVideoEarnings / 100m) * (1m - feeVideo));
 
             var remainingVirtualBalance = virtualBalanceCoins - totalWithdrawnCoins;
             if (remainingVirtualBalance < 0) remainingVirtualBalance = 0;
@@ -108,6 +115,7 @@ namespace Video_Platform_Backend.Controllers
             int totalGiftCoins = (int)((decimal)totalGiftedCoins * (1m - feeCoinGift));
             int totalDonateCoins = (int)((totalDonatedMoney / 100m) * (1m - feeDonate));
             int totalMembershipCoins = (int)((totalMembershipRevenue / 100m) * (1m - feeMembership));
+            int totalVideoCoins = (int)((totalVideoEarnings / 100m) * (1m - feeVideo));
 
             int remainingWithdrawn = totalWithdrawnCoins;
             if (remainingWithdrawn >= totalGiftCoins) { remainingWithdrawn -= totalGiftCoins; totalGiftCoins = 0; }
@@ -116,9 +124,11 @@ namespace Video_Platform_Backend.Controllers
             else { totalDonateCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
             if (remainingWithdrawn >= totalMembershipCoins) { remainingWithdrawn -= totalMembershipCoins; totalMembershipCoins = 0; }
             else { totalMembershipCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+            if (remainingWithdrawn >= totalVideoCoins) { remainingWithdrawn -= totalVideoCoins; totalVideoCoins = 0; }
+            else { totalVideoCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
 
             int virtualToTake = virtualCoinsToUse;
-            int useGift = 0, useDonate = 0, useMembership = 0;
+            int useGift = 0, useDonate = 0, useMembership = 0, useVideo = 0;
             if (virtualToTake > 0 && totalGiftCoins > 0) {
                 useGift = Math.Min(virtualToTake, totalGiftCoins);
                 virtualToTake -= useGift;
@@ -131,13 +141,18 @@ namespace Video_Platform_Backend.Controllers
                 useMembership = Math.Min(virtualToTake, totalMembershipCoins);
                 virtualToTake -= useMembership;
             }
+            if (virtualToTake > 0 && totalVideoCoins > 0) {
+                useVideo = Math.Min(virtualToTake, totalVideoCoins);
+                virtualToTake -= useVideo;
+            }
 
             var breakdownDataObj = new {
                 OwnCoins = coinsToDeductFromUser,
                 OwnCoinsVND = amountVndToDeductFromUserCoins,
                 GiftVND = useGift * 100m,
                 DonateVND = useDonate * 100m,
-                MembershipVND = useMembership * 100m
+                MembershipVND = useMembership * 100m,
+                VideoVND = useVideo * 100m
             };
             string breakdownJson = System.Text.Json.JsonSerializer.Serialize(breakdownDataObj);
 
@@ -238,19 +253,25 @@ namespace Video_Platform_Backend.Controllers
 
             var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
             decimal totalMembershipRevenue = 0;
+            decimal totalVideoEarnings = 0;
             if (channel != null)
             {
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
                     .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
                     .SumAsync(t => t.Amount);
+
+                totalVideoEarnings = await _context.DailyVideoEarnings
+                    .Where(e => e.Video.ChannelId == channel.Id)
+                    .SumAsync(e => (decimal?)e.EarnedAmount) ?? 0;
             }
 
             return Ok(new
             {
                 TotalDonatedMoney = totalDonatedMoney,
                 TotalGiftedCoins = totalGiftedCoins,
-                TotalMembershipRevenue = totalMembershipRevenue
+                TotalMembershipRevenue = totalMembershipRevenue,
+                TotalVideoEarnings = totalVideoEarnings
             });
         }
     }

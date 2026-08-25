@@ -1027,6 +1027,7 @@ export default function ChannelProfile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [revenueStats, setRevenueStats] = useState(null);
   const [loadingRevenue, setLoadingRevenue] = useState(false);
+  const [videoEarnings, setVideoEarnings] = useState(null);
   const [coinReceivedDateFilter, setCoinReceivedDateFilter] = useState("");
   const [coinSpentDateFilter, setCoinSpentDateFilter] = useState("");
   const [topCommunityPosts, setTopCommunityPosts] = useState([]);
@@ -1151,6 +1152,14 @@ export default function ChannelProfile() {
               },
             );
             setRevenueStats(res.data);
+
+            // Fetch video earnings nếu kênh đã monetize
+            try {
+              const earningsRes = await axios.get('/api/monetization/earnings', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              setVideoEarnings(earningsRes.data);
+            } catch { /* kênh chưa monetize thì bỏ qua */ }
           }
         } catch (err) {
           console.error(
@@ -2327,6 +2336,7 @@ export default function ChannelProfile() {
             const FEE_COIN_GIFT = 0.3;
             const FEE_DONATE = 0.1;
             const FEE_MEMBERSHIP = 0.3;
+            const FEE_VIDEO = 0.3;
             const COIN_RATE = 100;
 
             let giftCoins = Math.floor(totalCoinReceived * (1 - FEE_COIN_GIFT));
@@ -2335,6 +2345,9 @@ export default function ChannelProfile() {
             );
             let membershipCoins = Math.floor(
               (membershipRevenue / COIN_RATE) * (1 - FEE_MEMBERSHIP),
+            );
+            let videoCoins = Math.floor(
+              ((videoEarnings?.totalEarnings || 0) / COIN_RATE) * (1 - FEE_VIDEO),
             );
 
             const withdrawals = revenueStats?.withdrawals || [];
@@ -2373,6 +2386,14 @@ export default function ChannelProfile() {
               remainingWithdrawn = 0;
             }
 
+            if (remainingWithdrawn >= videoCoins) {
+              remainingWithdrawn -= videoCoins;
+              videoCoins = 0;
+            } else {
+              videoCoins -= remainingWithdrawn;
+              remainingWithdrawn = 0;
+            }
+
             const remainingDonateVND = Math.floor(
               (donateCoins / (1 - FEE_DONATE)) * COIN_RATE,
             );
@@ -2382,8 +2403,11 @@ export default function ChannelProfile() {
             const remainingMembershipVND = Math.floor(
               (membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE,
             );
+            const remainingVideoVND = Math.floor(
+              (videoCoins / (1 - FEE_VIDEO)) * COIN_RATE,
+            );
             const totalRemainingRevenueVND =
-              remainingDonateVND + remainingMembershipVND;
+              remainingDonateVND + remainingMembershipVND + remainingVideoVND;
 
             // Timeline processing
             const allActivities = [
@@ -2546,7 +2570,7 @@ export default function ChannelProfile() {
                 ) : (
                   <>
                     {/* Top Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
                       <DashboardCard
                         title="TỔNG DOANH THU (CÒN LẠI)"
                         value={`${totalRemainingRevenueVND.toLocaleString("vi-VN")} đ`}
@@ -2618,6 +2642,21 @@ export default function ChannelProfile() {
                           membershipRevenue - remainingMembershipVND > 0
                         }
                       />
+                      {videoEarnings && (
+                        <DashboardCard
+                          title="TIỀN TỪ VIDEO (CÒN LẠI)"
+                          value={`${remainingVideoVND.toLocaleString('vi-VN')} đ`}
+                          icon={<MonitorPlay className="w-5 h-5" />}
+                          gradient="from-green-600/80 to-emerald-900/80"
+                          color="text-green-400"
+                          trend={
+                            (videoEarnings.totalEarnings || 0) - remainingVideoVND > 0
+                              ? `Đã rút: ${((videoEarnings.totalEarnings || 0) - remainingVideoVND).toLocaleString("vi-VN")}đ`
+                              : "Chưa rút"
+                          }
+                          trendDown={(videoEarnings.totalEarnings || 0) - remainingVideoVND > 0}
+                        />
+                      )}
                     </div>
 
                     {/* Main Content Grid */}
