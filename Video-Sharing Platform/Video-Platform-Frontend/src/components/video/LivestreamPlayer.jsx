@@ -1,8 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
-import QualitySelector from '../QualitySelector';
+import React, { useEffect, useRef, useState } from "react";
+import Hls from "hls.js";
+import QualitySelector from "../QualitySelector";
 
-const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null }) => {
+const LivestreamPlayer = ({
+  hlsUrl,
+  poster,
+  className = "",
+  livestreamId = null,
+}) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [hlsInstance, setHlsInstance] = useState(null);
@@ -19,16 +24,16 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
     }
 
     if (!hlsUrl || !String(hlsUrl).trim()) {
-      video.removeAttribute('src');
+      video.removeAttribute("src");
       video.load();
       return;
     }
 
     setError(null);
-    console.log('[LivestreamPlayer] Loading HLS URL:', hlsUrl);
+    console.log("[LivestreamPlayer] Loading HLS URL:", hlsUrl);
 
     // Safari native HLS support
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = hlsUrl;
       // autoPlay attribute handles playback start
     } else if (Hls.isSupported()) {
@@ -45,21 +50,29 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
       setHlsInstance(hls);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('[LivestreamPlayer] Manifest parsed, levels:', hls.levels.length);
+        console.log(
+          "[LivestreamPlayer] Manifest parsed, levels:",
+          hls.levels.length,
+        );
         setTimeout(() => {
           if (video.paused) {
-            console.log('[LivestreamPlayer] Video is paused, attempting play()...');
+            console.log(
+              "[LivestreamPlayer] Video is paused, attempting play()...",
+            );
             const playPromise = video.play();
             if (playPromise !== undefined) {
-              playPromise.then(() => console.log('[LivestreamPlayer] Play successful'))
-                .catch(e => console.warn('[LivestreamPlayer] Play deferred:', e.message));
+              playPromise
+                .then(() => console.log("[LivestreamPlayer] Play successful"))
+                .catch((e) =>
+                  console.warn("[LivestreamPlayer] Play deferred:", e.message),
+                );
             }
           }
         }, 100);
       });
 
       // Cố gắng phát ngay khi có thể
-      video.addEventListener('loadeddata', () => {
+      video.addEventListener("loadeddata", () => {
         if (video.paused) {
           video.play().catch(() => {});
         }
@@ -67,15 +80,22 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
 
       // Lắng nghe lỗi HLS
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.warn('[LivestreamPlayer] HLS Error:', data.type, data.details, data.fatal);
-        
+        console.warn(
+          "[LivestreamPlayer] HLS Error:",
+          data.type,
+          data.details,
+          data.fatal,
+        );
+
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR) {
                 // Manifest chưa có (FFmpeg chưa tạo xong) -> Thử tải lại toàn bộ
-                console.log('[LivestreamPlayer] Manifest not found, retrying in 3s...');
-                setError('Đang đợi luồng phát bắt đầu...');
+                console.log(
+                  "[LivestreamPlayer] Manifest not found, retrying in 3s...",
+                );
+                setError("Đang đợi luồng phát bắt đầu...");
                 setTimeout(() => {
                   if (hlsRef.current) {
                     setError(null);
@@ -83,8 +103,8 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
                   }
                 }, 3000);
               } else {
-                console.log('[LivestreamPlayer] Network error, retrying...');
-                setError('Đang khôi phục kết nối mạng...');
+                console.log("[LivestreamPlayer] Network error, retrying...");
+                setError("Đang khôi phục kết nối mạng...");
                 setTimeout(() => {
                   if (hlsRef.current) {
                     setError(null);
@@ -94,11 +114,11 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
               }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.log('[LivestreamPlayer] Recovering from media error...');
+              console.log("[LivestreamPlayer] Recovering from media error...");
               hls.recoverMediaError();
               break;
             default:
-              setError('Không thể phát video này.');
+              setError("Không thể phát video này.");
               hls.destroy();
               break;
           }
@@ -110,9 +130,11 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
         hlsRef.current = null;
       };
     } else {
-      console.warn('[LivestreamPlayer] HLS not supported, falling back to native src');
+      console.warn(
+        "[LivestreamPlayer] HLS not supported, falling back to native src",
+      );
       video.src = hlsUrl;
-      video.addEventListener('loadeddata', () => {
+      video.addEventListener("loadeddata", () => {
         if (video.paused) {
           video.play().catch(() => {});
         }
@@ -122,11 +144,11 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
 
   const handleQualityChange = (quality) => {
     if (!hlsInstance) return;
-    if (quality === 'auto') {
+    if (quality === "auto") {
       hlsInstance.autoLevelCapping = -1;
     } else {
       const level = hlsInstance.levels.findIndex((l) => {
-        return l.height.toString().includes(quality.replace('p', ''));
+        return l.height.toString().includes(quality.replace("p", ""));
       });
       if (level !== -1) hlsInstance.nextLevel = level;
     }
@@ -147,10 +169,10 @@ const LivestreamPlayer = ({ hlsUrl, poster, className = '', livestreamId = null 
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-center px-4 rounded-lg z-10 backdrop-blur-sm">
           <div className="flex flex-col items-center">
-            {error.includes('đợi') || error.includes('khôi phục') ? (
-               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            {error.includes("đợi") || error.includes("khôi phục") ? (
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
             ) : (
-               <div className="text-red-400 text-3xl mb-2">⚠</div>
+              <div className="text-red-400 text-3xl mb-2">⚠</div>
             )}
             <div className="text-gray-200 text-lg font-medium">{error}</div>
           </div>

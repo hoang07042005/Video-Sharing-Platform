@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
   const [qualities, setQualities] = useState([]);
-  const [selectedQuality, setSelectedQuality] = useState('auto');
+  const [selectedQuality, setSelectedQuality] = useState("auto");
   const [isOpen, setIsOpen] = useState(false);
-  const apiBase = '';
+  const apiBase = "";
 
   useEffect(() => {
     if (!livestreamId) return;
@@ -14,22 +14,24 @@ const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
 
   // Load saved quality preference
   useEffect(() => {
-    const saved = localStorage.getItem('preferredQuality');
+    const saved = localStorage.getItem("preferredQuality");
     if (saved) setSelectedQuality(saved);
   }, []);
 
   const fetchQualities = async () => {
     try {
-      const res = await axios.get(`${apiBase}/api/videoQualities/livestream/${livestreamId}`);
+      const res = await axios.get(
+        `${apiBase}/api/videoQualities/livestream/${livestreamId}`,
+      );
       setQualities(res.data);
     } catch (err) {
-      console.error('Failed to fetch qualities:', err);
+      console.error("Failed to fetch qualities:", err);
     }
   };
 
   const handleQualityChange = (quality) => {
     setSelectedQuality(quality);
-    localStorage.setItem('preferredQuality', quality);
+    localStorage.setItem("preferredQuality", quality);
     setIsOpen(false);
 
     // Update player quality if available
@@ -41,13 +43,13 @@ const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
 
       // For HLS players, switch quality variant
       if (playerRef.current.hls) {
-        if (quality === 'auto') {
+        if (quality === "auto") {
           playerRef.current.hls.autoLevelCapping = -1;
         } else {
-          const qualityObj = qualities.find(q => q.qualityLabel === quality);
+          const qualityObj = qualities.find((q) => q.qualityLabel === quality);
           if (qualityObj) {
             const level = playerRef.current.hls.levels.findIndex(
-              l => l.url === qualityObj.hlsUrl
+              (l) => l.url === qualityObj.hlsUrl,
             );
             if (level !== -1) {
               playerRef.current.hls.nextLevel = level;
@@ -59,9 +61,9 @@ const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
   };
 
   const getQualityLabel = () => {
-    if (selectedQuality === 'auto') return 'Auto';
-    const quality = qualities.find(q => q.qualityLabel === selectedQuality);
-    return quality ? quality.qualityLabel : 'Auto';
+    if (selectedQuality === "auto") return "Auto";
+    const quality = qualities.find((q) => q.qualityLabel === selectedQuality);
+    return quality ? quality.qualityLabel : "Auto";
   };
 
   if (qualities.length === 0) {
@@ -84,11 +86,11 @@ const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
           <div className="p-2 space-y-1">
             {/* Auto Option */}
             <button
-              onClick={() => handleQualityChange('auto')}
+              onClick={() => handleQualityChange("auto")}
               className={`w-full px-3 py-2 rounded text-left text-sm transition ${
-                selectedQuality === 'auto'
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-white/10 text-gray-300'
+                selectedQuality === "auto"
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-white/10 text-gray-300"
               }`}
             >
               🔄 Auto (Recommended)
@@ -101,12 +103,14 @@ const QualitySelector = ({ livestreamId, playerRef, onQualityChange }) => {
                 onClick={() => handleQualityChange(quality.qualityLabel)}
                 className={`w-full px-3 py-2 rounded text-left text-sm transition flex justify-between items-center ${
                   selectedQuality === quality.qualityLabel
-                    ? 'bg-blue-600 text-white'
-                    : 'hover:bg-white/10 text-gray-300'
+                    ? "bg-blue-600 text-white"
+                    : "hover:bg-white/10 text-gray-300"
                 }`}
               >
                 <span>{quality.qualityLabel}</span>
-                <span className="text-xs opacity-70">{quality.bitrate} kbps</span>
+                <span className="text-xs opacity-70">
+                  {quality.bitrate} kbps
+                </span>
               </button>
             ))}
           </div>

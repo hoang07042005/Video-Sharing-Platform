@@ -30,7 +30,9 @@ export default function AdminWithdrawals() {
     fetchWithdrawals();
   }, []);
 
-  const uniqueBanks = Array.from(new Set(allWithdrawals.map(w => w.bankName).filter(Boolean)));
+  const uniqueBanks = Array.from(
+    new Set(allWithdrawals.map((w) => w.bankName).filter(Boolean)),
+  );
 
   const fetchWithdrawals = async () => {
     try {
@@ -151,29 +153,31 @@ export default function AdminWithdrawals() {
     const name = bankName.toLowerCase();
 
     // 1. Xử lý riêng các Ví điện tử (Do link ảnh khác thư mục)
-    if (name.includes('momo')) return '/public/images/bank-logos/Icon-Momo.png';
-    if (name.includes('zalo')) return '/public/images/bank-logos/Icon-ZaloPay.png';
-    if (name.includes('vnpay')) return '/public/images/bank-logos/Icon-VnPay.png';
+    if (name.includes("momo")) return "/public/images/bank-logos/Icon-Momo.png";
+    if (name.includes("zalo"))
+      return "/public/images/bank-logos/Icon-ZaloPay.png";
+    if (name.includes("vnpay"))
+      return "/public/images/bank-logos/Icon-VnPay.png";
 
     // 2. Danh sách map từ khóa ngân hàng với tên file Logo
     const bankLogos = {
-      'vietcombank': 'Icon-Vietcombank.png',
-      'vcb': 'Icon-Vietcombank.png',
-      'techcombank': 'Icon-Techcombank-TCB.png',
-      'tcb': 'Icon-Techcombank-TCB.png',
-      'mb': 'Icon-MB-Bank-MBB.png',
-      'mbbank': 'Icon-MB-Bank-MBB.png',
-      'vietinbank': 'Icon-VietinBank-CTG.png',
-      'ctg': 'Icon-VietinBank-CTG.png',
-      'bidv': 'Icon-BIDV.png',
-      'agribank': 'Icon-Agribank.png',
-      'vib': 'Icon-VIB.png',
-      'tpbank': 'Icon-TPBank.png',
-      'tpb': 'Icon-TPBank.png',
-      'vpbank': 'Icon-VPBank.png',
-      'vpb': 'Icon-VPBank.png',
-      'sacombank': 'Icon-Sacombank.png',
-      'stb': 'Icon-Sacombank.png',
+      vietcombank: "Icon-Vietcombank.png",
+      vcb: "Icon-Vietcombank.png",
+      techcombank: "Icon-Techcombank-TCB.png",
+      tcb: "Icon-Techcombank-TCB.png",
+      mb: "Icon-MB-Bank-MBB.png",
+      mbbank: "Icon-MB-Bank-MBB.png",
+      vietinbank: "Icon-VietinBank-CTG.png",
+      ctg: "Icon-VietinBank-CTG.png",
+      bidv: "Icon-BIDV.png",
+      agribank: "Icon-Agribank.png",
+      vib: "Icon-VIB.png",
+      tpbank: "Icon-TPBank.png",
+      tpb: "Icon-TPBank.png",
+      vpbank: "Icon-VPBank.png",
+      vpb: "Icon-VPBank.png",
+      sacombank: "Icon-Sacombank.png",
+      stb: "Icon-Sacombank.png",
     };
 
     for (const [key, filename] of Object.entries(bankLogos)) {
@@ -185,7 +189,6 @@ export default function AdminWithdrawals() {
 
     return null;
   };
-
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
@@ -431,7 +434,9 @@ export default function AdminWithdrawals() {
                 onChange={(e) => setBankFilter(e.target.value)}
                 className="appearance-none flex items-center bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-2 text-sm text-gray-400 outline-none focus:border-purple-500 cursor-pointer min-w-[150px]"
               >
-                <option value="all" className="bg-[#141418]">Tất cả ngân hàng</option>
+                <option value="all" className="bg-[#141418]">
+                  Tất cả ngân hàng
+                </option>
                 {uniqueBanks.map((bank, index) => (
                   <option key={index} value={bank} className="bg-[#141418]">
                     {bank}
@@ -444,7 +449,12 @@ export default function AdminWithdrawals() {
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -505,13 +515,18 @@ export default function AdminWithdrawals() {
                         {(() => {
                           try {
                             const dateStr = item.createdAt;
-                            if (typeof dateStr === 'string' && !dateStr.includes('T')) {
+                            if (
+                              typeof dateStr === "string" &&
+                              !dateStr.includes("T")
+                            ) {
                               return dateStr;
                             }
-                            const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+                            const d = new Date(
+                              dateStr.endsWith("Z") ? dateStr : dateStr + "Z",
+                            );
                             if (isNaN(d.getTime())) return dateStr;
-                            return `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ${d.toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric'})}`;
-                          } catch(e) {
+                            return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} ${d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+                          } catch (e) {
                             return item.createdAt;
                           }
                         })()}
@@ -675,9 +690,9 @@ export default function AdminWithdrawals() {
                       <div className="flex items-start gap-3">
                         {getBankLogo(item.bankName) ? (
                           <div className="w-10 h-10 mt-0.5 bg-white rounded-lg flex items-center justify-center shrink-0 ">
-                            <img 
-                              src={getBankLogo(item.bankName)} 
-                              alt={item.bankName} 
+                            <img
+                              src={getBankLogo(item.bankName)}
+                              alt={item.bankName}
                               className="w-full h-full object-contain"
                             />
                           </div>
@@ -771,31 +786,57 @@ export default function AdminWithdrawals() {
                                 className="w-8 h-8 flex items-center justify-center border border-blue-500/30 text-blue-500 hover:bg-blue-500 hover:text-white rounded transition-colors group relative"
                                 title="Xem biên lai"
                               >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
                                 </svg>
                               </a>
                             )}
-                            
                           </>
                         ) : (
                           <div className="flex gap-3 items-center">
                             {item.receiptUrl && (
-                                <a
-                                  href={item.receiptUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="w-8 h-8 flex items-center justify-center border border-blue-500/30 text-blue-500 hover:bg-blue-500 hover:text-white rounded transition-colors group relative"
-                                  title="Xem biên lai"
+                              <a
+                                href={item.receiptUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-8 h-8 flex items-center justify-center border border-blue-500/30 text-blue-500 hover:bg-blue-500 hover:text-white rounded transition-colors group relative"
+                                title="Xem biên lai"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
                                 >
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                </a>
-                              )}
-                             
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                              </a>
+                            )}
                           </div>
                         )}
                       </div>
@@ -897,24 +938,48 @@ export default function AdminWithdrawals() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tải lên Biên lai chuyển khoản <span className="text-red-500">*</span>
+                    Tải lên Biên lai chuyển khoản{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-col items-center justify-center w-full">
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-lg cursor-pointer bg-[#0A0A0C] hover:bg-white/5 relative overflow-hidden">
                       {receiptPreview ? (
-                        <img src={receiptPreview} alt="Receipt preview" className="w-full h-full object-contain p-2" />
+                        <img
+                          src={receiptPreview}
+                          alt="Receipt preview"
+                          className="w-full h-full object-contain p-2"
+                        />
                       ) : (
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                          <svg
+                            className="w-8 h-8 mb-4 text-gray-500"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 20 16"
+                          >
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                            />
                           </svg>
-                          <p className="mb-2 text-sm text-gray-400"><span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả</p>
-                          <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 5MB)</p>
+                          <p className="mb-2 text-sm text-gray-400">
+                            <span className="font-semibold">
+                              Nhấn để tải lên
+                            </span>{" "}
+                            hoặc kéo thả
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG or JPEG (MAX. 5MB)
+                          </p>
                         </div>
                       )}
-                      <input 
-                        type="file" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        className="hidden"
                         accept="image/*"
                         onChange={(e) => {
                           const file = e.target.files[0];

@@ -66,6 +66,21 @@ export default function AdminTransactions() {
     }).format(amount);
   };
 
+  const getPremiumPlan = (transactionType) => {
+    const plan = transactionType?.split("_")[1];
+    return plan === "Pro" || plan === "Family" || plan === "Premium"
+      ? plan
+      : "Premium";
+  };
+
+  const getPremiumPlanLabel = (transactionType) => {
+    const plan = getPremiumPlan(transactionType);
+    return plan === "Pro" ? "PLUS" : plan === "Family" ? "Gia đình" : plan;
+  };
+
+  const getPremiumCycleLabel = (transactionType) =>
+    transactionType?.includes("Yearly") ? "1 năm" : "1 tháng";
+
   const filteredPremium = premiumData.filter((t) => {
     const matchSearch =
       t.user?.fullName?.toLowerCase().includes(premiumSearch.toLowerCase()) ||
@@ -144,11 +159,17 @@ export default function AdminTransactions() {
                   <th className="px-6 py-5 whitespace-nowrap">Người dùng</th>
                   <th className="px-6 py-5 whitespace-nowrap">Gói nâng cấp</th>
                   <th className="px-6 py-5 whitespace-nowrap">Thời hạn</th>
-                  <th className="px-1 py-1 whitespace-nowrap">Thời gian bắt đầu</th>
-                  <th className="px-1 py-1 whitespace-nowrap">Thời gian kết thúc</th>
+                  <th className="px-1 py-1 whitespace-nowrap">
+                    Thời gian bắt đầu
+                  </th>
+                  <th className="px-1 py-1 whitespace-nowrap">
+                    Thời gian kết thúc
+                  </th>
                   <th className="px-1 py-1 whitespace-nowrap">Số tiền</th>
                   <th className="px-1 py-1 whitespace-nowrap">Phương thức</th>
-                  <th className="px-1 py-1 whitespace-nowrap">Ngày giao dịch</th>
+                  <th className="px-1 py-1 whitespace-nowrap">
+                    Ngày giao dịch
+                  </th>
                   <th className="px-1 py-1 whitespace-nowrap">Trạng thái</th>
                   {/* <th className="px-1 py-1 whitespace-nowrap text-right">Thao tác</th> */}
                 </tr>
@@ -194,20 +215,16 @@ export default function AdminTransactions() {
                               fill="currentColor"
                             />
                             <span className="font-semibold text-white text-[13px]">
-                              Premium
+                              {getPremiumPlanLabel(tx.transactionType)}
                             </span>
                           </div>
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#FF4E00]/10 text-[#FF4E00] border border-[#FF4E00]/20">
-                            {tx.transactionType?.includes("Yearly")
-                              ? "1 năm"
-                              : "1 tháng"}
+                            {getPremiumCycleLabel(tx.transactionType)}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-300 text-[13px]">
-                        {tx.transactionType?.includes("Yearly")
-                          ? "1 năm"
-                          : "1 tháng"}
+                        {getPremiumCycleLabel(tx.transactionType)}
                       </td>
                       <td className="px-6 py-4 text-gray-300 text-[13px]">
                         {tx.startDate
@@ -329,16 +346,36 @@ export default function AdminTransactions() {
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-b border-white/5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-[#141418]/50">
-                  <th className="px-6 py-3 whitespace-nowrap text-center">Người dùng</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">Gói hội viên</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">TG bắt đầu</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">TG kết thúc</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">Số tiền</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">Phương thức</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">Kênh đăng ký</th>
-                  <th className="px-4 py-3 whitespace-nowrap text-center">Thời gian</th>
-                  <th className="px-5 py-3 whitespace-nowrap text-center">Trạng thái</th>
-                  <th className="px-6 py-3 whitespace-nowrap text-center">Thao tác</th>
+                  <th className="px-6 py-3 whitespace-nowrap text-center">
+                    Người dùng
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    Gói hội viên
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    TG bắt đầu
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    TG kết thúc
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    Số tiền
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    Phương thức
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    Kênh đăng ký
+                  </th>
+                  <th className="px-4 py-3 whitespace-nowrap text-center">
+                    Thời gian
+                  </th>
+                  <th className="px-5 py-3 whitespace-nowrap text-center">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-3 whitespace-nowrap text-center">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -458,8 +495,6 @@ export default function AdminTransactions() {
                           Chi tiết <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       </td>
-                        
-                     
                     </tr>
                   ))
                 ) : (

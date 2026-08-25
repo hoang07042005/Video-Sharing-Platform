@@ -231,6 +231,7 @@ public class PaymentController : ControllerBase
                     {
                         // Update user premium status
                         user.IsPremium = true;
+                        user.CurrentPlan = plan is "Pro" or "Family" or "Premium" ? plan : "Premium";
                         var months = cycle == "Yearly" ? 12 : 1;
                         user.PremiumUntil = user.PremiumUntil.HasValue && user.PremiumUntil > DateTime.UtcNow
                             ? user.PremiumUntil.Value.AddMonths(months)
@@ -285,26 +286,17 @@ public class PaymentController : ControllerBase
                 return Ok(new { plan = "Premium", cycle = "Unlimited", premiumUntil = (DateTime?)null, coins = user.Coins });
             }
 
-            if (user.IsPremium != true || (user.PremiumUntil.HasValue && user.PremiumUntil.Value < DateTime.UtcNow))
+            if (user.CurrentPlan == "Free" || (user.PremiumUntil.HasValue && user.PremiumUntil.Value < DateTime.UtcNow))
             {
                 return Ok(new { plan = "Free", premiumUntil = (DateTime?)null, coins = user.Coins });
             }
 
-            // Get the latest premium transaction
-            var latestTxn = await _context.Transactions
-                .Where(t => t.Payment.UserId == userId && t.TransactionType.StartsWith("PremiumUpgrade_"))
-                .OrderByDescending(t => t.CreatedAt)
-                .FirstOrDefaultAsync();
+            var plan = user.CurrentPlan is "Pro" or "Family" or "Premium"
+                ? user.CurrentPlan
+                : "Premium";
+            var cycle = "Monthly";
 
-            if (latestTxn != null)
-            {
-                var parts = latestTxn.TransactionType.Split('_');
-                var plan = parts.Length > 1 ? parts[1] : "Premium";
-                var cycle = parts.Length > 2 ? parts[2] : "Monthly";
-                return Ok(new { plan, cycle, premiumUntil = user.PremiumUntil, coins = user.Coins });
-            }
-
-            return Ok(new { plan = "Premium", cycle = "Monthly", premiumUntil = user.PremiumUntil, coins = user.Coins });
+            return Ok(new { plan, cycle, premiumUntil = user.PremiumUntil, coins = user.Coins });
         }
 
         return BadRequest();

@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 const LivestreamReactions = ({ livestreamId, connRef }) => {
   const [floatingEmojis, setFloatingEmojis] = useState([]);
   const reactionCounterRef = useRef({});
-  const emojiList = ['❤️', '👍', '😂', '😮', '😢', '🔥', '🎉', '💯'];
+  const emojiList = ["❤️", "👍", "😂", "😮", "😢", "🔥", "🎉", "💯"];
 
   useEffect(() => {
     if (!connRef?.current) return;
@@ -14,8 +14,8 @@ const LivestreamReactions = ({ livestreamId, connRef }) => {
       }
     };
 
-    connRef.current.on('ReceiveReaction', handler);
-    return () => connRef.current?.off('ReceiveReaction', handler);
+    connRef.current.on("ReceiveReaction", handler);
+    return () => connRef.current?.off("ReceiveReaction", handler);
   }, [livestreamId, connRef]);
 
   const addFloatingEmoji = (emoji) => {
@@ -32,9 +32,11 @@ const LivestreamReactions = ({ livestreamId, connRef }) => {
     if (!connRef?.current) return;
 
     try {
-      connRef.current.invoke('SendReaction', livestreamId, emoji).catch((err) => {
-        console.error('Failed to send reaction:', err);
-      });
+      connRef.current
+        .invoke("SendReaction", livestreamId, emoji)
+        .catch((err) => {
+          console.error("Failed to send reaction:", err);
+        });
     } catch (err) {
       console.error(err);
     }
@@ -70,7 +72,6 @@ const LivestreamReactions = ({ livestreamId, connRef }) => {
           }
         `}</style>
       </div>
-
     </div>
   );
 };

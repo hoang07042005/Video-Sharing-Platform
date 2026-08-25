@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
@@ -7,7 +7,7 @@ const NotificationCenter = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState({});
-  const apiBase = '';
+  const apiBase = "";
 
   useEffect(() => {
     fetchNotifications();
@@ -24,7 +24,7 @@ const NotificationCenter = () => {
 
   // Request push notification permission
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    if ("serviceWorker" in navigator && "PushManager" in window) {
       navigator.serviceWorker.ready.then(async (registration) => {
         try {
           const subscription = await registration.pushManager.getSubscription();
@@ -32,7 +32,8 @@ const NotificationCenter = () => {
             // Auto-request if not already subscribed
             const newSubscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
-              applicationServerKey: process.env.REACT_APP_VAPID_PUBLIC_KEY || ''
+              applicationServerKey:
+                process.env.REACT_APP_VAPID_PUBLIC_KEY || "",
             });
 
             if (newSubscription) {
@@ -40,7 +41,7 @@ const NotificationCenter = () => {
             }
           }
         } catch (err) {
-          console.error('Push notification error:', err);
+          console.error("Push notification error:", err);
         }
       });
     }
@@ -49,89 +50,106 @@ const NotificationCenter = () => {
   const fetchNotifications = async () => {
     try {
       const res = await axios.get(`${apiBase}/api/notifications?limit=20`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setNotifications(res.data);
     } catch (err) {
-      console.error('Failed to fetch notifications:', err);
+      console.error("Failed to fetch notifications:", err);
     }
   };
 
   const fetchUnreadCount = async () => {
     try {
       const res = await axios.get(`${apiBase}/api/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setUnreadCount(res.data.unreadCount);
     } catch (err) {
-      console.error('Failed to fetch unread count:', err);
+      console.error("Failed to fetch unread count:", err);
     }
   };
 
   const fetchPreferences = async () => {
     try {
       const res = await axios.get(`${apiBase}/api/notifications/preferences`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setPreferences(res.data);
     } catch (err) {
-      console.error('Failed to fetch preferences:', err);
+      console.error("Failed to fetch preferences:", err);
     }
   };
 
   const registerPushSubscription = async (subscription) => {
     try {
       await axios.post(`${apiBase}/api/notifications/subscribe`, subscription, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
     } catch (err) {
-      console.error('Failed to register push subscription:', err);
+      console.error("Failed to register push subscription:", err);
     }
   };
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(`${apiBase}/api/notifications/${notificationId}/read`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await axios.put(
+        `${apiBase}/api/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
       fetchNotifications();
       fetchUnreadCount();
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+      console.error("Failed to mark as read:", err);
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      await axios.put(`${apiBase}/api/notifications/read-all`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await axios.put(
+        `${apiBase}/api/notifications/read-all`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
       fetchNotifications();
       fetchUnreadCount();
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      console.error("Failed to mark all as read:", err);
     }
   };
 
   const updatePreferences = async (key, value) => {
     try {
       const updatedPrefs = { ...preferences, [key]: value };
-      await axios.put(`${apiBase}/api/notifications/preferences`, updatedPrefs, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await axios.put(
+        `${apiBase}/api/notifications/preferences`,
+        updatedPrefs,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
       setPreferences(updatedPrefs);
     } catch (err) {
-      console.error('Failed to update preferences:', err);
+      console.error("Failed to update preferences:", err);
     }
   };
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'stream_live': return '🔴';
-      case 'donation': return '💝';
-      case 'comment': return '💬';
-      case 'follow': return '👤';
-      default: return 'ℹ️';
+      case "stream_live":
+        return "🔴";
+      case "donation":
+        return "💝";
+      case "comment":
+        return "💬";
+      case "follow":
+        return "👤";
+      default:
+        return "ℹ️";
     }
   };
 
@@ -149,7 +167,7 @@ const NotificationCenter = () => {
         <span className="text-xl">🔔</span>
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
@@ -161,7 +179,7 @@ const NotificationCenter = () => {
           <div className="p-4 border-b border-white/10 flex justify-between items-center">
             <h3 className="text-white font-semibold">Thông báo</h3>
             <div className="flex gap-2">
-              {notifications.some(n => !n.isRead) && (
+              {notifications.some((n) => !n.isRead) && (
                 <button
                   onClick={markAllAsRead}
                   className="text-xs px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-white"
@@ -184,17 +202,22 @@ const NotificationCenter = () => {
           {/* Settings Panel */}
           {showSettings ? (
             <div className="p-4 max-h-96 overflow-y-auto space-y-3">
-              <h4 className="text-white font-semibold text-sm mb-3">Cài đặt thông báo</h4>
+              <h4 className="text-white font-semibold text-sm mb-3">
+                Cài đặt thông báo
+              </h4>
 
               {[
-                ['enableStreamNotifications', 'Thông báo livestream'],
-                ['enableDonationNotifications', 'Thông báo quyên góp'],
-                ['enableCommentNotifications', 'Thông báo bình luận'],
-                ['enableFollowNotifications', 'Thông báo theo dõi'],
-                ['enablePushNotifications', 'Thông báo Push'],
-                ['enableEmailNotifications', 'Thông báo Email']
+                ["enableStreamNotifications", "Thông báo livestream"],
+                ["enableDonationNotifications", "Thông báo quyên góp"],
+                ["enableCommentNotifications", "Thông báo bình luận"],
+                ["enableFollowNotifications", "Thông báo theo dõi"],
+                ["enablePushNotifications", "Thông báo Push"],
+                ["enableEmailNotifications", "Thông báo Email"],
               ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                <label
+                  key={key}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
                   <input
                     type="checkbox"
                     checked={preferences[key] || false}
@@ -218,10 +241,11 @@ const NotificationCenter = () => {
                     key={notif.id}
                     onClick={() => {
                       markAsRead(notif.id);
-                      if (notif.targetUrl) window.location.href = notif.targetUrl;
+                      if (notif.targetUrl)
+                        window.location.href = notif.targetUrl;
                     }}
                     className={`p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition ${
-                      !notif.isRead ? 'bg-blue-500/10' : ''
+                      !notif.isRead ? "bg-blue-500/10" : ""
                     }`}
                   >
                     <div className="flex gap-3">
@@ -233,7 +257,9 @@ const NotificationCenter = () => {
                         />
                       )}
                       {!notif.imageUrl && (
-                        <span className="text-xl">{getNotificationIcon(notif.type)}</span>
+                        <span className="text-xl">
+                          {getNotificationIcon(notif.type)}
+                        </span>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white font-semibold truncate">

@@ -81,7 +81,12 @@ export default function CommunityPage() {
   }, [handle, navigate]);
 
   // 2. Fetch Posts
-  const fetchPosts = async (pageNum = 1, append = false, channelId, currentSort = sortFilter) => {
+  const fetchPosts = async (
+    pageNum = 1,
+    append = false,
+    channelId,
+    currentSort = sortFilter,
+  ) => {
     if (!channelId) return;
     try {
       const token = localStorage.getItem("token");
@@ -252,29 +257,42 @@ export default function CommunityPage() {
           </div>
 
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowSortMenu(!showSortMenu)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors ml-4 whitespace-nowrap"
             >
-              {sortFilter === "latest" ? "Mới nhất" : sortFilter === "popular" ? "Phổ biến" : "Cũ nhất"}
+              {sortFilter === "latest"
+                ? "Mới nhất"
+                : sortFilter === "popular"
+                  ? "Phổ biến"
+                  : "Cũ nhất"}
               <ChevronDown className="w-4 h-4" />
             </button>
             {showSortMenu && (
               <div className="absolute right-0 top-full mt-2 w-40 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl overflow-hidden z-20 py-1">
-                <button 
-                  onClick={() => { setSortFilter("latest"); setShowSortMenu(false); }} 
+                <button
+                  onClick={() => {
+                    setSortFilter("latest");
+                    setShowSortMenu(false);
+                  }}
                   className={`w-full text-left px-4 py-2 text-sm ${sortFilter === "latest" ? "text-purple-400 bg-white/5" : "text-gray-300 hover:bg-white/5"} transition-colors`}
                 >
                   Mới nhất
                 </button>
-                <button 
-                  onClick={() => { setSortFilter("popular"); setShowSortMenu(false); }} 
+                <button
+                  onClick={() => {
+                    setSortFilter("popular");
+                    setShowSortMenu(false);
+                  }}
                   className={`w-full text-left px-4 py-2 text-sm ${sortFilter === "popular" ? "text-purple-400 bg-white/5" : "text-gray-300 hover:bg-white/5"} transition-colors`}
                 >
                   Phổ biến
                 </button>
-                <button 
-                  onClick={() => { setSortFilter("oldest"); setShowSortMenu(false); }} 
+                <button
+                  onClick={() => {
+                    setSortFilter("oldest");
+                    setShowSortMenu(false);
+                  }}
                   className={`w-full text-left px-4 py-2 text-sm ${sortFilter === "oldest" ? "text-purple-400 bg-white/5" : "text-gray-300 hover:bg-white/5"} transition-colors`}
                 >
                   Cũ nhất
@@ -403,7 +421,12 @@ export default function CommunityPage() {
                           : "Bài viết")}
                     </h4>
                     <p className="text-xs text-gray-500 mt-1">
-                      {post.authorName} • {moment.utc(post.createdAt).local().locale('vi').fromNow()}
+                      {post.authorName} •{" "}
+                      {moment
+                        .utc(post.createdAt)
+                        .local()
+                        .locale("vi")
+                        .fromNow()}
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                       {post.pollOptions?.length > 0 ? (
@@ -575,38 +598,62 @@ export default function CommunityPage() {
         {sidebarData?.activeMembers?.length > 0 && (
           <div className="bg-[#151515] rounded-xl border border-white/5 p-5">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-base font-semibold text-white">Thành viên hoạt động</h3>
-              <button className="text-xs font-medium text-purple-400 hover:text-purple-300">Xem tất cả &gt;</button>
+              <h3 className="text-base font-semibold text-white">
+                Thành viên hoạt động
+              </h3>
+              <button className="text-xs font-medium text-purple-400 hover:text-purple-300">
+                Xem tất cả &gt;
+              </button>
             </div>
-            
+
             <div className="space-y-5">
               {sidebarData.activeMembers.map((member, idx) => {
-                 const maxPosts = sidebarData.activeMembers[0].postsCount || 1;
-                 const percentage = Math.round((member.postsCount / maxPosts) * 100);
-                 return (
+                const maxPosts = sidebarData.activeMembers[0].postsCount || 1;
+                const percentage = Math.round(
+                  (member.postsCount / maxPosts) * 100,
+                );
+                return (
                   <div key={member.userId} className="flex items-center gap-4">
-                    <span className="text-lg font-medium text-white/50 w-4">{idx + 1}</span>
+                    <span className="text-lg font-medium text-white/50 w-4">
+                      {idx + 1}
+                    </span>
                     <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-800 border border-white/10">
-                       {member.avatarUrl ? (
-                          <img src={member.avatarUrl} className="w-full h-full object-cover" />
-                       ) : (
-                          <div className={`w-full h-full flex items-center justify-center text-sm font-bold text-white ${member.bgColor}`}>{member.initials}</div>
-                       )}
+                      {member.avatarUrl ? (
+                        <img
+                          src={member.avatarUrl}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div
+                          className={`w-full h-full flex items-center justify-center text-sm font-bold text-white ${member.bgColor}`}
+                        >
+                          {member.initials}
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-200 truncate pr-2">{member.name}</span>
+                        <span className="text-sm font-medium text-gray-200 truncate pr-2">
+                          {member.name}
+                        </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 whitespace-nowrap">{member.postsCount} bài viết</span>
-                          {idx === 0 && <Crown className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
+                          <span className="text-xs text-gray-400 whitespace-nowrap">
+                            {member.postsCount} bài viết
+                          </span>
+                          {idx === 0 && (
+                            <Crown className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                          )}
                         </div>
                       </div>
                       <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                         <div className="h-full bg-purple-500 rounded-full" style={{ width: `${percentage}%` }}></div>
+                        <div
+                          className="h-full bg-purple-500 rounded-full"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
                       </div>
                     </div>
                   </div>
-                 )
+                );
               })}
             </div>
           </div>

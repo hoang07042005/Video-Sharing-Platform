@@ -1,11 +1,27 @@
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { Music, Monitor, Gamepad2, Tv, BookOpen, Dumbbell, LayoutGrid, Flame, ChevronRight, Clapperboard, Coffee } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import {
+  Music,
+  Monitor,
+  Gamepad2,
+  Tv,
+  BookOpen,
+  Dumbbell,
+  LayoutGrid,
+  Flame,
+  ChevronRight,
+  Clapperboard,
+  Coffee,
+} from "lucide-react";
 
-import * as LucideIcons from 'lucide-react';
-import { getIconColor } from '../../utils/iconHelpers';
+import * as LucideIcons from "lucide-react";
+import { getIconColor } from "../../utils/iconHelpers";
 
-export const DEFAULT_CATEGORY_ICON = { icon: 'LayoutGrid', iconColor: 'text-gray-400', bg: 'bg-white/10' };
+export const DEFAULT_CATEGORY_ICON = {
+  icon: "LayoutGrid",
+  iconColor: "text-gray-400",
+  bg: "bg-white/10",
+};
 
 export default function CategoryFilter({ onSelect }) {
   const [categories, setCategories] = useState([]);
@@ -15,10 +31,13 @@ export default function CategoryFilter({ onSelect }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('/api/videos/categories');
-        setCategories([{ id: 0, name: 'Tất cả', icon: 'Flame' }, ...response.data]);
+        const response = await axios.get("/api/videos/categories");
+        setCategories([
+          { id: 0, name: "Tất cả", icon: "Flame" },
+          ...response.data,
+        ]);
       } catch (err) {
-        console.error('Failed to fetch categories:', err);
+        console.error("Failed to fetch categories:", err);
       }
     };
     fetchCategories();
@@ -32,7 +51,7 @@ export default function CategoryFilter({ onSelect }) {
   };
 
   const scrollRight = () => {
-    scrollRef.current?.scrollBy({ left: 240, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({ left: 240, behavior: "smooth" });
   };
 
   return (
@@ -48,8 +67,9 @@ export default function CategoryFilter({ onSelect }) {
         >
           {categories.map((category) => {
             const isActive = activeCategory === category.id;
-            const IconComponent = LucideIcons[category.icon] || LucideIcons.LayoutGrid;
-            
+            const IconComponent =
+              LucideIcons[category.icon] || LucideIcons.LayoutGrid;
+
             const iconColor = getIconColor(category.icon);
 
             return (
@@ -58,8 +78,8 @@ export default function CategoryFilter({ onSelect }) {
                 onClick={() => handleSelect(category.id)}
                 className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all ${
                   isActive
-                     ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border border-transparent' 
-                    : 'bg-[#18181C] text-gray-400 border border-white/5 hover:bg-white/5 hover:text-white'
+                    ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white border border-transparent"
+                    : "bg-[#18181C] text-gray-400 border border-white/5 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {/* Icon box */}

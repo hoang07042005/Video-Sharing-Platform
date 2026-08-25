@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Download, Trash2, Play, HardDrive, CheckCircle2, FolderOpen } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  Download,
+  Trash2,
+  Play,
+  HardDrive,
+  CheckCircle2,
+  FolderOpen,
+} from "lucide-react";
 
 const formatDuration = (seconds) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  if (h > 0)
+    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 };
 
 const formatViews = (views) => {
-  if (!views) return '0';
+  if (!views) return "0";
   if (views >= 1000000) return `${(views / 1000000).toFixed(1)} Tr`;
   if (views >= 1000) return `${(views / 1000).toFixed(1)} N`;
   return String(views);
@@ -21,7 +29,7 @@ const getTimeAgo = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
   const diff = Math.floor((now - date) / 1000);
-  if (diff < 60) return 'Vừa xong';
+  if (diff < 60) return "Vừa xong";
   if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
   if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
@@ -29,7 +37,7 @@ const getTimeAgo = (dateString) => {
 };
 
 // localStorage key for downloads
-const DOWNLOADS_KEY = 'video_platform_downloads';
+const DOWNLOADS_KEY = "video_platform_downloads";
 
 export const getDownloads = () => {
   try {
@@ -80,7 +88,6 @@ export default function Downloads() {
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
       <div className="max-w-[1200px] mx-auto p-4 md:p-8">
-
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -88,11 +95,13 @@ export default function Downloads() {
               <Download className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Nội dung tải xuống</h1>
+              <h1 className="text-2xl font-bold text-white">
+                Nội dung tải xuống
+              </h1>
               <p className="text-gray-400 text-sm">
                 {downloads.length > 0
                   ? `${downloads.length} video • ~${totalSizeMB} MB`
-                  : 'Chưa có video nào được lưu'}
+                  : "Chưa có video nào được lưu"}
               </p>
             </div>
           </div>
@@ -115,12 +124,16 @@ export default function Downloads() {
             <div className="flex-1">
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-300">Dung lượng đã dùng</span>
-                <span className="text-white font-medium">~{totalSizeMB} MB</span>
+                <span className="text-white font-medium">
+                  ~{totalSizeMB} MB
+                </span>
               </div>
               <div className="w-full bg-[#2A2A2A] rounded-full h-1.5">
                 <div
                   className="bg-gradient-to-r from-[#3EA6FF] to-[#1565C0] h-1.5 rounded-full transition-all"
-                  style={{ width: `${Math.min((totalSizeMB / 1000) * 100, 100)}%` }}
+                  style={{
+                    width: `${Math.min((totalSizeMB / 1000) * 100, 100)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -134,9 +147,12 @@ export default function Downloads() {
               <FolderOpen className="w-12 h-12 text-gray-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Chưa có nội dung tải xuống</h2>
+              <h2 className="text-xl font-bold text-white mb-2">
+                Chưa có nội dung tải xuống
+              </h2>
               <p className="text-gray-400 text-sm max-w-sm">
-                Bấm nút <strong className="text-gray-300">Tải xuống</strong> khi xem bất kỳ video nào để lưu vào đây xem offline.
+                Bấm nút <strong className="text-gray-300">Tải xuống</strong> khi
+                xem bất kỳ video nào để lưu vào đây xem offline.
               </p>
             </div>
             <Link
@@ -152,16 +168,25 @@ export default function Downloads() {
               <div
                 key={video.id}
                 className={`flex gap-4 items-center group p-3 rounded-xl hover:bg-white/5 transition-all duration-300 ${
-                  removingId === video.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                  removingId === video.id
+                    ? "opacity-0 scale-95"
+                    : "opacity-100 scale-100"
                 }`}
               >
                 {/* Thumbnail */}
                 <Link
-                  to={video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}
+                  to={
+                    video.isShort
+                      ? `/shorts?id=${video.id}`
+                      : `/watch/${video.id}`
+                  }
                   className="relative shrink-0 w-[140px] md:w-[200px] aspect-video rounded-xl overflow-hidden bg-[#212121]"
                 >
                   <img
-                    src={video.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
+                    src={
+                      video.thumbnailUrl ||
+                      "https://via.placeholder.com/400x225?text=No+Thumbnail"
+                    }
                     alt={video.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -176,12 +201,21 @@ export default function Downloads() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <Link to={video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`}>
+                  <Link
+                    to={
+                      video.isShort
+                        ? `/shorts?id=${video.id}`
+                        : `/watch/${video.id}`
+                    }
+                  >
                     <h3 className="text-white font-medium text-sm md:text-base line-clamp-2 mb-1 group-hover:text-[#3EA6FF] transition-colors">
                       {video.title}
                     </h3>
                   </Link>
-                  <Link to={`/c/${video.channelHandle}`} className="text-gray-400 text-xs md:text-sm hover:text-white transition-colors block mb-1">
+                  <Link
+                    to={`/c/${video.channelHandle}`}
+                    className="text-gray-400 text-xs md:text-sm hover:text-white transition-colors block mb-1"
+                  >
                     {video.channelName}
                   </Link>
                   <div className="flex items-center gap-2 text-gray-500 text-xs">
@@ -191,7 +225,9 @@ export default function Downloads() {
                   </div>
                   <div className="flex items-center gap-1 mt-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#3EA6FF]" />
-                    <span className="text-[#3EA6FF] text-xs">Đã tải xuống • ~45 MB</span>
+                    <span className="text-[#3EA6FF] text-xs">
+                      Đã tải xuống • ~45 MB
+                    </span>
                   </div>
                 </div>
 
@@ -209,7 +245,6 @@ export default function Downloads() {
             ))}
           </div>
         )}
-
       </div>
     </div>
   );

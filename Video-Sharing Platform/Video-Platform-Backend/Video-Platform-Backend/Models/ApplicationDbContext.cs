@@ -608,6 +608,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.IsPhoneVerified).HasDefaultValue(false);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.CurrentPlan)
+                .HasMaxLength(20)
+                .HasDefaultValue("Free");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

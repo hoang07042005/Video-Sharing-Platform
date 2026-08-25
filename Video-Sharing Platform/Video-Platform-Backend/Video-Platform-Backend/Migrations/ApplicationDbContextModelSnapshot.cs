@@ -1474,6 +1474,13 @@ namespace Video_Platform_Backend.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<string>("CurrentPlan")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Free");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)

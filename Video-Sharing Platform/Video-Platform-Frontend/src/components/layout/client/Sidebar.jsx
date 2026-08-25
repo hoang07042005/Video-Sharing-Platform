@@ -1,9 +1,23 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from "react-router-dom";
 import {
-  Home, TrendingUp, Library, Settings, HelpCircle,
-  MessageSquare, Bell, Compass, Zap, Film, ListVideo,
-  ThumbsUp, Clock, User, Crown, Radio, Download
-} from 'lucide-react';
+  Home,
+  TrendingUp,
+  Library,
+  Settings,
+  HelpCircle,
+  MessageSquare,
+  Bell,
+  Compass,
+  Zap,
+  Film,
+  ListVideo,
+  ThumbsUp,
+  Clock,
+  User,
+  Crown,
+  Radio,
+  Download,
+} from "lucide-react";
 
 // Social icons (SVG inline vì lucide-react không có)
 const FacebookIcon = () => (
@@ -12,7 +26,15 @@ const FacebookIcon = () => (
   </svg>
 );
 const InstagramIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    className="w-4 h-4"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
     <circle cx="12" cy="12" r="4" />
     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
@@ -37,11 +59,13 @@ const NavItem = ({ item, location }) => {
       to={item.path}
       className={`flex items-center gap-3 px-3 py-2 mx-2 rounded-lg transition-all duration-150 ${
         isActive
-          ? 'bg-gradient-to-r from-[#FF5722] to-[#9C27B0] text-white font-semibold shadow-lg shadow-[#FF5722]/20'
-          : 'text-gray-400 hover:text-white hover:bg-[#1F1F1F]'
+          ? "bg-gradient-to-r from-[#FF5722] to-[#9C27B0] text-white font-semibold shadow-lg shadow-[#FF5722]/20"
+          : "text-gray-400 hover:text-white hover:bg-[#1F1F1F]"
       }`}
     >
-      <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : ''}`} />
+      <item.icon
+        className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : ""}`}
+      />
       <span className="text-sm">{item.name}</span>
     </Link>
   );
@@ -60,49 +84,53 @@ export default function Sidebar({ isOpen }) {
     {
       label: null,
       items: [
-        { name: 'Trang chủ', icon: Home, path: '/' },
-        { name: 'Khám phá', icon: Compass, path: '/explore' },
-        { name: 'Trực tiếp', icon: Radio, path: '/video/livestreams' },
-        { name: 'Thịnh hành', icon: TrendingUp, path: '/trending' },
-        { name: 'Video ngắn', icon: Film, path: '/shorts' },
-        { name: 'Mới cập nhật', icon: Zap, path: '/latest' },
-        { name: 'Danh sách phát', icon: ListVideo, path: '/playlists' },
+        { name: "Trang chủ", icon: Home, path: "/" },
+        { name: "Khám phá", icon: Compass, path: "/explore" },
+        { name: "Trực tiếp", icon: Radio, path: "/video/livestreams" },
+        { name: "Thịnh hành", icon: TrendingUp, path: "/trending" },
+        { name: "Video ngắn", icon: Film, path: "/shorts" },
+        { name: "Mới cập nhật", icon: Zap, path: "/latest" },
+        { name: "Danh sách phát", icon: ListVideo, path: "/playlists" },
       ],
     },
     {
-      label: 'Thư viện',
+      label: "Thư viện",
       items: [
-        { name: 'Video đã xem', icon: Clock, path: '/history' },
-        { name: 'Video đã thích', icon: ThumbsUp, path: '/liked' },
-        { name: 'Video đã tải', icon: Download, path: '/download'},
-        { name: 'Xem sau', icon: Library, path: '/saved' },
+        { name: "Video đã xem", icon: Clock, path: "/history" },
+        { name: "Video đã thích", icon: ThumbsUp, path: "/liked" },
+        { name: "Video đã tải", icon: Download, path: "/download" },
+        { name: "Xem sau", icon: Library, path: "/saved" },
       ],
     },
   ];
 
-  const userHandle = localStorage.getItem('handle');
+  const userHandle = localStorage.getItem("handle");
 
   const subscriptionLinks = [
-    { name: 'Kênh của bạn', icon: User, path: userHandle ? `/c/${userHandle}` : '/login' },
-    { name: 'Kênh đăng ký', icon: Bell, path: '/subscriptions' },
+    {
+      name: "Kênh của bạn",
+      icon: User,
+      path: userHandle ? `/c/${userHandle}` : "/login",
+    },
+    { name: "Kênh đăng ký", icon: Bell, path: "/subscriptions" },
   ];
 
   const bottomLinks = [
-    { name: 'Cài đặt', icon: Settings, path: '/settings' },
-    { name: 'Trợ giúp & phản hồi', icon: HelpCircle, path: '/help-feedback' },
+    { name: "Cài đặt", icon: Settings, path: "/settings" },
+    { name: "Trợ giúp & phản hồi", icon: HelpCircle, path: "/help-feedback" },
   ];
 
   const socialLinks = [
-    { icon: FacebookIcon, href: '#', label: 'Facebook' },
-    { icon: InstagramIcon, href: '#', label: 'Instagram' },
-    { icon: TikTokIcon, href: '#', label: 'TikTok' },
-    { icon: YoutubeIcon, href: '#', label: 'YouTube' },
+    { icon: FacebookIcon, href: "#", label: "Facebook" },
+    { icon: InstagramIcon, href: "#", label: "Instagram" },
+    { icon: TikTokIcon, href: "#", label: "TikTok" },
+    { icon: YoutubeIcon, href: "#", label: "YouTube" },
   ];
 
   return (
     <aside
       className={`fixed left-0 top-16 w-56 h-[calc(100vh-4rem)] bg-[#0F0F0F] flex flex-col z-40 transition-transform duration-300 border-r border-white/5 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+        isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       {/* Scrollable nav area */}
@@ -129,7 +157,9 @@ export default function Sidebar({ isOpen }) {
             <div className="flex items-center justify-center">
               <Crown className="w-6 h-6 text-yellow-300 mb-2 drop-shadow " />
             </div>
-            <h3 className='text-white text-lg text-center font-bold mb-2'>Nâng cấp ngay</h3>
+            <h3 className="text-white text-lg text-center font-bold mb-2">
+              Nâng cấp ngay
+            </h3>
             <p className="text-white text-[11px] text-center font-semibold leading-snug mb-3">
               Trải nghiệm không giới hạn với VideoX Premium
             </p>
@@ -177,7 +207,8 @@ export default function Sidebar({ isOpen }) {
         </div>
         {/* Chữ bản quyền thêm text-center */}
         <p className="text-center text-[10px] text-gray-600 leading-relaxed">
-          © 2024 VideoSharing.<br />
+          © 2024 VideoSharing.
+          <br />
           Mọi quyền được bảo lưu.
         </p>
       </div>

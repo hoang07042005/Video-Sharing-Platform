@@ -153,7 +153,9 @@ function FeaturedVideoCard({ video, categories }) {
           <span className="hover:text-white transition-colors">
             {video.channelName}
           </span>
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+          {video.channelIsVerified && (
+            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          )}
         </div>
         <div className="text-gray-500 text-[11px]">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
@@ -188,7 +190,9 @@ function NormalVideoCard({ video }) {
           <span className="hover:text-white transition-colors">
             {video.channelName}
           </span>
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+          {video.channelIsVerified && (
+            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          )}
         </div>
         <div className="text-gray-500 text-[11px]">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
@@ -335,30 +339,33 @@ export default function Latest() {
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white">
       {/* Header section */}
-        <div className="relative w-full h-[400px] rounded-2xl overflow-hidden mb-8 p-6 md:p-8 flex items-center gap-4">
-          {/* Ảnh nền hiển thị toàn màn hình container */}
-          <img
-            src="banner-trending.png"
-            alt="Banner trending"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="relative z-10 max-w-[1500px] w-full mx-auto px-6 md:px-10">
-            {/* Nội dung nổi lên trên ảnh */}
-            <div className="relative z-10  gap-4">
-              <div className="flex item-center gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#E040FB] to-[#7C4DFF] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(124,77,255,0.3)]">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
-                <h1 className="text-4xl w-[520px] font-extrabold text-white uppercase tracking-wider mb-1">
-                  Cập Nhật Nội Dung Mới Mỗi Ngày
-                </h1>
+      <div className="relative w-full h-[400px] rounded-2xl overflow-hidden mb-8 p-6 md:p-8 flex items-center gap-4">
+        {/* Ảnh nền hiển thị toàn màn hình container */}
+        <img
+          src="banner-trending.png"
+          alt="Banner trending"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="relative z-10 max-w-[1500px] w-full mx-auto px-6 md:px-10">
+          {/* Nội dung nổi lên trên ảnh */}
+          <div className="relative z-10  gap-4">
+            <div className="flex item-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#E040FB] to-[#7C4DFF] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(124,77,255,0.3)]">
+                <Sparkles className="w-10 h-10 text-white" />
               </div>
-              <p className="text-gray-200 w-[620px] mt-2 text-[16px] ">
-                Đón đầu những video mới nhất vừa lên sóng từ các kênh bạn theo dõi. Hệ thống tự động chọn lọc và gợi ý các nội dung thịnh hành theo đúng sở thích, giúp bạn không bỏ lỡ bất kỳ khoảnh khắc thú vị nào.
-              </p>
+              <h1 className="text-4xl w-[520px] font-extrabold text-white uppercase tracking-wider mb-1">
+                Cập Nhật Nội Dung Mới Mỗi Ngày
+              </h1>
             </div>
+            <p className="text-gray-200 w-[620px] mt-2 text-[16px] ">
+              Đón đầu những video mới nhất vừa lên sóng từ các kênh bạn theo
+              dõi. Hệ thống tự động chọn lọc và gợi ý các nội dung thịnh hành
+              theo đúng sở thích, giúp bạn không bỏ lỡ bất kỳ khoảnh khắc thú vị
+              nào.
+            </p>
           </div>
         </div>
+      </div>
       <div className="max-w-[1300px] mx-auto px-2 sm:px-4 md:px-6 pt-0 pb-16">
         {/* Filters */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-10">
@@ -367,8 +374,8 @@ export default function Latest() {
               onClick={() => setActiveCategoryId(0)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl whitespace-nowrap text-sm font-medium transition-all cursor-pointer shrink-0 border ${
                 activeCategoryId === 0
-                    ? 'bg-[#FF5722]/15 border-[#FF5722]/40 text-white'
-                    : 'bg-transparent border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                  ? "bg-[#FF5722]/15 border-[#FF5722]/40 text-white"
+                  : "bg-transparent border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
               }`}
             >
               <LucideIcons.LayoutGrid
@@ -386,8 +393,8 @@ export default function Latest() {
                   onClick={() => setActiveCategoryId(cat.id)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-xl whitespace-nowrap text-sm font-medium transition-all cursor-pointer shrink-0 border ${
                     isActive
-                     ? 'bg-[#FF5722]/15 border-[#FF5722]/40 text-white'
-                    : 'bg-transparent border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                      ? "bg-[#FF5722]/15 border-[#FF5722]/40 text-white"
+                      : "bg-transparent border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${iconColor}`} />

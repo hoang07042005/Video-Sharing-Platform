@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const DonationPanel = ({ livestreamId, connRef }) => {
   const [donations, setDonations] = useState([]);
   const [stats, setStats] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const apiBase = '';
+  const apiBase = "";
 
   // Form state
   const [formData, setFormData] = useState({
-    donorName: '',
-    message: '',
+    donorName: "",
+    message: "",
     amount: 50000, // 50k VND mặc định
-    isSuperChat: false
+    isSuperChat: false,
   });
 
   useEffect(() => {
@@ -32,48 +32,57 @@ const DonationPanel = ({ livestreamId, connRef }) => {
 
     const connection = connRef.current;
     const handler = (donation) => {
-      setDonations(prev => [donation, ...prev.slice(0, 49)]);
+      setDonations((prev) => [donation, ...prev.slice(0, 49)]);
     };
 
-    connection.on('ReceiveSuperChat', handler);
-    return () => connection.off('ReceiveSuperChat', handler);
+    connection.on("ReceiveSuperChat", handler);
+    return () => connection.off("ReceiveSuperChat", handler);
   }, [connRef]);
 
   const fetchDonations = async () => {
     try {
-      const res = await axios.get(`${apiBase}/api/donations/livestream/${livestreamId}`);
+      const res = await axios.get(
+        `${apiBase}/api/donations/livestream/${livestreamId}`,
+      );
       setDonations(res.data);
     } catch (err) {
-      console.error('Failed to fetch donations:', err);
+      console.error("Failed to fetch donations:", err);
     }
   };
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${apiBase}/api/donations/livestream/${livestreamId}/stats`);
+      const res = await axios.get(
+        `${apiBase}/api/donations/livestream/${livestreamId}/stats`,
+      );
       setStats(res.data);
     } catch (err) {
-      console.error('Failed to fetch donation stats:', err);
+      console.error("Failed to fetch donation stats:", err);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (name === 'amount' ? parseFloat(value) : value)
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "amount"
+            ? parseFloat(value)
+            : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.donorName.trim()) {
-      alert('Vui lòng nhập tên của bạn');
+      alert("Vui lòng nhập tên của bạn");
       return;
     }
     if (formData.amount < 10000) {
-      alert('Số tiền tối thiểu là 10,000 VND');
+      alert("Số tiền tối thiểu là 10,000 VND");
       return;
     }
 
@@ -84,25 +93,39 @@ const DonationPanel = ({ livestreamId, connRef }) => {
         donorName: formData.donorName,
         message: formData.message,
         amount: formData.amount,
-        currency: 'VND',
+        currency: "VND",
         isSuperChat: formData.isSuperChat,
-        userId: localStorage.getItem('userId') || null
+        userId: localStorage.getItem("userId") || null,
       });
 
       // Broadcast via SignalR
       if (connRef?.current && formData.isSuperChat) {
-        const userId = localStorage.getItem('userId') ? new Guid(localStorage.getItem('userId')) : null;
-        await connRef.current.invoke('SendSuperChat', livestreamId, userId, formData.donorName, formData.message, formData.amount);
+        const userId = localStorage.getItem("userId")
+          ? new Guid(localStorage.getItem("userId"))
+          : null;
+        await connRef.current.invoke(
+          "SendSuperChat",
+          livestreamId,
+          userId,
+          formData.donorName,
+          formData.message,
+          formData.amount,
+        );
       }
 
-      alert('Cảm ơn bạn đã quyên góp!');
+      alert("Cảm ơn bạn đã quyên góp!");
       setShowModal(false);
-      setFormData({ donorName: '', message: '', amount: 50000, isSuperChat: false });
+      setFormData({
+        donorName: "",
+        message: "",
+        amount: 50000,
+        isSuperChat: false,
+      });
       await fetchDonations();
       await fetchStats();
     } catch (err) {
-      console.error('Failed to create donation:', err);
-      alert('Lỗi: ' + (err.response?.data || err.message));
+      console.error("Failed to create donation:", err);
+      alert("Lỗi: " + (err.response?.data || err.message));
     } finally {
       setLoading(false);
     }
@@ -123,12 +146,14 @@ const DonationPanel = ({ livestreamId, connRef }) => {
             </div>
             <div>
               <div className="text-gray-400">Số lần</div>
-              <div className="text-blue-400 font-semibold">{stats.totalDonations}</div>
+              <div className="text-blue-400 font-semibold">
+                {stats.totalDonations}
+              </div>
             </div>
             <div>
               <div className="text-gray-400">Top</div>
               <div className="text-green-400 font-semibold text-xs truncate">
-                {stats.topDonor?.donorName || '-'}
+                {stats.topDonor?.donorName || "-"}
               </div>
             </div>
           </div>
@@ -138,22 +163,28 @@ const DonationPanel = ({ livestreamId, connRef }) => {
       {/* Donation List */}
       <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
         {donations.length === 0 ? (
-          <div className="text-gray-400 text-sm text-center py-4">Không có quyên góp nào</div>
+          <div className="text-gray-400 text-sm text-center py-4">
+            Không có quyên góp nào
+          </div>
         ) : (
           donations.map((donation) => (
             <div
               key={donation.id}
               className={`p-3 rounded ${
-                donation.isSuperChat ? 'bg-gradient-to-r from-yellow-600/20 to-red-600/20 border border-yellow-500/30' : 'bg-white/5'
+                donation.isSuperChat
+                  ? "bg-gradient-to-r from-yellow-600/20 to-red-600/20 border border-yellow-500/30"
+                  : "bg-white/5"
               }`}
             >
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-white flex items-center gap-1">
-                    {donation.isSuperChat && '⭐'} {donation.donorName}
+                    {donation.isSuperChat && "⭐"} {donation.donorName}
                   </div>
                   {donation.message && (
-                    <p className="text-xs text-gray-300 mt-1 break-words">{donation.message}</p>
+                    <p className="text-xs text-gray-300 mt-1 break-words">
+                      {donation.message}
+                    </p>
                   )}
                   <div className="text-xs text-gray-500 mt-1">
                     {new Date(donation.createdAt).toLocaleTimeString()}
@@ -182,12 +213,16 @@ const DonationPanel = ({ livestreamId, connRef }) => {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1F1F1F] rounded-lg border border-white/10 p-6 w-full max-w-sm">
-            <h3 className="text-xl font-bold text-white mb-4">💝 Quyên góp cho streamer</h3>
+            <h3 className="text-xl font-bold text-white mb-4">
+              💝 Quyên góp cho streamer
+            </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Donor Name */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Tên của bạn</label>
+                <label className="block text-sm text-gray-300 mb-1">
+                  Tên của bạn
+                </label>
                 <input
                   type="text"
                   name="donorName"
@@ -200,7 +235,9 @@ const DonationPanel = ({ livestreamId, connRef }) => {
 
               {/* Message */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Lời nhắn (tùy chọn)</label>
+                <label className="block text-sm text-gray-300 mb-1">
+                  Lời nhắn (tùy chọn)
+                </label>
                 <textarea
                   name="message"
                   value={formData.message}
@@ -212,7 +249,9 @@ const DonationPanel = ({ livestreamId, connRef }) => {
 
               {/* Amount */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Số tiền (VND)</label>
+                <label className="block text-sm text-gray-300 mb-1">
+                  Số tiền (VND)
+                </label>
                 <select
                   name="amount"
                   value={formData.amount}
@@ -257,7 +296,7 @@ const DonationPanel = ({ livestreamId, connRef }) => {
                   disabled={loading}
                   className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-600 to-red-600 hover:from-yellow-700 hover:to-red-700 rounded text-white text-sm font-semibold disabled:opacity-50"
                 >
-                  {loading ? 'Đang xử lý...' : 'Quyên góp ngay'}
+                  {loading ? "Đang xử lý..." : "Quyên góp ngay"}
                 </button>
               </div>
             </form>

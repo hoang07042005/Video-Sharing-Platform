@@ -2,7 +2,11 @@ import { useState, useRef } from "react";
 import axios from "axios";
 import { Image as ImageIcon, BarChart2, X, Upload, Video } from "lucide-react";
 
-export default function CreateCommunityPost({ channelId, isOwner, onPostCreated }) {
+export default function CreateCommunityPost({
+  channelId,
+  isOwner,
+  onPostCreated,
+}) {
   const [content, setContent] = useState("");
   const [isPoll, setIsPoll] = useState(false);
   const [images, setImages] = useState([]);
@@ -13,10 +17,10 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
   const [isMembersOnly, setIsMembersOnly] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  
+
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  
+
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     if (images.length + files.length > 5) {
@@ -26,8 +30,8 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
     setError("");
     const newImages = [...images, ...files];
     setImages(newImages);
-    
-    const previews = files.map(file => URL.createObjectURL(file));
+
+    const previews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews([...imagePreviews, ...previews]);
   };
 
@@ -42,12 +46,12 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
       setError("");
     }
   };
-  
+
   const removeImage = (index) => {
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
-    
+
     const newPreviews = [...imagePreviews];
     URL.revokeObjectURL(newPreviews[index]);
     newPreviews.splice(index, 1);
@@ -59,19 +63,19 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
     setVideoFile(null);
     setVideoPreview(null);
   };
-  
+
   const handlePollChange = (index, value) => {
     const newOptions = [...pollOptions];
     newOptions[index] = value;
     setPollOptions(newOptions);
   };
-  
+
   const addPollOption = () => {
     if (pollOptions.length < 5) {
       setPollOptions([...pollOptions, ""]);
     }
   };
-  
+
   const removePollOption = (index) => {
     if (pollOptions.length > 2) {
       const newOptions = [...pollOptions];
@@ -79,24 +83,24 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
       setPollOptions(newOptions);
     }
   };
-  
+
   const handleSubmit = async () => {
     if (!content.trim()) {
       setError("Vui lòng nhập nội dung bài viết.");
       return;
     }
-    
+
     if (isPoll) {
-      const validOptions = pollOptions.filter(o => o.trim() !== "");
+      const validOptions = pollOptions.filter((o) => o.trim() !== "");
       if (validOptions.length < 2) {
         setError("Cần ít nhất 2 lựa chọn cho cuộc thăm dò.");
         return;
       }
     }
-    
+
     setIsSubmitting(true);
     setError("");
-    
+
     try {
       const token = localStorage.getItem("token");
       const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
@@ -110,10 +114,10 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
             const formData = new FormData();
             formData.append("file", file);
             const res = await axios.post("/api/upload/image", formData, {
-              headers: { 
+              headers: {
                 "Content-Type": "multipart/form-data",
-                ...authHeader
-              }
+                ...authHeader,
+              },
             });
             uploadedImageUrls.push(res.data.url);
           }
@@ -123,26 +127,26 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           const formData = new FormData();
           formData.append("file", videoFile);
           const res = await axios.post("/api/upload/video", formData, {
-            headers: { 
+            headers: {
               "Content-Type": "multipart/form-data",
-              ...authHeader
-            }
+              ...authHeader,
+            },
           });
           uploadedVideoUrl = res.data.url;
         }
       }
-      
+
       const payload = {
-        channelId, 
+        channelId,
         content,
         isMembersOnly,
         imageUrls: !isPoll ? uploadedImageUrls : null,
         videoUrl: !isPoll ? uploadedVideoUrl : null,
-        pollOptions: isPoll ? pollOptions.filter(o => o.trim() !== "") : null
+        pollOptions: isPoll ? pollOptions.filter((o) => o.trim() !== "") : null,
       };
-      
+
       await axios.post("/api/community", payload, { headers: authHeader });
-      
+
       setContent("");
       setImages([]);
       setImagePreviews([]);
@@ -150,7 +154,7 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
       setPollOptions(["", ""]);
       setIsPoll(false);
       setIsMembersOnly(false);
-      
+
       if (onPostCreated) onPostCreated();
     } catch (err) {
       console.error(err);
@@ -163,7 +167,7 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
       setIsSubmitting(false);
     }
   };
-  
+
   const currentAvatar = localStorage.getItem("avatar");
   const currentName = localStorage.getItem("handle") || "User";
 
@@ -174,11 +178,13 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           Đăng bài với tư cách Hội viên
         </div>
       )}
-      
+
       <div className="flex gap-3 items-start mb-4">
-        <img 
-          src={currentAvatar || `https://ui-avatars.com/api/?name=${currentName}`} 
-          alt={currentName} 
+        <img
+          src={
+            currentAvatar || `https://ui-avatars.com/api/?name=${currentName}`
+          }
+          alt={currentName}
           className="w-10 h-10 rounded-full object-cover shrink-0"
         />
         <div className="flex-1">
@@ -191,9 +197,9 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           />
         </div>
       </div>
-      
+
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-      
+
       {!isPoll && (images.length > 0 || videoPreview) && (
         <div className="mb-4 space-y-3">
           {videoPreview && (
@@ -211,8 +217,15 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           {images.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden group border border-white/10">
-                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                <div
+                  key={index}
+                  className="relative w-24 h-24 rounded-lg overflow-hidden group border border-white/10"
+                >
+                  <img
+                    src={preview}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                   <button
                     onClick={() => removeImage(index)}
                     className="absolute top-1 right-1 bg-black/60 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
@@ -234,7 +247,7 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           )}
         </div>
       )}
-      
+
       {isPoll && (
         <div className="space-y-2 mb-4">
           {pollOptions.map((opt, index) => (
@@ -266,7 +279,7 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           )}
         </div>
       )}
-      
+
       <div className="flex items-center justify-between mt-2">
         <div className="flex gap-2">
           {!isPoll && (
@@ -292,9 +305,22 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
             </>
           )}
 
-          <input type="file" ref={imageInputRef} onChange={handleImageSelect} accept="image/*" multiple className="hidden" />
-          <input type="file" ref={videoInputRef} onChange={handleVideoSelect} accept="video/*" className="hidden" />
-          
+          <input
+            type="file"
+            ref={imageInputRef}
+            onChange={handleImageSelect}
+            accept="image/*"
+            multiple
+            className="hidden"
+          />
+          <input
+            type="file"
+            ref={videoInputRef}
+            onChange={handleVideoSelect}
+            accept="video/*"
+            className="hidden"
+          />
+
           {isOwner && (
             <button
               onClick={() => {
@@ -312,7 +338,7 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
             </button>
           )}
         </div>
-        
+
         <div className="flex items-center gap-4">
           {isOwner && (
             <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
@@ -327,7 +353,10 @@ export default function CreateCommunityPost({ channelId, isOwner, onPostCreated 
           )}
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || (!content.trim() && !isPoll && images.length === 0 && !videoFile)}
+            disabled={
+              isSubmitting ||
+              (!content.trim() && !isPoll && images.length === 0 && !videoFile)
+            }
             className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             {isSubmitting ? "Đang đăng..." : "Đăng"}

@@ -33,6 +33,8 @@ public partial class User
 
     public DateTime? PremiumUntil { get; set; }
 
+    public string CurrentPlan { get; set; } = "Free";
+
     public int Coins { get; set; } = 0;
 
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

@@ -382,7 +382,7 @@ export default function LiveWatch() {
             {/* Video Player Section */}
             <div className="bg-black rounded-2xl overflow-hidden shadow-2xl relative group border border-white/5">
               <div className="absolute top-4 left-4 z-10 flex gap-2 pointer-events-none">
-                {stream.status === 'paused' ? (
+                {stream.status === "paused" ? (
                   <div className="bg-amber-600 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
                     <LucideIcons.Pause className="w-3 h-3" />
                     ĐÃ TẠM DỪNG
@@ -423,11 +423,16 @@ export default function LiveWatch() {
                     poster={stream.thumbnailUrl}
                     className="relative z-0"
                   />
-                  {stream.status === 'paused' && (
+                  {stream.status === "paused" && (
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
                       <LucideIcons.PauseCircle className="w-16 h-16 text-amber-500 mb-4 animate-pulse" />
-                      <h3 className="text-2xl font-bold text-white mb-2">Luồng phát đang tạm dừng</h3>
-                      <p className="text-gray-300 text-sm max-w-md text-center">Người phát đã tạm dừng luồng trực tiếp này. Video sẽ tự động tiếp tục khi họ quay lại.</p>
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        Luồng phát đang tạm dừng
+                      </h3>
+                      <p className="text-gray-300 text-sm max-w-md text-center">
+                        Người phát đã tạm dừng luồng trực tiếp này. Video sẽ tự
+                        động tiếp tục khi họ quay lại.
+                      </p>
                     </div>
                   )}
                 </>
@@ -467,7 +472,7 @@ export default function LiveWatch() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    {stream.status === 'paused' ? (
+                    {stream.status === "paused" ? (
                       <span className="bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 leading-none h-[18px]">
                         <LucideIcons.Pause className="w-2.5 h-2.5" />
                         ĐÃ TẠM DỪNG
@@ -821,7 +826,10 @@ export default function LiveWatch() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={(e) => { e.preventDefault(); setShowGiftModal(true); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowGiftModal(true);
+                  }}
                   className="text-[#7B1FA2] hover:text-white transition-colors flex items-center gap-1 bg-[#7B1FA2]/20 px-2 py-1 rounded"
                 >
                   <Gift className="w-4 h-4" />{" "}
@@ -913,20 +921,26 @@ const DonateModal = ({ livestreamId, onClose }) => {
       const donationId = res.data.id;
 
       // 2. Get VNPay URL
-      const payRes = await axios.post("/api/payment/create-payment-url", {
-        plan: "Donation",
-        amount: formData.amount,
-        donationId: donationId
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const payRes = await axios.post(
+        "/api/payment/create-payment-url",
+        {
+          plan: "Donation",
+          amount: formData.amount,
+          donationId: donationId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       // 3. Redirect to VNPay
       toast.info("Đang chuyển hướng đến VNPay...");
-      window.open(payRes.data.url, '_blank');
+      window.open(payRes.data.url, "_blank");
       onClose();
     } catch (err) {
-      toast.error("Lỗi tạo yêu cầu thanh toán: " + (err.response?.data || err.message));
+      toast.error(
+        "Lỗi tạo yêu cầu thanh toán: " + (err.response?.data || err.message),
+      );
     } finally {
       setLoading(false);
     }

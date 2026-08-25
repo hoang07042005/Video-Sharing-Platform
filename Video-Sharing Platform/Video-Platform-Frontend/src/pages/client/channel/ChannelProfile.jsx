@@ -38,9 +38,21 @@ import {
   Activity,
   Heart,
   Coffee,
-  Crown
+  Crown,
 } from "lucide-react";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from "recharts";
 import VideoCard from "../../../components/home/VideoCard";
 import CustomizeChannelModal from "../../../components/channel/CustomizeChannelModal";
 
@@ -64,10 +76,16 @@ function UploadVideoForm({
   isShortType,
 }) {
   const [title, setTitle] = useState(() => editingVideo?.title || "");
-  const [description, setDescription] = useState(() => editingVideo?.description || "");
-  const [visibility, setVisibility] = useState(() => editingVideo?.visibility || "Public");
+  const [description, setDescription] = useState(
+    () => editingVideo?.description || "",
+  );
+  const [visibility, setVisibility] = useState(
+    () => editingVideo?.visibility || "Public",
+  );
   const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState(() => editingVideo?.thumbnailUrl || null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(
+    () => editingVideo?.thumbnailUrl || null,
+  );
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
   const [duration, setDuration] = useState(() => editingVideo?.duration || 0);
@@ -75,9 +93,13 @@ function UploadVideoForm({
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
-  const [isShortVideo, setIsShortVideo] = useState(() => editingVideo?.isShort || isShortType || false);
+  const [isShortVideo, setIsShortVideo] = useState(
+    () => editingVideo?.isShort || isShortType || false,
+  );
   const [categories, setCategories] = useState([]);
-  const [categoryId, setCategoryId] = useState(() => editingVideo?.categoryId || "");
+  const [categoryId, setCategoryId] = useState(
+    () => editingVideo?.categoryId || "",
+  );
   const [bannedError, setBannedError] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
@@ -224,7 +246,9 @@ function UploadVideoForm({
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403) {
-        setBannedError(err.response.data.message || 'Kênh của bạn đã bị cấm tải lên video.');
+        setBannedError(
+          err.response.data.message || "Kênh của bạn đã bị cấm tải lên video.",
+        );
       } else {
         setError(
           err.response?.data?.message || "Có lỗi xảy ra khi tải video lên.",
@@ -244,15 +268,20 @@ function UploadVideoForm({
             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Hành động bị chặn</h3>
+            <h3 className="text-xl font-bold text-white mb-2">
+              Hành động bị chặn
+            </h3>
             <p className="text-gray-400 mb-8">{bannedError}</p>
-            <button onClick={() => setBannedError(null)} className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors">
+            <button
+              onClick={() => setBannedError(null)}
+              className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+            >
               Đã hiểu
             </button>
           </div>
         </div>
       )}
-      
+
       {/* Loading Overlay */}
       {isUploading && (
         <div className="absolute inset-0 z-50 bg-black/60 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm">
@@ -1115,13 +1144,19 @@ export default function ChannelProfile() {
           setLoadingRevenue(true);
           const token = localStorage.getItem("token");
           if (token && channel && channel.id) {
-            const res = await axios.get(`/api/channels/${channel.id}/revenue-stats`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await axios.get(
+              `/api/channels/${channel.id}/revenue-stats`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              },
+            );
             setRevenueStats(res.data);
           }
         } catch (err) {
-          console.error("Lỗi khi tải doanh thu", err.response?.data || err.message);
+          console.error(
+            "Lỗi khi tải doanh thu",
+            err.response?.data || err.message,
+          );
         } finally {
           setLoadingRevenue(false);
         }
@@ -1140,7 +1175,7 @@ export default function ChannelProfile() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axios.get(
           `/api/channels/${channel.id}/community?page=1&limit=1&filter=popular`,
-          { headers }
+          { headers },
         );
         setTopCommunityPosts(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
@@ -1162,17 +1197,28 @@ export default function ChannelProfile() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const [channelsRes, subscribedRes] = await Promise.all([
           axios.get("/api/channels?limit=50"),
-          token ? axios.get("/api/channels/subscribed", { headers }) : Promise.resolve({ data: [] }),
+          token
+            ? axios.get("/api/channels/subscribed", { headers })
+            : Promise.resolve({ data: [] }),
         ]);
 
         if (cancelled) return;
 
         const subscribedIds = (subscribedRes.data || []).map((item) => item.id);
         const rankedChannels = (channelsRes.data || [])
-          .filter((item) => String(item.id).toLowerCase() !== String(channel.id).toLowerCase())
+          .filter(
+            (item) =>
+              String(item.id).toLowerCase() !==
+              String(channel.id).toLowerCase(),
+          )
           .sort((a, b) => {
-            const verificationDifference = Number(b.isVerified === true || b.isVerified === "true") - Number(a.isVerified === true || a.isVerified === "true");
-            return verificationDifference || (b.subscriberCount || 0) - (a.subscriberCount || 0);
+            const verificationDifference =
+              Number(b.isVerified === true || b.isVerified === "true") -
+              Number(a.isVerified === true || a.isVerified === "true");
+            return (
+              verificationDifference ||
+              (b.subscriberCount || 0) - (a.subscriberCount || 0)
+            );
           })
           .slice(0, 3);
 
@@ -1187,7 +1233,9 @@ export default function ChannelProfile() {
     };
 
     fetchRecommendedChannels();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [channel?.id]);
 
   const toggleRecommendedSubscription = async (channelId) => {
@@ -1195,12 +1243,18 @@ export default function ChannelProfile() {
     if (!token) return;
 
     try {
-      const res = await axios.post(`/api/channels/${channelId}/follow`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRecommendedSubscribedIds((previous) => res.data.isSubscribed
-        ? [...new Set([...previous, channelId])]
-        : previous.filter((id) => id !== channelId));
+      const res = await axios.post(
+        `/api/channels/${channelId}/follow`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setRecommendedSubscribedIds((previous) =>
+        res.data.isSubscribed
+          ? [...new Set([...previous, channelId])]
+          : previous.filter((id) => id !== channelId),
+      );
     } catch (err) {
       console.error("Failed to update channel subscription", err);
     }
@@ -1251,14 +1305,14 @@ export default function ChannelProfile() {
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
-      let dateString = date.toLocaleDateString('vi-VN');
+
+      let dateString = date.toLocaleDateString("vi-VN");
       if (date.toDateString() === today.toDateString()) {
-        dateString = 'Hôm nay';
+        dateString = "Hôm nay";
       } else if (date.toDateString() === yesterday.toDateString()) {
-        dateString = 'Hôm qua';
+        dateString = "Hôm qua";
       }
-      
+
       if (!acc[dateString]) acc[dateString] = [];
       acc[dateString].push(item);
       return acc;
@@ -1267,11 +1321,11 @@ export default function ChannelProfile() {
 
   const filterByDate = (historyArray, dateString) => {
     if (!dateString || !historyArray) return historyArray;
-    return historyArray.filter(item => {
+    return historyArray.filter((item) => {
       const itemDate = new Date(item.createdAt);
       const year = itemDate.getFullYear();
-      const month = String(itemDate.getMonth() + 1).padStart(2, '0');
-      const day = String(itemDate.getDate()).padStart(2, '0');
+      const month = String(itemDate.getMonth() + 1).padStart(2, "0");
+      const day = String(itemDate.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}` === dateString;
     });
   };
@@ -1347,9 +1401,15 @@ export default function ChannelProfile() {
           <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
             <AlertTriangle className="w-12 h-12 text-red-500" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">Kênh này đã bị đình chỉ</h1>
+          <h1 className="text-3xl font-bold text-white mb-3">
+            Kênh này đã bị đình chỉ
+          </h1>
           <p className="text-gray-400 mb-2 text-base leading-relaxed">
-            Tài khoản này đã bị tạm ngưng do vi phạm <span className="text-red-400 font-medium">Tiêu chuẩn Cộng đồng</span> của chúng tôi.
+            Tài khoản này đã bị tạm ngưng do vi phạm{" "}
+            <span className="text-red-400 font-medium">
+              Tiêu chuẩn Cộng đồng
+            </span>{" "}
+            của chúng tôi.
           </p>
           <p className="text-gray-500 text-sm mb-8">
             Các video, livestream và nội dung của kênh này hiện không khả dụng.
@@ -1410,7 +1470,9 @@ export default function ChannelProfile() {
                 {/* Name */}
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight flex items-center gap-2">
                   {channel.channelName}
-                  {(channel.isVerified === true || channel.isVerified === "true" || channel.channelIsVerified === true) && (
+                  {(channel.isVerified === true ||
+                    channel.isVerified === "true" ||
+                    channel.channelIsVerified === true) && (
                     <CheckCircle className="w-6 h-6 text-white fill-green-500 shrink-0 mt-3" />
                   )}
                 </h1>
@@ -1503,7 +1565,7 @@ export default function ChannelProfile() {
                     </button>
                   )}
                   {channelBtnSettings.showCommunityButton && (
-                    <button 
+                    <button
                       onClick={() => navigate(`/c/${channel.handle}/community`)}
                       className="px-5 py-2 rounded-full font-semibold text-sm text-white bg-white/10 hover:bg-white/20 transition-colors"
                     >
@@ -1620,8 +1682,6 @@ export default function ChannelProfile() {
 
             return (
               <div className="space-y-12">
-
-
                 {/* 0. Giới thiệu về kênh (Compact & Premium) */}
                 <div className="bg-gradient-to-br mt-10 from-[#1A1A1A] to-[#121212] rounded-2xl border border-white/5 p-6 md:p-8 flex flex-col lg:flex-row gap-8 items-center shadow-2xl relative overflow-hidden group">
                   {/* Background glow effects */}
@@ -1634,10 +1694,13 @@ export default function ChannelProfile() {
                       <div className="w-8 h-8 rounded-full bg-[#FF4E00]/10 flex items-center justify-center">
                         <Info className="w-4 h-4 text-[#FF4E00]" />
                       </div>
-                      <h3 className="text-xl font-bold text-white tracking-tight">Giới thiệu</h3>
+                      <h3 className="text-xl font-bold text-white tracking-tight">
+                        Giới thiệu
+                      </h3>
                     </div>
                     <p className="text-gray-400 text-sm md:text-base leading-relaxed whitespace-pre-wrap line-clamp-7 relative z-10">
-                      {channel.description || "Kênh này chưa có mô tả nào. Hãy cập nhật để người xem hiểu rõ hơn về bạn nhé!"}
+                      {channel.description ||
+                        "Kênh này chưa có mô tả nào. Hãy cập nhật để người xem hiểu rõ hơn về bạn nhé!"}
                     </p>
                   </div>
 
@@ -1645,16 +1708,20 @@ export default function ChannelProfile() {
                   <div className="w-full lg:w-[400px] grid grid-cols-2 gap-3 shrink-0 z-10">
                     <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
-                        <Clock className="w-3.5 h-3.5 group-hover/card:text-[#4FC3F7] transition-colors" /> Đã tham gia
+                        <Clock className="w-3.5 h-3.5 group-hover/card:text-[#4FC3F7] transition-colors" />{" "}
+                        Đã tham gia
                       </span>
                       <span className="text-white font-bold text-sm">
-                        {new Date(channel.createdAt).toLocaleDateString("vi-VN")}
+                        {new Date(channel.createdAt).toLocaleDateString(
+                          "vi-VN",
+                        )}
                       </span>
                     </div>
 
                     <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
-                        <Globe className="w-3.5 h-3.5 group-hover/card:text-green-400 transition-colors" /> Quốc gia
+                        <Globe className="w-3.5 h-3.5 group-hover/card:text-green-400 transition-colors" />{" "}
+                        Quốc gia
                       </span>
                       <span className="text-white font-bold text-sm">
                         {channel.country || "Chưa cập nhật"}
@@ -1663,7 +1730,8 @@ export default function ChannelProfile() {
 
                     <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
-                        <TrendingUp className="w-3.5 h-3.5 group-hover/card:text-purple-400 transition-colors" /> Tổng lượt xem
+                        <TrendingUp className="w-3.5 h-3.5 group-hover/card:text-purple-400 transition-colors" />{" "}
+                        Tổng lượt xem
                       </span>
                       <span className="text-white font-bold text-sm">
                         {formatViews(channel.totalViews || 0)}
@@ -1672,7 +1740,8 @@ export default function ChannelProfile() {
 
                     <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
-                        <Users className="w-3.5 h-3.5 group-hover/card:text-yellow-400 transition-colors" /> Người đăng ký
+                        <Users className="w-3.5 h-3.5 group-hover/card:text-yellow-400 transition-colors" />{" "}
+                        Người đăng ký
                       </span>
                       <span className="text-white font-bold text-sm">
                         {formatViews(channel.subscriberCount || 0)}
@@ -1767,7 +1836,9 @@ export default function ChannelProfile() {
                   {/* Right side: Featured List */}
                   <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-5 h-full flex flex-col">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-[16px]">
-                      <span className="text-white font-black text-lg">Nổi bật</span>
+                      <span className="text-white font-black text-lg">
+                        Nổi bật
+                      </span>
                     </div>
 
                     <div className="space-y-4 flex-1">
@@ -1986,7 +2057,7 @@ export default function ChannelProfile() {
                         to={`/c/${channel.handle}/community`}
                         className="text-xs text-gray-400 hover:text-white transition-colors"
                       >
-                        Xem tất cả {'>'}
+                        Xem tất cả {">"}
                       </Link>
                     </div>
 
@@ -1997,52 +2068,76 @@ export default function ChannelProfile() {
                     ) : topCommunityPosts.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
                         <Users className="w-8 h-8 text-white/10" />
-                        <p className="text-gray-500 text-sm">Chưa có bài viết nào.</p>
+                        <p className="text-gray-500 text-sm">
+                          Chưa có bài viết nào.
+                        </p>
                       </div>
-                    ) : (() => {
-                      const post = topCommunityPosts[0];
-                      return (
-                        <Link
-                          to={`/c/${channel.handle}/community`}
-                          className="block bg-[#2A2A2A]/50 border border-white/5 rounded-xl p-4 hover:bg-[#2A2A2A]/80 hover:border-white/10 transition-all group"
-                        >
-                          <div className="flex gap-3 mb-3">
-                            <img
-                              src={post.authorAvatarUrl || channel?.avatarUrl || "https://via.placeholder.com/36"}
-                              className="w-9 h-9 rounded-full shrink-0 object-cover"
-                              alt={post.authorName}
-                            />
-                            <div>
-                              <span className="text-white text-sm font-semibold block">{post.authorName || channel?.channelName}</span>
-                              <span className="text-gray-500 text-[11px]">
-                                {post.createdAt ? new Date(post.createdAt).toLocaleDateString("vi-VN") : ""}
-                              </span>
+                    ) : (
+                      (() => {
+                        const post = topCommunityPosts[0];
+                        return (
+                          <Link
+                            to={`/c/${channel.handle}/community`}
+                            className="block bg-[#2A2A2A]/50 border border-white/5 rounded-xl p-4 hover:bg-[#2A2A2A]/80 hover:border-white/10 transition-all group"
+                          >
+                            <div className="flex gap-3 mb-3">
+                              <img
+                                src={
+                                  post.authorAvatarUrl ||
+                                  channel?.avatarUrl ||
+                                  "https://via.placeholder.com/36"
+                                }
+                                className="w-9 h-9 rounded-full shrink-0 object-cover"
+                                alt={post.authorName}
+                              />
+                              <div>
+                                <span className="text-white text-sm font-semibold block">
+                                  {post.authorName || channel?.channelName}
+                                </span>
+                                <span className="text-gray-500 text-[11px]">
+                                  {post.createdAt
+                                    ? new Date(
+                                        post.createdAt,
+                                      ).toLocaleDateString("vi-VN")
+                                    : ""}
+                                </span>
+                              </div>
+                              {post.isMembersOnly && (
+                                <span className="ml-auto text-[10px] text-purple-400 font-medium px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20 self-start">
+                                  Hội viên
+                                </span>
+                              )}
                             </div>
-                            {post.isMembersOnly && (
-                              <span className="ml-auto text-[10px] text-purple-400 font-medium px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20 self-start">
-                                Hội viên
-                              </span>
+                            <p className="text-gray-300 text-sm leading-relaxed line-clamp-3 mb-3 group-hover:text-white transition-colors">
+                              {post.content || "Bài viết cộng đồng"}
+                            </p>
+                            {post.images && post.images.length > 0 && (
+                              <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-black/30">
+                                <img
+                                  src={post.images[0]}
+                                  className="w-full h-full object-cover"
+                                  alt=""
+                                />
+                              </div>
                             )}
-                          </div>
-                          <p className="text-gray-300 text-sm leading-relaxed line-clamp-3 mb-3 group-hover:text-white transition-colors">
-                            {post.content || "Bài viết cộng đồng"}
-                          </p>
-                          {post.images && post.images.length > 0 && (
-                            <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-black/30">
-                              <img src={post.images[0]} className="w-full h-full object-cover" alt="" />
+                            <div className="flex items-center gap-5 text-gray-400 text-xs pt-2 border-t border-white/5">
+                              <span className="flex items-center gap-1.5">
+                                👍{" "}
+                                <span className="font-semibold text-white">
+                                  {post.likesCount || 0}
+                                </span>
+                              </span>
+                              <span className="flex items-center gap-1.5">
+                                💬{" "}
+                                <span className="font-semibold text-white">
+                                  {post.commentsCount || 0}
+                                </span>
+                              </span>
                             </div>
-                          )}
-                          <div className="flex items-center gap-5 text-gray-400 text-xs pt-2 border-t border-white/5">
-                            <span className="flex items-center gap-1.5">
-                              👍 <span className="font-semibold text-white">{post.likesCount || 0}</span>
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              💬 <span className="font-semibold text-white">{post.commentsCount || 0}</span>
-                            </span>
-                          </div>
-                        </Link>
-                      );
-                    })()}
+                          </Link>
+                        );
+                      })()
+                    )}
                   </div>
 
                   {/* Recommended Channels */}
@@ -2053,33 +2148,56 @@ export default function ChannelProfile() {
                     </div>
                     <div className="space-y-5">
                       {recommendedChannels.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3">
-                          <Link to={`/c/${item.handle}`} className="flex items-center gap-3 min-w-0">
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-3"
+                        >
+                          <Link
+                            to={`/c/${item.handle}`}
+                            className="flex items-center gap-3 min-w-0"
+                          >
                             <img
-                              src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.channelName || "Channel")}`}
+                              src={
+                                item.avatarUrl ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(item.channelName || "Channel")}`
+                              }
                               className="w-10 h-10 rounded-full shrink-0"
                               alt={item.channelName}
                             />
                             <div className="min-w-0">
                               <h4 className="text-white text-sm font-medium flex items-center gap-1">
-                                <span className="truncate">{item.channelName}</span>
-                                {(item.isVerified === true || item.isVerified === "true") && <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />}
+                                <span className="truncate">
+                                  {item.channelName}
+                                </span>
+                                {(item.isVerified === true ||
+                                  item.isVerified === "true") && (
+                                  <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />
+                                )}
                               </h4>
                               <p className="text-gray-500 text-xs">
-                                {formatViews(item.subscriberCount || 0)} {"\u0111\u0103ng k\u00fd"}
+                                {formatViews(item.subscriberCount || 0)}{" "}
+                                {"\u0111\u0103ng k\u00fd"}
                               </p>
                             </div>
                           </Link>
                           <button
-                            onClick={() => toggleRecommendedSubscription(item.id)}
+                            onClick={() =>
+                              toggleRecommendedSubscription(item.id)
+                            }
                             className="px-4 py-1.5 bg-white/10 hover:bg-[#FF4E00] text-white text-xs font-medium rounded-full transition-colors shrink-0"
                           >
-                            {recommendedSubscribedIds.includes(item.id) ? "\u0110\u00e3 \u0111\u0103ng k\u00fd" : "\u0110\u0103ng k\u00fd"}
+                            {recommendedSubscribedIds.includes(item.id)
+                              ? "\u0110\u00e3 \u0111\u0103ng k\u00fd"
+                              : "\u0110\u0103ng k\u00fd"}
                           </button>
                         </div>
                       ))}
                       {recommendedChannels.length === 0 && (
-                        <p className="text-gray-500 text-sm">{"Ch\u01b0a c\u00f3 k\u00eanh ph\u00f9 h\u1ee3p \u0111\u1ec3 \u0111\u1ec1 xu\u1ea5t."}</p>
+                        <p className="text-gray-500 text-sm">
+                          {
+                            "Ch\u01b0a c\u00f3 k\u00eanh ph\u00f9 h\u1ee3p \u0111\u1ec3 \u0111\u1ec1 xu\u1ea5t."
+                          }
+                        </p>
                       )}
                     </div>
                   </div>
@@ -2140,14 +2258,11 @@ export default function ChannelProfile() {
                     </div>
                   </div>
                 </div>
-
-                
               </div>
             );
           }
 
-                    if (activeTab === "revenue" && isOwner) {
-            
+          if (activeTab === "revenue" && isOwner) {
             // --- DATA PROCESSING FOR DASHBOARD ---
             const giftsDef = [
               { id: 1, name: "Hoa hồng", price: 10, icon: "🌹" },
@@ -2163,90 +2278,247 @@ export default function ChannelProfile() {
               { id: 11, name: "Phi thuyền", price: 20000, icon: "🛸" },
               { id: 12, name: "Hành tinh", price: 50000, icon: "🌍" },
             ];
-            const giftCounts = giftsDef.map(g => {
-               const count = revenueStats?.coinReceivedHistory?.filter(h => h.message && h.message.includes(`Đã tặng ${g.name}`)).length || 0;
-               return { ...g, count };
-            }).sort((a, b) => b.count - a.count);
+            const giftCounts = giftsDef
+              .map((g) => {
+                const count =
+                  revenueStats?.coinReceivedHistory?.filter(
+                    (h) => h.message && h.message.includes(`Đã tặng ${g.name}`),
+                  ).length || 0;
+                return { ...g, count };
+              })
+              .sort((a, b) => b.count - a.count);
 
-            const totalDeposit = revenueStats?.depositHistory?.reduce((acc, curr) => acc + curr.coinsAdded, 0) || 0;
-            const totalSpent = revenueStats?.coinSpentHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
-            const totalDonate = revenueStats?.donateHistory?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
-            const totalDonors = new Set(revenueStats?.donateHistory?.map(d => d.donorName)).size;
+            const totalDeposit =
+              revenueStats?.depositHistory?.reduce(
+                (acc, curr) => acc + curr.coinsAdded,
+                0,
+              ) || 0;
+            const totalSpent =
+              revenueStats?.coinSpentHistory?.reduce(
+                (acc, curr) => acc + curr.amount,
+                0,
+              ) || 0;
+            const totalDonate =
+              revenueStats?.donateHistory?.reduce(
+                (acc, curr) => acc + curr.amount,
+                0,
+              ) || 0;
+            const totalDonors = new Set(
+              revenueStats?.donateHistory?.map((d) => d.donorName),
+            ).size;
             const totalCoinReceived = revenueStats?.totalCoinReceived || 0;
             const membershipRevenue = revenueStats?.membershipRevenue || 0;
             const totalDonateVND = revenueStats?.totalDonateVND || 0;
-            
+
             // --- Tính toán số dư còn lại sau khi rút ---
-            const FEE_COIN_GIFT = 0.30;
-            const FEE_DONATE = 0.10;
-            const FEE_MEMBERSHIP = 0.30;
+            const FEE_COIN_GIFT = 0.3;
+            const FEE_DONATE = 0.1;
+            const FEE_MEMBERSHIP = 0.3;
             const COIN_RATE = 100;
 
             let giftCoins = Math.floor(totalCoinReceived * (1 - FEE_COIN_GIFT));
-            let donateCoins = Math.floor((totalDonateVND / COIN_RATE) * (1 - FEE_DONATE));
-            let membershipCoins = Math.floor((membershipRevenue / COIN_RATE) * (1 - FEE_MEMBERSHIP));
+            let donateCoins = Math.floor(
+              (totalDonateVND / COIN_RATE) * (1 - FEE_DONATE),
+            );
+            let membershipCoins = Math.floor(
+              (membershipRevenue / COIN_RATE) * (1 - FEE_MEMBERSHIP),
+            );
 
             const withdrawals = revenueStats?.withdrawals || [];
-            const totalWithdrawnCoins = withdrawals.reduce((sum, w) => sum + w.coins, 0);
-            const totalWithdrawnVND = withdrawals.reduce((sum, w) => sum + w.amountVnd, 0); // w.amountVnd from API? Wait, the API maps AmountFiat to AmountVnd.
+            const totalWithdrawnCoins = withdrawals.reduce(
+              (sum, w) => sum + w.coins,
+              0,
+            );
+            const totalWithdrawnVND = withdrawals.reduce(
+              (sum, w) => sum + w.amountVnd,
+              0,
+            ); // w.amountVnd from API? Wait, the API maps AmountFiat to AmountVnd.
 
             let remainingWithdrawn = totalWithdrawnCoins;
 
-            if (remainingWithdrawn >= giftCoins) { remainingWithdrawn -= giftCoins; giftCoins = 0; }
-            else { giftCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+            if (remainingWithdrawn >= giftCoins) {
+              remainingWithdrawn -= giftCoins;
+              giftCoins = 0;
+            } else {
+              giftCoins -= remainingWithdrawn;
+              remainingWithdrawn = 0;
+            }
 
-            if (remainingWithdrawn >= donateCoins) { remainingWithdrawn -= donateCoins; donateCoins = 0; }
-            else { donateCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+            if (remainingWithdrawn >= donateCoins) {
+              remainingWithdrawn -= donateCoins;
+              donateCoins = 0;
+            } else {
+              donateCoins -= remainingWithdrawn;
+              remainingWithdrawn = 0;
+            }
 
-            if (remainingWithdrawn >= membershipCoins) { remainingWithdrawn -= membershipCoins; membershipCoins = 0; }
-            else { membershipCoins -= remainingWithdrawn; remainingWithdrawn = 0; }
+            if (remainingWithdrawn >= membershipCoins) {
+              remainingWithdrawn -= membershipCoins;
+              membershipCoins = 0;
+            } else {
+              membershipCoins -= remainingWithdrawn;
+              remainingWithdrawn = 0;
+            }
 
-            const remainingDonateVND = Math.floor((donateCoins / (1 - FEE_DONATE)) * COIN_RATE);
-            const remainingGiftCoins = Math.floor(giftCoins / (1 - FEE_COIN_GIFT));
-            const remainingMembershipVND = Math.floor((membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE);
-            const totalRemainingRevenueVND = remainingDonateVND + remainingMembershipVND;
-            
+            const remainingDonateVND = Math.floor(
+              (donateCoins / (1 - FEE_DONATE)) * COIN_RATE,
+            );
+            const remainingGiftCoins = Math.floor(
+              giftCoins / (1 - FEE_COIN_GIFT),
+            );
+            const remainingMembershipVND = Math.floor(
+              (membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE,
+            );
+            const totalRemainingRevenueVND =
+              remainingDonateVND + remainingMembershipVND;
+
             // Timeline processing
             const allActivities = [
-              ...(revenueStats?.donateHistory?.map(d => ({...d, type: 'donate', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `${d.donorName} đã donate`, desc: d.message, amountStr: `+${d.amount.toLocaleString('vi-VN')} đ`, amountColor: 'text-green-500', icon: <img src={d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}`} className="w-8 h-8 rounded-full" /> })) || []),
-              ...(revenueStats?.coinReceivedHistory?.map(d => ({...d, type: 'receive_coin', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `${d.donorName} đã tặng quà`, desc: d.message, amountStr: `+${d.amount.toLocaleString('vi-VN')} Xu`, amountColor: 'text-yellow-500', icon: <img src={d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}`} className="w-8 h-8 rounded-full" /> })) || []),
-              ...(revenueStats?.depositHistory?.map(d => ({...d, type: 'deposit', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `Nạp xu qua hệ thống`, desc: `Thanh toán: ${d.amount.toLocaleString('vi-VN')} đ`, amountStr: `+${d.coinsAdded.toLocaleString('vi-VN')} Xu`, amountColor: 'text-blue-500', icon: <Wallet className="w-4 h-4 text-blue-400" />, iconBg: 'bg-blue-500/10' })) || []),
-              ...(revenueStats?.coinSpentHistory?.map(d => ({...d, type: 'spend_coin', date: new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")), title: `Tặng cho ${d.channelName}`, desc: d.message || 'Đã tặng quà', amountStr: `-${d.amount.toLocaleString('vi-VN')} Xu`, amountColor: 'text-red-500', icon: <Gift className="w-4 h-4 text-red-400" />, iconBg: 'bg-red-500/10' })) || [])
-            ].sort((a, b) => b.date - a.date).slice(0, 50);
-            
+              ...(revenueStats?.donateHistory?.map((d) => ({
+                ...d,
+                type: "donate",
+                date: new Date(
+                  d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                ),
+                title: `${d.donorName} đã donate`,
+                desc: d.message,
+                amountStr: `+${d.amount.toLocaleString("vi-VN")} đ`,
+                amountColor: "text-green-500",
+                icon: (
+                  <img
+                    src={
+                      d.avatarUrl ||
+                      `https://ui-avatars.com/api/?name=${d.donorName}`
+                    }
+                    className="w-8 h-8 rounded-full"
+                  />
+                ),
+              })) || []),
+              ...(revenueStats?.coinReceivedHistory?.map((d) => ({
+                ...d,
+                type: "receive_coin",
+                date: new Date(
+                  d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                ),
+                title: `${d.donorName} đã tặng quà`,
+                desc: d.message,
+                amountStr: `+${d.amount.toLocaleString("vi-VN")} Xu`,
+                amountColor: "text-yellow-500",
+                icon: (
+                  <img
+                    src={
+                      d.avatarUrl ||
+                      `https://ui-avatars.com/api/?name=${d.donorName}`
+                    }
+                    className="w-8 h-8 rounded-full"
+                  />
+                ),
+              })) || []),
+              ...(revenueStats?.depositHistory?.map((d) => ({
+                ...d,
+                type: "deposit",
+                date: new Date(
+                  d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                ),
+                title: `Nạp xu qua hệ thống`,
+                desc: `Thanh toán: ${d.amount.toLocaleString("vi-VN")} đ`,
+                amountStr: `+${d.coinsAdded.toLocaleString("vi-VN")} Xu`,
+                amountColor: "text-blue-500",
+                icon: <Wallet className="w-4 h-4 text-blue-400" />,
+                iconBg: "bg-blue-500/10",
+              })) || []),
+              ...(revenueStats?.coinSpentHistory?.map((d) => ({
+                ...d,
+                type: "spend_coin",
+                date: new Date(
+                  d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                ),
+                title: `Tặng cho ${d.channelName}`,
+                desc: d.message || "Đã tặng quà",
+                amountStr: `-${d.amount.toLocaleString("vi-VN")} Xu`,
+                amountColor: "text-red-500",
+                icon: <Gift className="w-4 h-4 text-red-400" />,
+                iconBg: "bg-red-500/10",
+              })) || []),
+            ]
+              .sort((a, b) => b.date - a.date)
+              .slice(0, 50);
+
             // Chart Data (Last 7 days)
-            const last7Days = Array.from({length: 7}, (_, i) => { 
-              const d = new Date(); d.setDate(d.getDate() - 6 + i); 
-              return d; 
+            const last7Days = Array.from({ length: 7 }, (_, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() - 6 + i);
+              return d;
             });
-            const chartData = last7Days.map(date => {
-              const dateStr = date.toLocaleDateString('vi-VN'); // dd/MM/yyyy
-              const shortDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}`;
-              const donateVND = revenueStats?.donateHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
-              const coinsReceived = revenueStats?.coinReceivedHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
-              const coinsSpent = revenueStats?.coinSpentHistory?.filter(d => new Date(d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') === dateStr).reduce((sum, item) => sum + item.amount, 0) || 0;
-              return { name: shortDate, donate: donateVND, received: coinsReceived, spent: coinsSpent };
+            const chartData = last7Days.map((date) => {
+              const dateStr = date.toLocaleDateString("vi-VN"); // dd/MM/yyyy
+              const shortDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+              const donateVND =
+                revenueStats?.donateHistory
+                  ?.filter(
+                    (d) =>
+                      new Date(
+                        d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                      ).toLocaleDateString("vi-VN") === dateStr,
+                  )
+                  .reduce((sum, item) => sum + item.amount, 0) || 0;
+              const coinsReceived =
+                revenueStats?.coinReceivedHistory
+                  ?.filter(
+                    (d) =>
+                      new Date(
+                        d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                      ).toLocaleDateString("vi-VN") === dateStr,
+                  )
+                  .reduce((sum, item) => sum + item.amount, 0) || 0;
+              const coinsSpent =
+                revenueStats?.coinSpentHistory
+                  ?.filter(
+                    (d) =>
+                      new Date(
+                        d.createdAt + (d.createdAt.endsWith("Z") ? "" : "Z"),
+                      ).toLocaleDateString("vi-VN") === dateStr,
+                  )
+                  .reduce((sum, item) => sum + item.amount, 0) || 0;
+              return {
+                name: shortDate,
+                donate: donateVND,
+                received: coinsReceived,
+                spent: coinsSpent,
+              };
             });
 
             // Top Donate
             const topDonatorsMap = new Map();
-            revenueStats?.donateHistory?.forEach(d => {
-              const existing = topDonatorsMap.get(d.donorName) || { amount: 0, avatar: d.avatarUrl };
-              topDonatorsMap.set(d.donorName, { amount: existing.amount + d.amount, avatar: d.avatarUrl || `https://ui-avatars.com/api/?name=${d.donorName}` });
+            revenueStats?.donateHistory?.forEach((d) => {
+              const existing = topDonatorsMap.get(d.donorName) || {
+                amount: 0,
+                avatar: d.avatarUrl,
+              };
+              topDonatorsMap.set(d.donorName, {
+                amount: existing.amount + d.amount,
+                avatar:
+                  d.avatarUrl ||
+                  `https://ui-avatars.com/api/?name=${d.donorName}`,
+              });
             });
-            const topDonators = Array.from(topDonatorsMap.entries()).map(([name, data]) => ({name, ...data})).sort((a, b) => b.amount - a.amount).slice(0, 8);
+            const topDonators = Array.from(topDonatorsMap.entries())
+              .map(([name, data]) => ({ name, ...data }))
+              .sort((a, b) => b.amount - a.amount)
+              .slice(0, 8);
 
             return (
               <div className="space-y-6 animate-fade-in text-white pb-10 mt-10">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-2xl font-bold">Tổng quan</h3>
                   <div className="flex items-center gap-3">
-                     <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
-                        12/08/2026 - 18/08/2026 <ChevronDown className="w-4 h-4" />
-                     </button>
-                     <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
-                        <MonitorPlay className="w-4 h-4" /> Bộ lọc
-                     </button>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                      12/08/2026 - 18/08/2026{" "}
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                      <MonitorPlay className="w-4 h-4" /> Bộ lọc
+                    </button>
                   </div>
                 </div>
 
@@ -2255,97 +2527,293 @@ export default function ChannelProfile() {
                     <Loader2 className="w-8 h-8 text-[#FF4E00] animate-spin" />
                   </div>
                 ) : !revenueStats ? (
-                  <div className="text-gray-400 text-center py-20">Không có dữ liệu doanh thu.</div>
+                  <div className="text-gray-400 text-center py-20">
+                    Không có dữ liệu doanh thu.
+                  </div>
                 ) : (
                   <>
                     {/* Top Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                       <DashboardCard title="TỔNG DOANH THU (CÒN LẠI)" value={`${totalRemainingRevenueVND.toLocaleString('vi-VN')} đ`} icon={<Wallet className="w-5 h-5"/>} gradient="from-purple-600/80 to-purple-900/80" color="text-purple-400" trend={totalWithdrawnVND > 0 ? `Đã rút: ${totalWithdrawnVND.toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={totalWithdrawnVND > 0} />
-                       <DashboardCard title="TỔNG XU NHẬN (CÒN LẠI)" value={`${remainingGiftCoins.toLocaleString('vi-VN')} Xu`} icon={<Star className="w-5 h-5"/>} gradient="from-orange-500/80 to-orange-800/80" color="text-orange-400" trend={totalWithdrawnCoins > 0 ? `Đã đổi: ${Math.floor(totalWithdrawnCoins / (1 - FEE_COIN_GIFT)).toLocaleString('vi-VN')} Xu` : 'Chưa rút'} trendDown={totalWithdrawnCoins > 0} />
-                       <DashboardCard title="XU ĐÃ NẠP" value={`${totalDeposit.toLocaleString('vi-VN')} Xu`} icon={<Wallet className="w-5 h-5"/>} gradient="from-blue-600/80 to-blue-900/80" color="text-blue-400" trend="+10.2%" />
-                       <DashboardCard title="XU ĐÃ TIÊU (QUÀ TẶNG)" value={`${totalSpent.toLocaleString('vi-VN')} Xu`} icon={<Gift className="w-5 h-5"/>} gradient="from-red-600/80 to-red-900/80" color="text-red-400" trend="-5.1%" trendDown />
-                       <DashboardCard title="TỔNG DONATE (CÒN LẠI)" value={`${remainingDonateVND.toLocaleString('vi-VN')} đ`} icon={<Activity className="w-5 h-5"/>} gradient="from-fuchsia-600/80 to-purple-900/80" color="text-purple-400" trend={totalDonateVND - remainingDonateVND > 0 ? `Đã rút: ${(totalDonateVND - remainingDonateVND).toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={totalDonateVND - remainingDonateVND > 0} />
-                       <DashboardCard title="TIỀN HỘI VIÊN (CÒN LẠI)" value={`${remainingMembershipVND.toLocaleString('vi-VN')} đ`} icon={<Users className="w-5 h-5"/>} gradient="from-teal-500/80 to-teal-800/80" color="text-teal-400" trend={membershipRevenue - remainingMembershipVND > 0 ? `Đã rút: ${(membershipRevenue - remainingMembershipVND).toLocaleString('vi-VN')}đ` : 'Chưa rút'} trendDown={membershipRevenue - remainingMembershipVND > 0} />
+                      <DashboardCard
+                        title="TỔNG DOANH THU (CÒN LẠI)"
+                        value={`${totalRemainingRevenueVND.toLocaleString("vi-VN")} đ`}
+                        icon={<Wallet className="w-5 h-5" />}
+                        gradient="from-purple-600/80 to-purple-900/80"
+                        color="text-purple-400"
+                        trend={
+                          totalWithdrawnVND > 0
+                            ? `Đã rút: ${totalWithdrawnVND.toLocaleString("vi-VN")}đ`
+                            : "Chưa rút"
+                        }
+                        trendDown={totalWithdrawnVND > 0}
+                      />
+                      <DashboardCard
+                        title="TỔNG XU NHẬN (CÒN LẠI)"
+                        value={`${remainingGiftCoins.toLocaleString("vi-VN")} Xu`}
+                        icon={<Star className="w-5 h-5" />}
+                        gradient="from-orange-500/80 to-orange-800/80"
+                        color="text-orange-400"
+                        trend={
+                          totalWithdrawnCoins > 0
+                            ? `Đã đổi: ${Math.floor(totalWithdrawnCoins / (1 - FEE_COIN_GIFT)).toLocaleString("vi-VN")} Xu`
+                            : "Chưa rút"
+                        }
+                        trendDown={totalWithdrawnCoins > 0}
+                      />
+                      <DashboardCard
+                        title="XU ĐÃ NẠP"
+                        value={`${totalDeposit.toLocaleString("vi-VN")} Xu`}
+                        icon={<Wallet className="w-5 h-5" />}
+                        gradient="from-blue-600/80 to-blue-900/80"
+                        color="text-blue-400"
+                        trend="+10.2%"
+                      />
+                      <DashboardCard
+                        title="XU ĐÃ TIÊU (QUÀ TẶNG)"
+                        value={`${totalSpent.toLocaleString("vi-VN")} Xu`}
+                        icon={<Gift className="w-5 h-5" />}
+                        gradient="from-red-600/80 to-red-900/80"
+                        color="text-red-400"
+                        trend="-5.1%"
+                        trendDown
+                      />
+                      <DashboardCard
+                        title="TỔNG DONATE (CÒN LẠI)"
+                        value={`${remainingDonateVND.toLocaleString("vi-VN")} đ`}
+                        icon={<Activity className="w-5 h-5" />}
+                        gradient="from-fuchsia-600/80 to-purple-900/80"
+                        color="text-purple-400"
+                        trend={
+                          totalDonateVND - remainingDonateVND > 0
+                            ? `Đã rút: ${(totalDonateVND - remainingDonateVND).toLocaleString("vi-VN")}đ`
+                            : "Chưa rút"
+                        }
+                        trendDown={totalDonateVND - remainingDonateVND > 0}
+                      />
+                      <DashboardCard
+                        title="TIỀN HỘI VIÊN (CÒN LẠI)"
+                        value={`${remainingMembershipVND.toLocaleString("vi-VN")} đ`}
+                        icon={<Users className="w-5 h-5" />}
+                        gradient="from-teal-500/80 to-teal-800/80"
+                        color="text-teal-400"
+                        trend={
+                          membershipRevenue - remainingMembershipVND > 0
+                            ? `Đã rút: ${(membershipRevenue - remainingMembershipVND).toLocaleString("vi-VN")}đ`
+                            : "Chưa rút"
+                        }
+                        trendDown={
+                          membershipRevenue - remainingMembershipVND > 0
+                        }
+                      />
                     </div>
 
                     {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6">
-                      
                       {/* Left: Recent Activity */}
-                      <div className={`bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col transition-all duration-300 ${showAllActivities ? 'lg:col-span-12 order-3' : 'lg:col-span-4 order-1'}`}>
+                      <div
+                        className={`bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col transition-all duration-300 ${showAllActivities ? "lg:col-span-12 order-3" : "lg:col-span-4 order-1"}`}
+                      >
                         <div className="flex items-center justify-between mb-6">
-                           <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
-                             <Activity className="w-4 h-4 text-purple-400" /> HOẠT ĐỘNG GẦN ĐÂY
-                           </h4>
-                           {/* <span onClick={() => setShowAllActivities(!showAllActivities)} className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors bg-white/5 px-2 py-1 rounded-md">
+                          <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                            <Activity className="w-4 h-4 text-purple-400" />{" "}
+                            HOẠT ĐỘNG GẦN ĐÂY
+                          </h4>
+                          {/* <span onClick={() => setShowAllActivities(!showAllActivities)} className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors bg-white/5 px-2 py-1 rounded-md">
                              {showAllActivities ? "Ẩn bớt" : "Xem tất cả"}
                            </span> */}
                         </div>
-                        <div className={`flex-1 overflow-y-auto custom-scrollbar pr-2 transition-all duration-300 ${showAllActivities ? 'h-[600px] lg:h-[700px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start' : 'h-[320px] space-y-6 relative'}`}>
-                          {!showAllActivities && <div className="absolute left-[19px] top-4 bottom-4 w-px bg-white/10" />}
-                          {(showAllActivities ? allActivities : allActivities.slice(0, 8)).length > 0 ? (showAllActivities ? allActivities : allActivities.slice(0, 8)).map((act, i) => (
-                            <div key={i} className={`flex items-start gap-4 relative z-10 ${showAllActivities ? "bg-[#1A1A1A] border border-white/5 p-4 rounded-xl hover:bg-white/5 transition-colors" : ""}`}>
-                               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] border-[#111111] ${act.iconBg || 'bg-[#1A1A1A]'}`}>
-                                 {act.icon}
-                               </div>
-                               <div className="flex-1 min-w-0 pt-1">
+                        <div
+                          className={`flex-1 overflow-y-auto custom-scrollbar pr-2 transition-all duration-300 ${showAllActivities ? "h-[600px] lg:h-[700px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start" : "h-[320px] space-y-6 relative"}`}
+                        >
+                          {!showAllActivities && (
+                            <div className="absolute left-[19px] top-4 bottom-4 w-px bg-white/10" />
+                          )}
+                          {(showAllActivities
+                            ? allActivities
+                            : allActivities.slice(0, 8)
+                          ).length > 0 ? (
+                            (showAllActivities
+                              ? allActivities
+                              : allActivities.slice(0, 8)
+                            ).map((act, i) => (
+                              <div
+                                key={i}
+                                className={`flex items-start gap-4 relative z-10 ${showAllActivities ? "bg-[#1A1A1A] border border-white/5 p-4 rounded-xl hover:bg-white/5 transition-colors" : ""}`}
+                              >
+                                <div
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] border-[#111111] ${act.iconBg || "bg-[#1A1A1A]"}`}
+                                >
+                                  {act.icon}
+                                </div>
+                                <div className="flex-1 min-w-0 pt-1">
                                   <div className="flex justify-between items-start">
                                     <div>
-                                      <p className="text-sm font-medium text-white truncate">{act.title}</p>
-                                      <p className="text-xs text-gray-500 mt-1 truncate">{act.desc || 'Không có tin nhắn'}</p>
+                                      <p className="text-sm font-medium text-white truncate">
+                                        {act.title}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-1 truncate">
+                                        {act.desc || "Không có tin nhắn"}
+                                      </p>
                                     </div>
                                     <div className="text-right">
-                                      <p className={`text-sm font-bold ${act.amountColor} whitespace-nowrap`}>{act.amountStr}</p>
-                                      <p className="text-[10px] text-gray-500 mt-1">{act.date.toLocaleTimeString('vi-VN')}<br/>{act.date.toLocaleDateString('vi-VN')}</p>
+                                      <p
+                                        className={`text-sm font-bold ${act.amountColor} whitespace-nowrap`}
+                                      >
+                                        {act.amountStr}
+                                      </p>
+                                      <p className="text-[10px] text-gray-500 mt-1">
+                                        {act.date.toLocaleTimeString("vi-VN")}
+                                        <br />
+                                        {act.date.toLocaleDateString("vi-VN")}
+                                      </p>
                                     </div>
                                   </div>
-                               </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center text-gray-500 py-10">
+                              Không có hoạt động nào.
                             </div>
-                          )) : (
-                            <div className="text-center text-gray-500 py-10">Không có hoạt động nào.</div>
                           )}
                         </div>
                         {!showAllActivities ? (
-                           <button onClick={() => setShowAllActivities(true)} className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2">
-                             Xem tất cả hoạt động <ChevronDown className="w-4 h-4" />
-                           </button>
+                          <button
+                            onClick={() => setShowAllActivities(true)}
+                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
+                          >
+                            Xem tất cả hoạt động{" "}
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
                         ) : (
-                           <button onClick={() => setShowAllActivities(false)} className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2">
-                             Ẩn bớt <ChevronDown className="w-4 h-4 rotate-180" />
-                           </button>
+                          <button
+                            onClick={() => setShowAllActivities(false)}
+                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
+                          >
+                            Ẩn bớt{" "}
+                            <ChevronDown className="w-4 h-4 rotate-180" />
+                          </button>
                         )}
                       </div>
 
                       {/* Middle: Charts */}
-                      <div className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? 'lg:col-span-8 order-1' : 'lg:col-span-5 order-2'}`}>
+                      <div
+                        className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? "lg:col-span-8 order-1" : "lg:col-span-5 order-2"}`}
+                      >
                         {/* Line Chart */}
                         <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
                           <div className="flex items-center justify-between mb-4">
-                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
-                               <Wallet className="w-4 h-4 text-blue-400" /> DOANH THU (VNĐ)
-                             </h4>
-                             <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
-                               <option>7 ngày qua</option>
-                             </select>
+                            <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                              <Wallet className="w-4 h-4 text-blue-400" /> DOANH
+                              THU (VNĐ)
+                            </h4>
+                            <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
+                              <option>7 ngày qua</option>
+                            </select>
                           </div>
                           <div className="mb-6">
-                             <div className="text-3xl font-bold text-white mb-1">{totalRemainingRevenueVND.toLocaleString('vi-VN')} đ</div>
-                             <div className="text-xs text-green-400 font-medium">↑ 12.5% <span className="text-gray-500">so với 7 ngày trước</span></div>
+                            <div className="text-3xl font-bold text-white mb-1">
+                              {totalRemainingRevenueVND.toLocaleString("vi-VN")}{" "}
+                              đ
+                            </div>
+                            <div className="text-xs text-green-400 font-medium">
+                              ↑ 12.5%{" "}
+                              <span className="text-gray-500">
+                                so với 7 ngày trước
+                              </span>
+                            </div>
                           </div>
                           <div className="flex-1 w-full min-h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
-                              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <AreaChart
+                                data={chartData}
+                                margin={{
+                                  top: 10,
+                                  right: 10,
+                                  left: -20,
+                                  bottom: 0,
+                                }}
+                              >
                                 <defs>
-                                  <linearGradient id="colorDonate" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#7E22CE" stopOpacity={0.5}/>
-                                    <stop offset="95%" stopColor="#7E22CE" stopOpacity={0}/>
+                                  <linearGradient
+                                    id="colorDonate"
+                                    x1="0"
+                                    y1="0"
+                                    x2="0"
+                                    y2="1"
+                                  >
+                                    <stop
+                                      offset="5%"
+                                      stopColor="#7E22CE"
+                                      stopOpacity={0.5}
+                                    />
+                                    <stop
+                                      offset="95%"
+                                      stopColor="#7E22CE"
+                                      stopOpacity={0}
+                                    />
                                   </linearGradient>
                                 </defs>
-                                <CartesianGrid vertical={false} stroke="#ffffff" strokeOpacity={0.05} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 11}} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 11}} tickFormatter={(value) => value >= 1000000 ? (value / 1000000) + 'M' : value >= 1000 ? (value / 1000) + 'k' : value} dx={-10} />
-                                <RechartsTooltip contentStyle={{backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff'}} itemStyle={{color: '#fff'}} cursor={{stroke: '#7E22CE', strokeWidth: 1, strokeOpacity: 0.5}} />
-                                <Area type="monotone" dataKey="donate" name="Doanh thu" stroke="#A855F7" strokeWidth={3} fillOpacity={1} fill="url(#colorDonate)" dot={{r: 4, fill: '#fff', stroke: '#A855F7', strokeWidth: 2}} activeDot={{r: 6, fill: '#fff', stroke: '#A855F7', strokeWidth: 3}} />
+                                <CartesianGrid
+                                  vertical={false}
+                                  stroke="#ffffff"
+                                  strokeOpacity={0.05}
+                                />
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fill: "#888", fontSize: 11 }}
+                                  dy={10}
+                                />
+                                <YAxis
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fill: "#888", fontSize: 11 }}
+                                  tickFormatter={(value) =>
+                                    value >= 1000000
+                                      ? value / 1000000 + "M"
+                                      : value >= 1000
+                                        ? value / 1000 + "k"
+                                        : value
+                                  }
+                                  dx={-10}
+                                />
+                                <RechartsTooltip
+                                  contentStyle={{
+                                    backgroundColor: "#111",
+                                    border: "1px solid #333",
+                                    borderRadius: "8px",
+                                    color: "#fff",
+                                  }}
+                                  itemStyle={{ color: "#fff" }}
+                                  cursor={{
+                                    stroke: "#7E22CE",
+                                    strokeWidth: 1,
+                                    strokeOpacity: 0.5,
+                                  }}
+                                />
+                                <Area
+                                  type="monotone"
+                                  dataKey="donate"
+                                  name="Doanh thu"
+                                  stroke="#A855F7"
+                                  strokeWidth={3}
+                                  fillOpacity={1}
+                                  fill="url(#colorDonate)"
+                                  dot={{
+                                    r: 4,
+                                    fill: "#fff",
+                                    stroke: "#A855F7",
+                                    strokeWidth: 2,
+                                  }}
+                                  activeDot={{
+                                    r: 6,
+                                    fill: "#fff",
+                                    stroke: "#A855F7",
+                                    strokeWidth: 3,
+                                  }}
+                                />
                               </AreaChart>
                             </ResponsiveContainer>
                           </div>
@@ -2354,25 +2822,57 @@ export default function ChannelProfile() {
                         {/* Bar Chart */}
                         <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
                           <div className="flex items-center justify-between mb-6">
-                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
-                               <Star className="w-4 h-4 text-yellow-400" /> XU NHẬN / XU TIÊU
-                             </h4>
-                             <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
-                               <option>7 ngày qua</option>
-                             </select>
+                            <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                              <Star className="w-4 h-4 text-yellow-400" /> XU
+                              NHẬN / XU TIÊU
+                            </h4>
+                            <select className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-400 outline-none">
+                              <option>7 ngày qua</option>
+                            </select>
                           </div>
                           <div className="flex items-center gap-6 mb-4">
-                             <div className="flex items-center gap-2 text-xs text-gray-400"><div className="w-3 h-3 rounded bg-[#10B981]"/> Xu nhận</div>
-                             <div className="flex items-center gap-2 text-xs text-gray-400"><div className="w-3 h-3 rounded bg-[#EF4444]"/> Xu tiêu</div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
+                              <div className="w-3 h-3 rounded bg-[#10B981]" />{" "}
+                              Xu nhận
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
+                              <div className="w-3 h-3 rounded bg-[#EF4444]" />{" "}
+                              Xu tiêu
+                            </div>
                           </div>
                           <div className="flex-1 w-full min-h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart data={chartData} barGap={4}>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 10}} dy={10} />
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fill: "#666", fontSize: 10 }}
+                                  dy={10}
+                                />
                                 <YAxis hide />
-                                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{backgroundColor: '#1A1A1A', border: 'none', borderRadius: '8px'}} />
-                                <Bar dataKey="received" name="Xu nhận" fill="#10B981" radius={[2, 2, 0, 0]} maxBarSize={15} />
-                                <Bar dataKey="spent" name="Xu tiêu" fill="#EF4444" radius={[2, 2, 0, 0]} maxBarSize={15} />
+                                <RechartsTooltip
+                                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                                  contentStyle={{
+                                    backgroundColor: "#1A1A1A",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                                <Bar
+                                  dataKey="received"
+                                  name="Xu nhận"
+                                  fill="#10B981"
+                                  radius={[2, 2, 0, 0]}
+                                  maxBarSize={15}
+                                />
+                                <Bar
+                                  dataKey="spent"
+                                  name="Xu tiêu"
+                                  fill="#EF4444"
+                                  radius={[2, 2, 0, 0]}
+                                  maxBarSize={15}
+                                />
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
@@ -2380,31 +2880,50 @@ export default function ChannelProfile() {
                       </div>
 
                       {/* Right: Top Donators & Gifts */}
-                      <div className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? 'lg:col-span-4 order-2' : 'lg:col-span-3 order-3'}`}>
+                      <div
+                        className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? "lg:col-span-4 order-2" : "lg:col-span-3 order-3"}`}
+                      >
                         {/* Top Donate */}
                         <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 max-h-[400px] flex flex-col">
                           <div className="flex items-center justify-between mb-6">
-                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
-                               <Crown className="w-4 h-4 text-yellow-500" /> TOP DONATE
-                             </h4>
-                             <span className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors">Tháng này</span>
+                            <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                              <Crown className="w-4 h-4 text-yellow-500" /> TOP
+                              DONATE
+                            </h4>
+                            <span className="text-xs text-gray-500 cursor-pointer hover:text-white transition-colors">
+                              Tháng này
+                            </span>
                           </div>
                           <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
-                            {topDonators.length > 0 ? topDonators.map((donor, idx) => (
-                              <div key={idx} className="flex items-center gap-3">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx===0?'bg-yellow-500 text-black':idx===1?'bg-gray-300 text-black':idx===2?'bg-amber-600 text-white':'bg-[#222] text-gray-400'}`}>
-                                  {idx + 1}
+                            {topDonators.length > 0 ? (
+                              topDonators.map((donor, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-3"
+                                >
+                                  <div
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx === 0 ? "bg-yellow-500 text-black" : idx === 1 ? "bg-gray-300 text-black" : idx === 2 ? "bg-amber-600 text-white" : "bg-[#222] text-gray-400"}`}
+                                  >
+                                    {idx + 1}
+                                  </div>
+                                  <img
+                                    src={donor.avatar}
+                                    className="w-8 h-8 rounded-full border border-white/10"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-200 truncate">
+                                      {donor.name}
+                                    </p>
+                                  </div>
+                                  <div className="text-purple-400 text-sm font-bold whitespace-nowrap">
+                                    {donor.amount.toLocaleString("vi-VN")} đ
+                                  </div>
                                 </div>
-                                <img src={donor.avatar} className="w-8 h-8 rounded-full border border-white/10" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-200 truncate">{donor.name}</p>
-                                </div>
-                                <div className="text-purple-400 text-sm font-bold whitespace-nowrap">
-                                  {donor.amount.toLocaleString('vi-VN')} đ
-                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center text-gray-500 py-4 text-sm">
+                                Chưa có dữ liệu
                               </div>
-                            )) : (
-                              <div className="text-center text-gray-500 py-4 text-sm">Chưa có dữ liệu</div>
                             )}
                           </div>
                         </div>
@@ -2412,65 +2931,125 @@ export default function ChannelProfile() {
                         {/* Popular Gifts */}
                         <div className="bg-[#111111] border border-white/5 rounded-2xl p-2 shadow-xl flex-1">
                           <div className="flex items-center justify-between mb-6 p-2">
-                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
-                               <Gift className="w-4 h-4 text-pink-500" /> QUÀ TẶNG PHỔ BIẾN
-                             </h4>
+                            <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
+                              <Gift className="w-4 h-4 text-pink-500" /> QUÀ
+                              TẶNG PHỔ BIẾN
+                            </h4>
                           </div>
                           <div className="grid grid-cols-3 md:grid-cols-4 gap-1 lg:gap-3 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
-                            {giftCounts.map(g => (
-                              <GiftCard key={g.id} icon={g.icon} name={g.name} count={g.count} />
+                            {giftCounts.map((g) => (
+                              <GiftCard
+                                key={g.id}
+                                icon={g.icon}
+                                name={g.name}
+                                count={g.count}
+                              />
                             ))}
                           </div>
                         </div>
                       </div>
-                      
                     </div>
 
                     {/* Members List */}
                     <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl mt-6">
-                       <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider mb-6">
-                         <Users className="w-4 h-4 text-teal-400" /> 5 HỘI VIÊN MỚI NHẤT
-                       </h4>
-                       {revenueStats.members && revenueStats.members.length > 0 ? (
-                         <div className="overflow-x-auto custom-scrollbar pb-2">
-                           <table className="w-full text-left text-sm text-gray-400">
-                             <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                               <tr>
-                                 <th scope="col" className="px-4 py-3 font-medium rounded-tl-lg">Người dùng</th>
-                                 <th scope="col" className="px-4 py-3 font-medium">Gói hội viên</th>
-                                 <th scope="col" className="px-4 py-3 font-medium">Ngày tham gia</th>
-                                 <th scope="col" className="px-4 py-3 font-medium rounded-tr-lg">Hết hạn</th>
-                               </tr>
-                             </thead>
-                             <tbody>
-                               {revenueStats.members.slice(0, 5).map((member, idx) => (
-                                 <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                   <td className="px-4 py-3 flex items-center gap-3">
-                                     <img src={member.avatarUrl || `https://ui-avatars.com/api/?name=${member.fullName}`} alt={member.fullName} className="w-8 h-8 rounded-full" />
-                                     <span className="font-medium text-white">{member.fullName}</span>
-                                   </td>
-                                   <td className="px-4 py-3">
-                                     <span className="bg-teal-500/20 text-teal-400 px-2 py-1 rounded-md text-xs font-semibold">{member.tier}</span>
-                                   </td>
-                                   <td className="px-4 py-3">{new Date(member.joinedAt + (member.joinedAt.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN')}</td>
-                                   <td className="px-4 py-3">{member.endDate ? new Date(member.endDate + (member.endDate.endsWith("Z") ? "" : "Z")).toLocaleDateString('vi-VN') : 'Không thời hạn'}</td>
-                                 </tr>
-                               ))}
-                             </tbody>
-                           </table>
-                         </div>
-                       ) : (
-                         <div className="text-center text-gray-500 py-6">Kênh chưa có hội viên nào.</div>
-                       )}
+                      <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider mb-6">
+                        <Users className="w-4 h-4 text-teal-400" /> 5 HỘI VIÊN
+                        MỚI NHẤT
+                      </h4>
+                      {revenueStats.members &&
+                      revenueStats.members.length > 0 ? (
+                        <div className="overflow-x-auto custom-scrollbar pb-2">
+                          <table className="w-full text-left text-sm text-gray-400">
+                            <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                              <tr>
+                                <th
+                                  scope="col"
+                                  className="px-4 py-3 font-medium rounded-tl-lg"
+                                >
+                                  Người dùng
+                                </th>
+                                <th
+                                  scope="col"
+                                  className="px-4 py-3 font-medium"
+                                >
+                                  Gói hội viên
+                                </th>
+                                <th
+                                  scope="col"
+                                  className="px-4 py-3 font-medium"
+                                >
+                                  Ngày tham gia
+                                </th>
+                                <th
+                                  scope="col"
+                                  className="px-4 py-3 font-medium rounded-tr-lg"
+                                >
+                                  Hết hạn
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {revenueStats.members
+                                .slice(0, 5)
+                                .map((member, idx) => (
+                                  <tr
+                                    key={idx}
+                                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                  >
+                                    <td className="px-4 py-3 flex items-center gap-3">
+                                      <img
+                                        src={
+                                          member.avatarUrl ||
+                                          `https://ui-avatars.com/api/?name=${member.fullName}`
+                                        }
+                                        alt={member.fullName}
+                                        className="w-8 h-8 rounded-full"
+                                      />
+                                      <span className="font-medium text-white">
+                                        {member.fullName}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="bg-teal-500/20 text-teal-400 px-2 py-1 rounded-md text-xs font-semibold">
+                                        {member.tier}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {new Date(
+                                        member.joinedAt +
+                                          (member.joinedAt.endsWith("Z")
+                                            ? ""
+                                            : "Z"),
+                                      ).toLocaleDateString("vi-VN")}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {member.endDate
+                                        ? new Date(
+                                            member.endDate +
+                                              (member.endDate.endsWith("Z")
+                                                ? ""
+                                                : "Z"),
+                                          ).toLocaleDateString("vi-VN")
+                                        : "Không thời hạn"}
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500 py-6">
+                          Kênh chưa có hội viên nào.
+                        </div>
+                      )}
                     </div>
-
                   </>
                 )}
               </div>
             );
           }
 
-if (activeTab === "videos") {
+          if (activeTab === "videos") {
             const normalVideos = videos.filter((v) => !v.isShort);
             const filteredVideos = normalVideos.filter((v) =>
               v.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -3249,26 +3828,52 @@ if (activeTab === "videos") {
   );
 }
 
-function DashboardCard({ title, value, icon, gradient, color, trend, trendDown }) {
+function DashboardCard({
+  title,
+  value,
+  icon,
+  gradient,
+  color,
+  trend,
+  trendDown,
+}) {
   return (
-    <div className={`bg-gradient-to-br ${gradient} border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group`}>
-       <div className="flex justify-between items-start mb-4">
-         <div className={`w-10 h-10 rounded-full bg-black/40 flex items-center justify-center border border-white/10 ${color}`}>
-           {icon}
-         </div>
-       </div>
-       <div className="relative z-10">
-         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1 opacity-80 truncate">{title}</p>
-         <h4 className="text-xl lg:text-2xl font-black text-white mb-2">{value}</h4>
-         <p className={`text-xs font-semibold ${trendDown ? 'text-red-400' : 'text-green-400'} flex items-center gap-1`}>
-           {trendDown ? '↓' : '↑'} {trend}
-         </p>
-       </div>
-       <div className="absolute bottom-0 left-0 right-0 h-1/2 opacity-30 pointer-events-none overflow-hidden">
-          <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full h-full">
-            <path d="M0,20 L0,15 Q10,10 20,15 T40,15 T60,15 T80,15 T100,10 L100,20 Z" fill="currentColor" className={color} />
-          </svg>
-       </div>
+    <div
+      className={`bg-gradient-to-br ${gradient} border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group`}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div
+          className={`w-10 h-10 rounded-full bg-black/40 flex items-center justify-center border border-white/10 ${color}`}
+        >
+          {icon}
+        </div>
+      </div>
+      <div className="relative z-10">
+        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1 opacity-80 truncate">
+          {title}
+        </p>
+        <h4 className="text-xl lg:text-2xl font-black text-white mb-2">
+          {value}
+        </h4>
+        <p
+          className={`text-xs font-semibold ${trendDown ? "text-red-400" : "text-green-400"} flex items-center gap-1`}
+        >
+          {trendDown ? "↓" : "↑"} {trend}
+        </p>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 opacity-30 pointer-events-none overflow-hidden">
+        <svg
+          viewBox="0 0 100 20"
+          preserveAspectRatio="none"
+          className="w-full h-full"
+        >
+          <path
+            d="M0,20 L0,15 Q10,10 20,15 T40,15 T60,15 T80,15 T100,10 L100,20 Z"
+            fill="currentColor"
+            className={color}
+          />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -3277,8 +3882,12 @@ function GiftCard({ icon, name, count }) {
   return (
     <div className="rounded-xl p-0 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer">
       <span className="text-2xl mb-2">{icon}</span>
-      <p className="text-[10px] font-medium text-gray-400 truncate w-full">{name}</p>
-      <p className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full mt-1">{count}</p>
+      <p className="text-[10px] font-medium text-gray-400 truncate w-full">
+        {name}
+      </p>
+      <p className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full mt-1">
+        {count}
+      </p>
     </div>
   );
 }

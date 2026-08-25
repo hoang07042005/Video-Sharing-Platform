@@ -16,7 +16,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import CategoryFilter from "../../../components/home/CategoryFilter";
 import FeaturedHero from "../../../components/home/FeaturedHero";
-import { getIconColor } from '../../../utils/iconHelpers';
+import { getIconColor } from "../../../utils/iconHelpers";
 
 // ─── Helpers ───────────────────────────────────────────────────
 const formatDuration = (s) => {
@@ -109,13 +109,15 @@ function SmallVideoCard({ video }) {
             {video.title}
           </h3>
           <Link
-          to={`/c/${video.channelHandle}`}
-          onClick={(e) => e.stopPropagation()}
-          className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
-        >
-          {video.channelName}
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
-        </Link>
+            to={`/c/${video.channelHandle}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
+          >
+            {video.channelName}
+            {video.channelIsVerified && (
+              <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+            )}
+          </Link>
           <p className="text-gray-500 text-[11px]">
             {formatViews(video.viewsCount)} lượt xem •{" "}
             {timeAgo(video.createdAt)}
@@ -182,7 +184,9 @@ function HorizontalVideoCard({ video }) {
           className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
         >
           {video.channelName}
-          {video.channelIsVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+          {video.channelIsVerified && (
+            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          )}
         </Link>
         <p className="text-gray-500 text-xs mt-0.5">
           {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
@@ -232,7 +236,10 @@ function ShortVideoCard({ short }) {
   );
 }
 
-const normalizeId = (value) => String(value ?? '').trim().toLowerCase();
+const normalizeId = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase();
 
 function LiveStreamCard({ stream, channel }) {
   const navigate = useNavigate();
@@ -245,7 +252,10 @@ function LiveStreamCard({ stream, channel }) {
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] border border-red-500/30">
         <img
-          src={stream.thumbnailUrl || "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80"}
+          src={
+            stream.thumbnailUrl ||
+            "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80"
+          }
           alt={stream.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
@@ -259,7 +269,11 @@ function LiveStreamCard({ stream, channel }) {
       <div className="flex gap-2">
         <div className="w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0">
           <img
-            src={channel?.avatarUrl || channel?.avatarUrl || "https://via.placeholder.com/40"}
+            src={
+              channel?.avatarUrl ||
+              channel?.avatarUrl ||
+              "https://via.placeholder.com/40"
+            }
             alt={channel?.channelName || "Kênh"}
             className="w-full h-full object-cover"
           />
@@ -268,8 +282,12 @@ function LiveStreamCard({ stream, channel }) {
           <h3 className="text-white text-sm font-semibold line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
             {stream.title}
           </h3>
-          <p className="text-gray-400 text-xs mt-1">{channel?.channelName || "Kênh trực tiếp"}</p>
-          <p className="text-gray-500 text-[11px] mt-0.5">{stream.tags || "Livestream"}</p>
+          <p className="text-gray-400 text-xs mt-1">
+            {channel?.channelName || "Kênh trực tiếp"}
+          </p>
+          <p className="text-gray-500 text-[11px] mt-0.5">
+            {stream.tags || "Livestream"}
+          </p>
         </div>
       </div>
     </div>
@@ -283,36 +301,35 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
   return (
     <div className="flex flex-col gap-2  p-2 rounded-2xl transition-all group">
       {/* Top: Avatar + Info */}
-      
-        {/* Avatar */}
-        <div className="relative shrink-0 flex justify-center">
-          <Link to={`/c/${channel.handle}`}>
-            <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-[#2A2A2A]">
-              <img
-                src={channel.avatarUrl || "https://via.placeholder.com/80"}
-                alt={channel.channelName}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </Link>
-        </div>
 
-        {/* Info */}
-        <div className="min-w-0 flex-1 flex flex-col items-center text-center">
-          <Link
-            to={`/c/${channel.handle}`}
-            className="text-white text-[13px] font-bold hover:text-white/80 transition-colors flex items-center justify-center gap-1"
-          >
-            <span className="line-clamp-1">{channel.channelName}</span>
-            {(channel.isVerified === true || channel.isVerified === "true") && (
-              <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />
-            )}
-          </Link>
-          {/* <p className="text-gray-400 text-[11px] mt-0.5">{channel.handle}</p> */}
-          <p className="text-gray-400 text-[11px] mt-0.5">
-            {formatViews(channel.subscriberCount)} người đăng ký
-          </p>
-        
+      {/* Avatar */}
+      <div className="relative shrink-0 flex justify-center">
+        <Link to={`/c/${channel.handle}`}>
+          <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-[#2A2A2A]">
+            <img
+              src={channel.avatarUrl || "https://via.placeholder.com/80"}
+              alt={channel.channelName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </Link>
+      </div>
+
+      {/* Info */}
+      <div className="min-w-0 flex-1 flex flex-col items-center text-center">
+        <Link
+          to={`/c/${channel.handle}`}
+          className="text-white text-[13px] font-bold hover:text-white/80 transition-colors flex items-center justify-center gap-1"
+        >
+          <span className="line-clamp-1">{channel.channelName}</span>
+          {(channel.isVerified === true || channel.isVerified === "true") && (
+            <CheckCircle className="w-3.5 h-3.5 text-white fill-green-500 shrink-0" />
+          )}
+        </Link>
+        {/* <p className="text-gray-400 text-[11px] mt-0.5">{channel.handle}</p> */}
+        <p className="text-gray-400 text-[11px] mt-0.5">
+          {formatViews(channel.subscriberCount)} người đăng ký
+        </p>
       </div>
 
       {/* Subscribe button */}
@@ -379,38 +396,70 @@ function RightSidebar() {
       <div className="relative min-h-[160px] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#E26627] via-[#912A57] to-[#250F49] p-5">
         <div className="pointer-events-none absolute -right-1 bottom-0 z-10 h-[145px] w-[150px] scale-[0.8] origin-bottom-right">
           <div className="absolute left-1/2 top-[42px] h-[75px] w-[95px] -translate-x-1/2 rounded-full bg-orange-400/30 blur-[35px]" />
-          <div className="absolute left-1/2 top-[15px] h-[85px] w-[108px] -translate-x-1/2 border border-white/[0.14] bg-white/[0.06] shadow-[inset_0_1px_15px_rgba(255,255,255,0.08)] backdrop-blur-[2px]"style={{
-              clipPath:"polygon(50% 0%, 95% 24%, 95% 73%, 50% 100%, 5% 73%, 5% 24%)",}}/>
-          <div className="absolute left-1/2 top-[23px] h-[68px] w-[87px] -translate-x-1/2 bg-gradient-to-br from-orange-300/[0.12] via-transparent to-pink-400/[0.08] blur-[2px]"style={{
-              clipPath:"polygon(50% 0%, 95% 24%, 95% 73%, 50% 100%, 5% 73%, 5% 24%)",}}/>
+          <div
+            className="absolute left-1/2 top-[15px] h-[85px] w-[108px] -translate-x-1/2 border border-white/[0.14] bg-white/[0.06] shadow-[inset_0_1px_15px_rgba(255,255,255,0.08)] backdrop-blur-[2px]"
+            style={{
+              clipPath:
+                "polygon(50% 0%, 95% 24%, 95% 73%, 50% 100%, 5% 73%, 5% 24%)",
+            }}
+          />
+          <div
+            className="absolute left-1/2 top-[23px] h-[68px] w-[87px] -translate-x-1/2 bg-gradient-to-br from-orange-300/[0.12] via-transparent to-pink-400/[0.08] blur-[2px]"
+            style={{
+              clipPath:
+                "polygon(50% 0%, 95% 24%, 95% 73%, 50% 100%, 5% 73%, 5% 24%)",
+            }}
+          />
           <div className="absolute bottom-[8px] left-1/2 h-[15px] w-[90px] -translate-x-1/2 rounded-full bg-[#3D0628]/50 blur-[8px]" />
-          <div className="absolute bottom-[18px] left-1/2 h-[43px] w-[108px] -translate-x-1/2 bg-gradient-to-br from-[#E33B70] via-[#B71956] to-[#72103E] shadow-[0_12px_25px_rgba(55,0,35,0.45)]"style={{
-              clipPath: "polygon(0% 32%, 50% 0%, 100% 32%, 50% 100%)",}}/>
-          <div className="absolute bottom-[4px] left-1/2 h-[30px] w-[108px] -translate-x-1/2 bg-gradient-to-b from-[#C7215A] to-[#78103F]"style={{
-              clipPath: "polygon(0% 0%, 50% 36%, 100% 0%, 100% 58%, 50% 100%, 0% 58%)",}}/>
-          <div className="absolute bottom-[27px] left-1/2 h-[18px] w-[92px] -translate-x-1/2 bg-gradient-to-r from-[#F96A8B]/30 via-[#F14472]/70 to-[#A91851]/30"style={{
-              clipPath: "polygon(0% 38%, 50% 0%, 100% 38%, 50% 100%)",}}/>
+          <div
+            className="absolute bottom-[18px] left-1/2 h-[43px] w-[108px] -translate-x-1/2 bg-gradient-to-br from-[#E33B70] via-[#B71956] to-[#72103E] shadow-[0_12px_25px_rgba(55,0,35,0.45)]"
+            style={{
+              clipPath: "polygon(0% 32%, 50% 0%, 100% 32%, 50% 100%)",
+            }}
+          />
+          <div
+            className="absolute bottom-[4px] left-1/2 h-[30px] w-[108px] -translate-x-1/2 bg-gradient-to-b from-[#C7215A] to-[#78103F]"
+            style={{
+              clipPath:
+                "polygon(0% 0%, 50% 36%, 100% 0%, 100% 58%, 50% 100%, 0% 58%)",
+            }}
+          />
+          <div
+            className="absolute bottom-[27px] left-1/2 h-[18px] w-[92px] -translate-x-1/2 bg-gradient-to-r from-[#F96A8B]/30 via-[#F14472]/70 to-[#A91851]/30"
+            style={{
+              clipPath: "polygon(0% 38%, 50% 0%, 100% 38%, 50% 100%)",
+            }}
+          />
           <div className="absolute bottom-[40px] left-1/2 h-[11px] w-[70px] -translate-x-1/2 rounded-full bg-[#671037]/60 blur-[7px]" />
-          <div className="absolute bottom-[43px] left-1/2 h-[58px] w-[76px] -translate-x-1/2 bg-gradient-to-br from-[#FFE16A] via-[#FFC027] to-[#E48608] drop-shadow-[0_5px_12px_rgba(255,174,25,0.5)]"style={{
-              clipPath:"polygon(3% 19%, 22% 38%, 35% 0%, 50% 40%, 65% 0%, 78% 38%, 97% 19%, 87% 84%, 13% 84%)",}}/>
-          <div className="absolute bottom-[48px] left-1/2 h-[47px] w-[20px] -translate-x-1/2 bg-gradient-to-b from-white/35 via-white/10 to-transparent blur-[1px]"style={{
-              clipPath: "polygon(50% 0%, 100% 25%, 80% 100%, 20% 100%, 0% 25%)",}}/>
-          <div className="absolute bottom-[39px] left-1/2 h-[15px] w-[76px] -translate-x-1/2 rounded-[5px] bg-gradient-to-b from-[#FFE16A] via-[#FFB91E] to-[#DF8207] shadow-[0_3px_8px_rgba(255,175,20,0.45)]"/>
-          <div className="absolute bottom-[49px] left-1/2 h-[3px] w-[63px] -translate-x-1/2 rounded-full bg-[#FFF0A1]/75 blur-[1px]"/>
+          <div
+            className="absolute bottom-[43px] left-1/2 h-[58px] w-[76px] -translate-x-1/2 bg-gradient-to-br from-[#FFE16A] via-[#FFC027] to-[#E48608] drop-shadow-[0_5px_12px_rgba(255,174,25,0.5)]"
+            style={{
+              clipPath:
+                "polygon(3% 19%, 22% 38%, 35% 0%, 50% 40%, 65% 0%, 78% 38%, 97% 19%, 87% 84%, 13% 84%)",
+            }}
+          />
+          <div
+            className="absolute bottom-[48px] left-1/2 h-[47px] w-[20px] -translate-x-1/2 bg-gradient-to-b from-white/35 via-white/10 to-transparent blur-[1px]"
+            style={{
+              clipPath: "polygon(50% 0%, 100% 25%, 80% 100%, 20% 100%, 0% 25%)",
+            }}
+          />
+          <div className="absolute bottom-[39px] left-1/2 h-[15px] w-[76px] -translate-x-1/2 rounded-[5px] bg-gradient-to-b from-[#FFE16A] via-[#FFB91E] to-[#DF8207] shadow-[0_3px_8px_rgba(255,175,20,0.45)]" />
+          <div className="absolute bottom-[49px] left-1/2 h-[3px] w-[63px] -translate-x-1/2 rounded-full bg-[#FFF0A1]/75 blur-[1px]" />
           <div className="absolute left-[30px] top-[43px] h-[15px] w-[15px]">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD45D] via-[#FF9227] to-[#E95715] shadow-[0_0_13px_rgba(255,145,40,0.7)]"/>
-            <div className="absolute left-[3px] top-[2px] h-[5px] w-[6px] rounded-full bg-white/55 blur-[1px]"/>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD45D] via-[#FF9227] to-[#E95715] shadow-[0_0_13px_rgba(255,145,40,0.7)]" />
+            <div className="absolute left-[3px] top-[2px] h-[5px] w-[6px] rounded-full bg-white/55 blur-[1px]" />
           </div>
           <div className="absolute right-[30px] top-[43px] h-[15px] w-[15px]">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD45D] via-[#FF9227] to-[#E95715] shadow-[0_0_13px_rgba(255,145,40,0.7)]"/>
-            <div className="absolute left-[3px] top-[2px] h-[5px] w-[6px] rounded-full bg-white/55 blur-[1px]"/>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD45D] via-[#FF9227] to-[#E95715] shadow-[0_0_13px_rgba(255,145,40,0.7)]" />
+            <div className="absolute left-[3px] top-[2px] h-[5px] w-[6px] rounded-full bg-white/55 blur-[1px]" />
           </div>
 
           <div className="absolute left-1/2 top-[22px] h-[17px] w-[17px] -translate-x-1/2">
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFE477] via-[#FF9E2D] to-[#F05A17] shadow-[0_0_17px_rgba(255,126,28,0.85)]" />
             <div className="absolute left-[4px] top-[3px] h-[5px] w-[6px] rounded-full bg-white/60 blur-[1px] " />
           </div>
-          <div className="absolute bottom-[48px] left-1/2 h-[42px] w-[65px] -translate-x-1/2 rounded-full bg-orange-300/15 blur-[17px]"/>
+          <div className="absolute bottom-[48px] left-1/2 h-[42px] w-[65px] -translate-x-1/2 rounded-full bg-orange-300/15 blur-[17px]" />
         </div>
         <div className="relative z-20 flex h-full w-[66%] flex-col justify-between">
           <div>
@@ -436,7 +485,8 @@ function RightSidebar() {
           <div>
             <Link
               to="/premium"
-              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/[0.02] px-4 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm transition-all duration-200 hover:border-white/60 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.08)]  ">
+              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/[0.02] px-4 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm transition-all duration-200 hover:border-white/60 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.08)]  "
+            >
               Nâng cấp ngay
             </Link>
           </div>
@@ -498,7 +548,7 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const promises = [
           axios.get("/api/videos"),
           axios.get("/api/channels"),
@@ -509,24 +559,37 @@ export default function Home() {
         let subPromiseIndex = -1;
         if (token) {
           subPromiseIndex = promises.length;
-          promises.push(axios.get("/api/channels/subscribed", { headers: { Authorization: `Bearer ${token}` } }));
+          promises.push(
+            axios.get("/api/channels/subscribed", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          );
         }
 
         const results = await Promise.allSettled(promises);
-        
+
         if (results[0].status === "fulfilled") {
-          const shuffledVideos = [...results[0].value.data].sort(() => Math.random() - 0.5);
+          const shuffledVideos = [...results[0].value.data].sort(
+            () => Math.random() - 0.5,
+          );
           setVideos(shuffledVideos);
         }
-        if (results[1].status === "fulfilled") setChannels(results[1].value.data);
+        if (results[1].status === "fulfilled")
+          setChannels(results[1].value.data);
         if (results[2].status === "fulfilled") {
-          const shuffledShorts = [...results[2].value.data].sort(() => Math.random() - 0.5);
+          const shuffledShorts = [...results[2].value.data].sort(
+            () => Math.random() - 0.5,
+          );
           setShorts(shuffledShorts);
         }
-        if (results[3].status === "fulfilled") setLiveStreams(results[3].value.data);
-        
-        if (subPromiseIndex !== -1 && results[subPromiseIndex].status === "fulfilled") {
-          const subIds = results[subPromiseIndex].value.data.map(c => c.id);
+        if (results[3].status === "fulfilled")
+          setLiveStreams(results[3].value.data);
+
+        if (
+          subPromiseIndex !== -1 &&
+          results[subPromiseIndex].status === "fulfilled"
+        ) {
+          const subIds = results[subPromiseIndex].value.data.map((c) => c.id);
           setSubscribedChannelIds(subIds);
         }
       } catch (err) {
@@ -545,7 +608,9 @@ export default function Home() {
   ).filter((v) => !v.isShort);
 
   const featuredVideos = filteredVideos.slice(0, 4);
-  const liveNow = liveStreams.filter((stream) => normalizeId(stream.status) === 'live');
+  const liveNow = liveStreams.filter(
+    (stream) => normalizeId(stream.status) === "live",
+  );
 
   // Auto-slide cho FeaturedHero
   useEffect(() => {
@@ -563,7 +628,6 @@ export default function Home() {
       </div>
     );
   }
-
 
   const filteredShorts =
     activeCategoryId === 0
@@ -626,12 +690,16 @@ export default function Home() {
         "https://api.dicebear.com/7.x/initials/svg?seed=HH&backgroundColor=2196f3",
     },
   ];
-  
+
   let featuredChannelsRaw = channels.length > 0 ? channels : mockChannels;
-  const currentUserHandle = localStorage.getItem('handle');
+  const currentUserHandle = localStorage.getItem("handle");
   if (currentUserHandle) {
-    const handleCheck = currentUserHandle.startsWith('@') ? currentUserHandle : `@${currentUserHandle}`;
-    featuredChannelsRaw = featuredChannelsRaw.filter(c => c.handle !== handleCheck && c.handle !== currentUserHandle);
+    const handleCheck = currentUserHandle.startsWith("@")
+      ? currentUserHandle
+      : `@${currentUserHandle}`;
+    featuredChannelsRaw = featuredChannelsRaw.filter(
+      (c) => c.handle !== handleCheck && c.handle !== currentUserHandle,
+    );
   }
   const featuredChannels = featuredChannelsRaw.slice(0, 6);
 
@@ -644,15 +712,22 @@ export default function Home() {
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             {/* Featured Hero */}
             {featuredVideos.length > 0 && (
-              <FeaturedHero 
-                video={featuredVideos[featuredSlide]} 
+              <FeaturedHero
+                video={featuredVideos[featuredSlide]}
                 totalSlides={featuredVideos.length}
                 currentSlide={featuredSlide}
-                onNext={() => setFeaturedSlide((prev) => (prev + 1) % featuredVideos.length)}
-                onPrev={() => setFeaturedSlide((prev) => (prev - 1 + featuredVideos.length) % featuredVideos.length)}
+                onNext={() =>
+                  setFeaturedSlide((prev) => (prev + 1) % featuredVideos.length)
+                }
+                onPrev={() =>
+                  setFeaturedSlide(
+                    (prev) =>
+                      (prev - 1 + featuredVideos.length) %
+                      featuredVideos.length,
+                  )
+                }
               />
             )}
-
           </div>
           {/* end left col */}
 
@@ -667,15 +742,23 @@ export default function Home() {
         <div>
           <CategoryFilter onSelect={(id) => setActiveCategoryId(id)} />
         </div>
-        
+
         {/* ── Full-width sections bên dưới ── */}
         <div className="flex flex-col gap-8 mt-10">
           {liveNow.length > 0 && (
             <section>
-              <SectionHeader icon={Play} title="Đang phát trực tiếp" linkTo="/" />
+              <SectionHeader
+                icon={Play}
+                title="Đang phát trực tiếp"
+                linkTo="/"
+              />
               <div className="grid grid-cols-4 gap-4">
                 {liveNow.slice(0, 4).map((stream) => {
-                  const channel = channels.find((item) => normalizeId(item.id) === normalizeId(stream.channelId)) || null;
+                  const channel =
+                    channels.find(
+                      (item) =>
+                        normalizeId(item.id) === normalizeId(stream.channelId),
+                    ) || null;
                   return (
                     <LiveStreamCard
                       key={stream.id}
@@ -687,7 +770,6 @@ export default function Home() {
               </div>
             </section>
           )}
-
 
           {/* Đề xuất cho bạn */}
           <section>
@@ -706,7 +788,6 @@ export default function Home() {
               </div>
             )}
           </section>
-
 
           {/* Thịnh hành */}
           <section>
@@ -785,9 +866,9 @@ export default function Home() {
             />
             <div className="grid grid-cols-6 gap-4">
               {featuredChannels.map((ch) => (
-                <FeaturedChannelCard 
-                  key={ch.id} 
-                  channel={ch} 
+                <FeaturedChannelCard
+                  key={ch.id}
+                  channel={ch}
                   initialSubbed={subscribedChannelIds.includes(ch.id)}
                 />
               ))}

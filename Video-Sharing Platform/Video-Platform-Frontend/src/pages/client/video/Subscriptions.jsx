@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Loader2, Bell, Users, UserCheck, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Loader2, Bell, Users, UserCheck, CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const formatSubscribers = (count) => {
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)} Tr người đăng ký`;
+  if (count >= 1000000)
+    return `${(count / 1000000).toFixed(1)} Tr người đăng ký`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)} N người đăng ký`;
   return `${count} người đăng ký`;
 };
@@ -17,22 +18,22 @@ export default function Subscriptions() {
   useEffect(() => {
     const fetchChannels = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-          setError('auth');
+          setError("auth");
           setLoading(false);
           return;
         }
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await axios.get('/api/channels/subscribed', { headers });
+        const res = await axios.get("/api/channels/subscribed", { headers });
         setChannels(res.data);
         setError(null);
       } catch (err) {
-        console.error('Lỗi khi lấy kênh đăng ký:', err);
+        console.error("Lỗi khi lấy kênh đăng ký:", err);
         if (err.response?.status === 401) {
-          setError('auth');
+          setError("auth");
         } else {
-          setError('fetch');
+          setError("fetch");
         }
       } finally {
         setLoading(false);
@@ -49,15 +50,19 @@ export default function Subscriptions() {
     );
   }
 
-  if (error === 'auth') {
+  if (error === "auth") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-4">
         <div className="w-20 h-20 rounded-full bg-[#212121] flex items-center justify-center">
           <Bell className="w-10 h-10 text-gray-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Không thể hiển thị kênh đăng ký</h2>
-          <p className="text-gray-400 mb-6">Đăng nhập để xem các kênh bạn đã theo dõi</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Không thể hiển thị kênh đăng ký
+          </h2>
+          <p className="text-gray-400 mb-6">
+            Đăng nhập để xem các kênh bạn đã theo dõi
+          </p>
           <Link
             to="/login"
             className="px-6 py-3 bg-[#FF5722] text-white font-bold rounded-full hover:bg-[#E64A19] transition-colors"
@@ -76,9 +81,12 @@ export default function Subscriptions() {
           <Users className="w-10 h-10 text-gray-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Bạn chưa đăng ký kênh nào</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Bạn chưa đăng ký kênh nào
+          </h2>
           <p className="text-gray-400 max-w-sm">
-            Hãy tìm và đăng ký các kênh yêu thích để theo dõi nội dung mới nhất của họ.
+            Hãy tìm và đăng ký các kênh yêu thích để theo dõi nội dung mới nhất
+            của họ.
           </p>
         </div>
       </div>
@@ -88,7 +96,6 @@ export default function Subscriptions() {
   return (
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
       <div className="max-w-[1400px] mx-auto p-4 md:p-8">
-
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5722] to-[#FF9800] flex items-center justify-center">
@@ -96,7 +103,9 @@ export default function Subscriptions() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Kênh đăng ký</h1>
-            <p className="text-gray-400 text-sm">{channels.length} kênh bạn đang theo dõi</p>
+            <p className="text-gray-400 text-sm">
+              {channels.length} kênh bạn đang theo dõi
+            </p>
           </div>
         </div>
 
@@ -133,7 +142,9 @@ export default function Subscriptions() {
               <div className="text-center">
                 <p className="text-white font-medium text-sm md:text-base line-clamp-1 group-hover:text-[#FF5722] transition-colors flex items-center justify-center gap-1">
                   {channel.channelName}
-                  {channel.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
+                  {channel.isVerified && (
+                    <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+                  )}
                 </p>
                 <p className="text-gray-400 text-xs mt-0.5">
                   {formatSubscribers(channel.subscriberCount)}
@@ -142,7 +153,6 @@ export default function Subscriptions() {
             </Link>
           ))}
         </div>
-
       </div>
     </div>
   );
