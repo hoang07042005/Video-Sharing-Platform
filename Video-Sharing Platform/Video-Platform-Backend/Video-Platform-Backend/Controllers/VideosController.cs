@@ -718,6 +718,41 @@ namespace Video_Platform_Backend.Controllers
             return Ok(history);
         }
 
+        // GET: api/videos/history/stats
+        [HttpGet("history/stats")]
+        [Authorize]
+        public async Task<IActionResult> GetHistoryStats()
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Unauthorized();
+
+            var sevenDaysAgo = DateTime.UtcNow.AddDays(-6).Date; // 7 days including today
+            
+            var history = await _context.WatchHistories
+                .Where(h => h.UserId == userId && h.LastWatchedAt >= sevenDaysAgo)
+                .GroupBy(h => h.LastWatchedAt.Value.Date)
+                .Select(g => new {
+                    Date = g.Key.ToString("yyyy-MM-dd"),
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            // Fill in missing days with 0
+            var stats = new List<object>();
+            for (int i = 6; i >= 0; i--)
+            {
+                var date = DateTime.UtcNow.AddDays(-i).Date.ToString("yyyy-MM-dd");
+                var dayName = DateTime.UtcNow.AddDays(-i).ToString("ddd", new System.Globalization.CultureInfo("vi-VN"));
+                var data = history.FirstOrDefault(h => h.Date == date);
+                stats.Add(new {
+                    name = dayName,
+                    videos = data?.Count ?? 0
+                });
+            }
+
+            return Ok(stats);
+        }
+
         // DELETE: api/videos/history
         [HttpDelete("history")]
         [Authorize]
@@ -1176,6 +1211,28 @@ namespace Video_Platform_Backend.Controllers
             };
 
             _context.Reports.Add(report);
+            
+            // Notify all admins
+            var adminIds = await _context.Users
+                .Where(u => u.Role == "Admin")
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            foreach (var adminId in adminIds)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = adminId,
+                    Type = "Report",
+                    Title = "Có báo cáo vi phạm mới",
+                    Message = $"Một người dùng vừa báo cáo video: {video.Title}. Lý do: {request.Reason}",
+                    TargetUrl = "/admin/reports",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Cảm ơn bạn. Báo cáo của bạn đã được gửi và sẽ được xem xét." });

@@ -61,7 +61,7 @@ export default function AdminReports() {
         setReports(reportsRes.data);
 
         // Mocking total pages since it's not implemented on backend yet
-        setTotalPages(Math.ceil(statsRes.data.TotalReports / 5) || 1);
+        setTotalPages(Math.ceil(statsRes.data.totalReports / 5) || 1);
       } catch (error) {
         console.error("Error fetching admin reports data:", error);
       } finally {

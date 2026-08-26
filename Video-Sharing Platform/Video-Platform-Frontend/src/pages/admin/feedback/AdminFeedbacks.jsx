@@ -38,6 +38,17 @@ export default function AdminFeedbacks() {
   const [replyContent, setReplyContent] = useState("");
   const [replying, setReplying] = useState(false);
 
+  // Lightbox State
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  const openLightbox = (images, index) => {
+    setLightboxImages(images);
+    setLightboxIndex(index);
+    setIsLightboxOpen(true);
+  };
+
   useEffect(() => {
     fetchFeedbacks();
   }, []);
@@ -514,18 +525,37 @@ export default function AdminFeedbacks() {
                     <td className="p-4 whitespace-nowrap">
                       {f.attachmentUrl ? (
                         <div className="flex items-center gap-1">
-                          <a
-                            href={f.attachmentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block w-8 h-8 rounded border border-white/10 overflow-hidden hover:border-white/30 transition-colors"
-                          >
-                            <img
-                              src={f.attachmentUrl}
-                              alt="Đính kèm"
-                              className="w-full h-full object-cover"
-                            />
-                          </a>
+                          {(() => {
+                            let images = [];
+                            try {
+                              images = JSON.parse(f.attachmentUrl);
+                              if (!Array.isArray(images)) images = [f.attachmentUrl];
+                            } catch {
+                              images = [f.attachmentUrl];
+                            }
+                            return images.slice(0, 3).map((url, i) => (
+                              <button
+                                type="button"
+                                key={i}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openLightbox(images, i);
+                                }}
+                                className="block w-8 h-8 rounded border border-white/10 overflow-hidden hover:border-white/30 transition-colors relative cursor-pointer"
+                              >
+                                <img
+                                  src={url}
+                                  alt="Đính kèm"
+                                  className="w-full h-full object-cover"
+                                />
+                                {i === 2 && images.length > 3 && (
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-[10px] font-bold text-white">
+                                    +{images.length - 3}
+                                  </div>
+                                )}
+                              </button>
+                            ));
+                          })()}
                         </div>
                       ) : (
                         <span className="text-gray-600 text-xs">-</span>
@@ -700,18 +730,31 @@ export default function AdminFeedbacks() {
                       <p className="text-xs text-gray-500 mb-2 font-medium">
                         Tệp đính kèm:
                       </p>
-                      <a
-                        href={selectedFeedback.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-32 h-32 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-colors"
-                      >
-                        <img
-                          src={selectedFeedback.attachmentUrl}
-                          alt="Đính kèm"
-                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                        />
-                      </a>
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          let images = [];
+                          try {
+                            images = JSON.parse(selectedFeedback.attachmentUrl);
+                            if (!Array.isArray(images)) images = [selectedFeedback.attachmentUrl];
+                          } catch {
+                            images = [selectedFeedback.attachmentUrl];
+                          }
+                          return images.map((url, i) => (
+                            <button
+                              type="button"
+                              key={i}
+                              onClick={() => openLightbox(images, i)}
+                              className="block w-32 h-32 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-colors cursor-pointer"
+                            >
+                              <img
+                                src={url}
+                                alt={`Đính kèm ${i + 1}`}
+                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                              />
+                            </button>
+                          ));
+                        })()}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -763,6 +806,72 @@ export default function AdminFeedbacks() {
               </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {isLightboxOpen && lightboxImages.length > 0 && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-6 right-6 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={() =>
+              setLightboxIndex((prev) =>
+                prev === 0 ? lightboxImages.length - 1 : prev - 1
+              )
+            }
+            disabled={lightboxImages.length <= 1}
+            className={`absolute left-6 p-3 rounded-full transition-colors ${
+              lightboxImages.length > 1 
+                ? "text-white/70 hover:text-white hover:bg-white/10 cursor-pointer" 
+                : "text-white/20 cursor-not-allowed"
+            }`}
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+
+          <img
+            src={lightboxImages[lightboxIndex]}
+            alt="Phóng to"
+            className="max-w-[90vw] max-h-[90vh] object-contain select-none"
+          />
+
+          <button
+            onClick={() =>
+              setLightboxIndex((prev) =>
+                prev === lightboxImages.length - 1 ? 0 : prev + 1
+              )
+            }
+            disabled={lightboxImages.length <= 1}
+            className={`absolute right-6 p-3 rounded-full transition-colors ${
+              lightboxImages.length > 1 
+                ? "text-white/70 hover:text-white hover:bg-white/10 cursor-pointer" 
+                : "text-white/20 cursor-not-allowed"
+            }`}
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+
+          {lightboxImages.length > 1 && (
+            <div className="absolute bottom-6 flex gap-2">
+              {lightboxImages.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setLightboxIndex(i)}
+                  className={`w-2 h-2 rounded-full cursor-pointer transition-all ${
+                    i === lightboxIndex
+                      ? "bg-white scale-125"
+                      : "bg-white/30 hover:bg-white/60"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

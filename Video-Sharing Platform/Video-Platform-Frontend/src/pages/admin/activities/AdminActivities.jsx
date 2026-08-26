@@ -137,29 +137,7 @@ const AdminActivities = () => {
       const response = await axios.get("/api/admin/audit-logs", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Mock some additional properties based on the design for visual accuracy
-      const enhancedData = response.data.map((item, index) => {
-        let status = "Thành công";
-        if (item.actionType === "delete") status = "Cảnh báo";
-        else if (item.actionType === "error") status = "Thất bại";
-
-        // Faking status based on target or random for mockup if needed
-        if (index % 12 === 0) status = "Thất bại";
-        else if (index % 7 === 0) status = "Cảnh báo";
-
-        return {
-          ...item,
-          status: status,
-          ipAddress: "103.25.123." + (45 + (index % 50)),
-          browser:
-            index % 3 === 0
-              ? "Firefox • Windows"
-              : index % 5 === 0
-                ? "Safari • macOS"
-                : "Chrome • Windows",
-        };
-      });
-      setActivities(enhancedData);
+      setActivities(response.data);
     } catch (error) {
       console.error("Error fetching activities:", error);
       toast.error("Không thể tải hoạt động hệ thống");

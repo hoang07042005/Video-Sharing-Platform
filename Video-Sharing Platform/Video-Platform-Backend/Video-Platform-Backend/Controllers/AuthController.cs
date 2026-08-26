@@ -394,7 +394,9 @@ namespace Video_Platform_Backend.Controllers
                 DateOfBirth = user.Profile?.DateOfBirth.HasValue == true ? user.Profile.DateOfBirth.Value.ToDateTime(TimeOnly.MinValue) : null,
                 ChannelName = user.Channel?.ChannelName,
                 Handle = user.Channel?.Handle,
-                Description = user.Channel?.Description
+                Description = user.Channel?.Description,
+                ReceiveNewVideoNotifications = user.ReceiveNewVideoNotifications,
+                ReceiveCommentNotifications = user.ReceiveCommentNotifications
             };
 
             return Ok(dto);
@@ -427,6 +429,12 @@ namespace Video_Platform_Backend.Controllers
             }
 
             user.PhoneNumber = dto.PhoneNumber ?? user.PhoneNumber;
+            
+            if (dto.ReceiveNewVideoNotifications.HasValue)
+                user.ReceiveNewVideoNotifications = dto.ReceiveNewVideoNotifications.Value;
+                
+            if (dto.ReceiveCommentNotifications.HasValue)
+                user.ReceiveCommentNotifications = dto.ReceiveCommentNotifications.Value;
 
             if (user.Profile != null)
             {

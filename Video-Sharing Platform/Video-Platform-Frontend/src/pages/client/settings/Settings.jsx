@@ -98,6 +98,8 @@ export default function Settings() {
     channelName: "",
     handle: "",
     description: "",
+    receiveNewVideoNotifications: true,
+    receiveCommentNotifications: true,
   });
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState({ type: "", text: "" });
@@ -123,6 +125,8 @@ export default function Settings() {
             channelName: res.data.channelName || "",
             handle: res.data.handle || "",
             description: res.data.description || "",
+            receiveNewVideoNotifications: res.data.receiveNewVideoNotifications ?? true,
+            receiveCommentNotifications: res.data.receiveCommentNotifications ?? true,
           });
         }
       } catch (error) {
@@ -509,9 +513,19 @@ export default function Settings() {
                     title="Thông báo video mới"
                     description="Nhận thông báo khi kênh bạn theo dõi đăng video mới."
                   >
-                    <span className="text-xs text-[#FF5722] border border-[#FF5722]/30 bg-[#FF5722]/10 px-3 py-1.5 rounded-full">
-                      Sắp ra mắt
-                    </span>
+                    <Toggle
+                      checked={profileData.receiveNewVideoNotifications}
+                      onChange={async (val) => {
+                        setProfileData({ ...profileData, receiveNewVideoNotifications: val });
+                        try {
+                          await axios.put("/api/auth/profile", { ...profileData, receiveNewVideoNotifications: val }, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                          });
+                        } catch (e) {
+                          console.error("Lỗi cập nhật thông báo:", e);
+                        }
+                      }}
+                    />
                   </SettingItem>
                   <div className="mx-5 border-t border-white/5" />
                   <SettingItem
@@ -520,9 +534,19 @@ export default function Settings() {
                     title="Thông báo bình luận"
                     description="Nhận thông báo khi có người bình luận vào video của bạn."
                   >
-                    <span className="text-xs text-[#FF5722] border border-[#FF5722]/30 bg-[#FF5722]/10 px-3 py-1.5 rounded-full">
-                      Sắp ra mắt
-                    </span>
+                    <Toggle
+                      checked={profileData.receiveCommentNotifications}
+                      onChange={async (val) => {
+                        setProfileData({ ...profileData, receiveCommentNotifications: val });
+                        try {
+                          await axios.put("/api/auth/profile", { ...profileData, receiveCommentNotifications: val }, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                          });
+                        } catch (e) {
+                          console.error("Lỗi cập nhật thông báo:", e);
+                        }
+                      }}
+                    />
                   </SettingItem>
                 </div>
               </div>

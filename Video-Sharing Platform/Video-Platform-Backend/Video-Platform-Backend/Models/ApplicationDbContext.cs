@@ -112,6 +112,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<CommunityPostVote> CommunityPostVotes { get; set; }
     public virtual DbSet<CommunityPostLike> CommunityPostLikes { get; set; }
 
+    public virtual DbSet<Faq> Faqs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Channel>(entity =>
@@ -510,7 +512,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending");
             entity.Property(e => e.Content).HasMaxLength(2000);
             entity.Property(e => e.AdminReply).HasMaxLength(2000);
-            entity.Property(e => e.AttachmentUrl).HasMaxLength(500);
+            entity.Property(e => e.AttachmentUrl).IsRequired(false);
             
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getutcdate())")

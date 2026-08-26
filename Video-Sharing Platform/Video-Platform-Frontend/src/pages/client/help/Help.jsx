@@ -67,37 +67,17 @@ const categories = [
   },
 ];
 
-const faqs = [
-  {
-    question: "Làm thế nào để đăng ký gói Hội viên VIP?",
-    answer:
-      "Truy cập vào trang cá nhân của kênh bạn yêu thích, bấm vào nút 'Tham gia' (Join) và chọn gói Hội viên phù hợp. Bạn có thể thanh toán qua ví MoMo hoặc thẻ ngân hàng.",
-  },
-  {
-    question: "Tại sao tôi không xem được video ở độ phân giải 4K?",
-    answer:
-      "Chất lượng 4K yêu cầu kết nối internet ổn định (khuyến nghị trên 20Mbps) và thiết bị hỗ trợ giải mã phần cứng. Vui lòng kiểm tra lại đường truyền và cài đặt hiển thị của bạn.",
-  },
-  {
-    question: "Cách báo cáo một video có nội dung xấu?",
-    answer:
-      "Bên dưới mỗi trình phát video, hãy bấm vào nút 3 chấm (...) -> chọn 'Báo cáo vi phạm'. Chọn lý do chính xác để đội ngũ kiểm duyệt xử lý nhanh chóng.",
-  },
-  {
-    question: "Làm sao để xóa lịch sử xem video?",
-    answer:
-      "Bạn hãy vào menu 'Lịch sử' (Watch History) ở thanh điều hướng bên trái, sau đó bấm nút 'Xóa toàn bộ lịch sử xem' ở cột bên phải.",
-  },
-  {
-    question: "Thời gian xử lý yêu cầu rút tiền là bao lâu?",
-    answer:
-      "Các yêu cầu rút tiền thường được xử lý trong khoảng thời gian từ ngày 10 đến ngày 15 hàng tháng.",
-  },
-];
-
 export default function Help() {
+  const [faqs, setFaqs] = useState([]);
   const [openFaq, setOpenFaq] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    axios
+      .get("/api/faqs")
+      .then((res) => setFaqs(res.data))
+      .catch((err) => console.error("Lỗi khi tải FAQs:", err));
+  }, []);
 
   const [siteConfig, setSiteConfig] = useState({
     contactEmail: "support@videosharing.vn",
@@ -129,36 +109,59 @@ export default function Help() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
+  const feedbackFormRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     type: "technical",
     content: "",
-    attachmentUrl: "",
+    attachments: [],
   });
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Kích thước ảnh vượt quá 5MB");
+    if (formData.attachments.length + files.length > 5) {
+      toast.error("Bạn chỉ được tải lên tối đa 5 ảnh.");
       return;
     }
 
     setUploadingImage(true);
-    const formPayload = new FormData();
-    formPayload.append("file", file);
+    let newAttachments = [...formData.attachments];
 
-    try {
-      const response = await axios.post("/api/upload/image", formPayload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setFormData({ ...formData, attachmentUrl: response.data.url });
-      toast.success("Tải ảnh đính kèm thành công!");
-    } catch (err) {
-      toast.error("Lỗi khi tải ảnh lên. Vui lòng thử lại.");
-    } finally {
-      setUploadingImage(false);
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} vượt quá 5MB`);
+        continue;
+      }
+      
+      const formPayload = new FormData();
+      formPayload.append("file", file);
+
+      try {
+        const response = await axios.post("/api/upload/image", formPayload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        newAttachments.push(response.data.url);
+      } catch (err) {
+        toast.error(`Lỗi khi tải ảnh ${file.name} lên.`);
+      }
     }
+
+    setFormData({ ...formData, attachments: newAttachments });
+    setUploadingImage(false);
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setFormData({
+      ...formData,
+      attachments: formData.attachments.filter((_, index) => index !== indexToRemove)
+    });
+  };
+
+  const handleCategoryClick = (categoryId) => {
+    setFormData({ ...formData, type: categoryId });
+    feedbackFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleFeedbackSubmit = async (e) => {
@@ -170,16 +173,21 @@ export default function Help() {
 
     setLoading(true);
     try {
+      const payload = {
+        type: formData.type,
+        content: formData.content,
+        attachmentUrl: formData.attachments.length > 0 ? JSON.stringify(formData.attachments) : null
+      };
+      
       const token = localStorage.getItem("token");
-      const response = await axios.post("/api/feedback", formData, {
+      const response = await axios.post("/api/feedback", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(response.data.message || "Gửi yêu cầu hỗ trợ thành công!");
       setFormData({
         type: "technical",
-        title: "",
         content: "",
-        attachmentUrl: "",
+        attachments: [],
       });
     } catch (err) {
       toast.error(
@@ -279,6 +287,7 @@ export default function Help() {
             {categories.map((cat, idx) => (
               <div
                 key={idx}
+                onClick={() => handleCategoryClick(cat.id)}
                 className="bg-[#141417] border border-white/5 rounded-2xl p-5 flex items-center gap-4 hover:bg-white/[0.04] transition-colors cursor-pointer group"
               >
                 <div
@@ -376,9 +385,10 @@ export default function Help() {
                 ngũ hỗ trợ sẽ phản hồi sớm nhất.
               </p>
 
+            <div className="bg-[#141417] border border-white/5 rounded-2xl p-1" ref={feedbackFormRef}>
               <form
                 onSubmit={handleFeedbackSubmit}
-                className="bg-[#141417] border border-white/5 rounded-2xl p-6 md:p-8"
+                className="bg-[#141417] rounded-2xl p-6 md:p-8"
               >
                 <div className="mb-6">
                   {/* Category Select */}
@@ -428,33 +438,53 @@ export default function Help() {
                 {/* Attachment */}
                 <div className="mb-8">
                   <label className="block text-[13px] font-medium text-gray-400 mb-2">
-                    Đính kèm hình ảnh (tùy chọn)
+                    Đính kèm hình ảnh (tùy chọn, tối đa 5 ảnh)
                   </label>
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleImageUpload}
                     accept="image/*"
+                    multiple
                     className="hidden"
                   />
-                  {formData.attachmentUrl ? (
-                    <div className="relative w-full rounded-xl overflow-hidden border border-white/10 group">
-                      <img
-                        src={formData.attachmentUrl}
-                        alt="Đính kèm"
-                        className="w-full max-h-[200px] object-contain bg-[#0a0a0c] p-2"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {formData.attachments.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {formData.attachments.map((url, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group bg-[#0a0a0c]">
+                            <img
+                              src={url}
+                              alt={`Đính kèm ${idx + 1}`}
+                              className="w-full h-full object-cover p-1"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(idx)}
+                                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                                title="Xóa ảnh này"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {formData.attachments.length < 5 && (
                         <button
                           type="button"
-                          onClick={() =>
-                            setFormData({ ...formData, attachmentUrl: "" })
-                          }
-                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border border-dashed border-white/20 hover:border-purple-500/50 bg-[#0a0a0c] rounded-xl py-4 flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer"
                         >
-                          Xóa hình ảnh
+                          {uploadingImage ? (
+                            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                          ) : (
+                            <CloudUpload className="w-5 h-5 text-blue-400" />
+                          )}
+                          <span className="text-xs text-gray-400">Thêm ảnh khác</span>
                         </button>
-                      </div>
+                      )}
                     </div>
                   ) : (
                     <div
@@ -474,7 +504,7 @@ export default function Help() {
                         </p>
                         <button
                           type="button"
-                          className="bg-white/10 text-gray-200 px-4 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-xs font-medium cursor-pointer"
+                          className="bg-white/10 text-gray-200 px-4 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-xs font-medium cursor-pointer pointer-events-none"
                         >
                           Chọn file
                         </button>
@@ -503,6 +533,7 @@ export default function Help() {
                 </div>
               </form>
             </div>
+          </div>
           </div>
 
           {/* Right Column - 35% */}

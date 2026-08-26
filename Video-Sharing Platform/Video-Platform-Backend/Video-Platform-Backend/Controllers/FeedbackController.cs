@@ -37,6 +37,28 @@ public class FeedbackController : ControllerBase
         };
 
         _context.Feedbacks.Add(feedback);
+        
+        // Notify all admins
+        var adminIds = await _context.Users
+            .Where(u => u.Role == "Admin")
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        foreach (var adminId in adminIds)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                UserId = adminId,
+                Type = "Feedback",
+                Title = "Có phản hồi/góp ý mới",
+                Message = $"Một người dùng vừa gửi phản hồi về: {dto.Type}.",
+                TargetUrl = "/admin/feedbacks",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new { Message = "Phản hồi của bạn đã được gửi thành công!" });

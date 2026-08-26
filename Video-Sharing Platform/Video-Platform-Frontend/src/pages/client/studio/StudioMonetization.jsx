@@ -406,11 +406,19 @@ export default function StudioMonetization() {
             </div>
 
             {/* Stat cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
+                  label: 'Số dư khả dụng',
+                  value: `${earnings.availableBalanceVnd?.toLocaleString('vi-VN') || 0} ₫`,
+                  icon: DollarSign,
+                  color: '#fbbf24',
+                  bg: 'rgba(251,191,36,0.08)',
+                  border: 'rgba(251,191,36,0.2)',
+                },
+                {
                   label: 'Tổng doanh thu',
-                  value: `${earnings.totalEarnings?.toLocaleString('vi-VN')} ₫`,
+                  value: `${earnings.totalEarnings?.toLocaleString('vi-VN') || 0} ₫`,
                   icon: DollarSign,
                   color: '#22c55e',
                   bg: 'rgba(34,197,94,0.08)',
@@ -418,7 +426,7 @@ export default function StudioMonetization() {
                 },
                 {
                   label: 'Tháng này',
-                  value: `${earnings.thisMonthEarnings?.toLocaleString('vi-VN')} ₫`,
+                  value: `${earnings.thisMonthEarnings?.toLocaleString('vi-VN') || 0} ₫`,
                   icon: TrendingUp,
                   color: '#3b82f6',
                   bg: 'rgba(59,130,246,0.08)',
@@ -426,7 +434,7 @@ export default function StudioMonetization() {
                 },
                 {
                   label: '30 ngày qua',
-                  value: `${earnings.last30DaysEarnings?.toLocaleString('vi-VN')} ₫`,
+                  value: `${earnings.last30DaysEarnings?.toLocaleString('vi-VN') || 0} ₫`,
                   icon: ArrowUpRight,
                   color: '#a78bfa',
                   bg: 'rgba(167,139,250,0.08)',

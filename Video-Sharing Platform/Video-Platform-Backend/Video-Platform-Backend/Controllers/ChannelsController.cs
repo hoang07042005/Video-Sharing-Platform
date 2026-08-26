@@ -556,7 +556,7 @@ namespace Video_Platform_Backend.Controllers
                     c.Id,
                     c.ChannelName,
                     c.Handle,
-                    AvatarUrl = c.User.Profile != null ? c.User.Profile.AvatarUrl : null,
+                    AvatarUrl = !string.IsNullOrEmpty(c.AvatarUrl) ? c.AvatarUrl : (c.User.Profile != null ? c.User.Profile.AvatarUrl : null),
                     OwnerEmail = c.User.Email,
                     OwnerName = c.User.Email,
                     c.TotalViews,

@@ -135,8 +135,10 @@ export default function AdminUsers() {
 
   // KPI Calculations
   const totalUsers = users.length;
-  // We mock the new users if not provided by backend. Let's just say a fraction.
-  const newUsers = Math.floor(totalUsers * 0.02) || 0;
+  // Users created in the last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const newUsers = users.filter((u) => new Date(u.createdAt) >= thirtyDaysAgo).length;
   const activeUsers = users.filter((u) => !u.isBanned).length;
   const bannedUsers = users.filter((u) => u.isBanned).length;
   const roleOptions = [
@@ -514,6 +516,11 @@ export default function AdminUsers() {
                             }
                             alt="Avatar"
                             className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullName}`;
+                            }}
                           />
                           <div className="flex flex-col min-w-0">
                             <h4 className="text-sm font-semibold text-gray-200 line-clamp-1 group-hover:text-purple-400 transition-colors cursor-pointer">

@@ -11,6 +11,8 @@ namespace Video_Platform_Backend.DTOs
         public string? ChannelName { get; set; }
         public string? Handle { get; set; }
         public string? Description { get; set; }
+        public bool ReceiveNewVideoNotifications { get; set; }
+        public bool ReceiveCommentNotifications { get; set; }
     }
 
     public class UpdateProfileDto
@@ -22,5 +24,7 @@ namespace Video_Platform_Backend.DTOs
         public string? ChannelName { get; set; }
         public string? Handle { get; set; }
         public string? Description { get; set; }
+        public bool? ReceiveNewVideoNotifications { get; set; }
+        public bool? ReceiveCommentNotifications { get; set; }
     }
 }

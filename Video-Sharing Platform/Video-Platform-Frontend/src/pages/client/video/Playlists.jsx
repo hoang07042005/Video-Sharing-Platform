@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ListVideo,
@@ -22,6 +23,10 @@ import {
   Activity,
   Pencil,
   ChevronLeft,
+  Smartphone,
+  MonitorPlay,
+  Zap,
+  Play,
 } from "lucide-react";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -148,44 +153,116 @@ function PlaylistCard({ playlist, onOpen, onDelete }) {
 }
 
 /* ── Video Item in Detail Panel ──────────────────────────────── */
-function VideoItem({ video, index, onNavigate }) {
+function VideoItem({ video, index, onNavigate, onRemove }) {
   const [err, setErr] = useState(false);
   return (
     <div
       onClick={() => onNavigate(video)}
-      className="group flex gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
+      className="group flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 cursor-pointer transition-colors w-full"
     >
-      <div className="shrink-0 text-gray-600 text-xs w-5 text-center pt-3">
+      <div className="shrink-0 flex items-center justify-center text-gray-400 text-sm font-medium w-6 pt-10">
         {index + 1}
       </div>
-      <div className="relative w-36 aspect-video rounded-lg overflow-hidden bg-[#1A1A1A] shrink-0">
+      
+      <div className="relative w-56 aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] shrink-0 border border-white/10">
         {!err && video.thumbnailUrl ? (
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title}
-            onError={() => setErr(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          video.isShort ? (
+            <>
+              <img
+                src={video.thumbnailUrl}
+                alt={video.title}
+                className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
+              />
+              <img
+                src={video.thumbnailUrl}
+                alt={video.title}
+                onError={() => setErr(true)}
+                className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+              />
+            </>
+          ) : (
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              onError={() => setErr(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <PlayCircle className="w-5 h-5 text-gray-600" />
+            <PlayCircle className="w-6 h-6 text-gray-600" />
           </div>
         )}
-        <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 py-0.5 rounded">
+        
+        {/* Indicators */}
+        {video.isShort && (
+          <div className="absolute bottom-1.5 left-1.5 bg-black/90 text-white text-[11px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 z-20">
+            <Zap className="w-3 h-3 fill-white" /> SHORTS
+          </div>
+        )}
+        
+        <span className="absolute bottom-1.5 right-1.5 bg-black/90 text-white text-[11px] font-medium px-1.5 py-0.5 rounded z-20">
           {formatDuration(video.duration || 0)}
         </span>
       </div>
-      <div className="flex-1 min-w-0 py-0.5">
-        <h4 className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-[#FF5722] transition-colors">
+
+      <div className="flex-1 min-w-0 flex flex-col pt-1">
+        <h4 className="text-white text-base font-bold uppercase leading-snug line-clamp-2 transition-colors">
           {video.title}
         </h4>
-        <p className="text-gray-400 text-xs mt-1 truncate">
-          {video.channelName}
-        </p>
-        <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-          <Eye className="w-3 h-3" />
-          <span>{formatViews(video.viewsCount)} lượt xem</span>
+        
+        <div className="flex items-center gap-2 mt-2">
+          {video.channelAvatarUrl || video.channelAvatar || video.avatar ? (
+            <img src={video.channelAvatarUrl || video.channelAvatar || video.avatar} className="w-5 h-5 rounded-full object-cover" alt="avatar"/>
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white shrink-0">
+              {(video.channelName || "U").charAt(0).toUpperCase()}
+            </div>
+          )}
+          <p className="text-gray-400 text-sm hover:text-white transition-colors">{video.channelName}</p>
+          {video.channelIsVerified && (
+            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+          )}
+          <span className="w-1 h-1 bg-gray-600 rounded-full shrink-0"></span>
+          <p className="text-gray-400 text-sm">{formatViews(video.viewsCount)} lượt xem</p>
+          <span className="w-1 h-1 bg-gray-600 rounded-full shrink-0"></span>
+          <p className="text-gray-400 text-sm">{timeAgo(video.createdAt)}</p>
         </div>
+
+        <p className="text-gray-500 text-sm mt-2 line-clamp-1">
+          {video.description || "Không có mô tả cho video này."}
+        </p>
+
+        <p className="text-gray-600 text-sm mt-1">
+          {video.hashtags || "#Trending #Video #HayNhat"}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-4 shrink-0 pr-20 pt-8 pl-4">
+        {video.isShort ? (
+          <span className="text-[#FF8C00] text-[11px] font-bold tracking-widest bg-[#FF8C00]/10 px-2 py-1 rounded">
+            SHORTS
+          </span>
+        ) : (
+          <span className="text-[#a855f7] text-[11px] font-bold tracking-widest bg-[#a855f7]/10 px-2 py-1 rounded">
+            VIDEO
+          </span>
+        )}
+        
+        <button 
+          onClick={(e) => { e.stopPropagation(); onNavigate(video); }}
+          className="w-10 h-10 flex items-center justify-center rounded-full border border-white/20 hover:bg-white/10 text-white transition-colors"
+        >
+          <Play className="w-4 h-4 fill-white ml-0.5" />
+        </button>
+        
+        <button 
+          onClick={(e) => { e.stopPropagation(); onRemove && onRemove(video); }}
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+        
       </div>
     </div>
   );
@@ -320,6 +397,9 @@ export default function Playlists() {
   const [editTitle, setEditTitle] = useState("");
   const [editVisibility, setEditVisibility] = useState("Public");
   const [isEditing, setIsEditing] = useState(false);
+
+  // Modal Xóa
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
 
   const token = localStorage.getItem("token");
 
@@ -556,6 +636,35 @@ export default function Playlists() {
                           ? `/shorts?id=${videoObj.id}`
                           : `/watch/${videoObj.id}?list=${selected.id}`,
                       );
+                    }}
+                    onRemove={async (videoObj) => {
+                      setConfirmModal({
+                        isOpen: true,
+                        title: "Xóa video",
+                        message: "Bạn có chắc chắn muốn xóa video này khỏi danh sách phát không?",
+                        onConfirm: async () => {
+                          try {
+                            const token = localStorage.getItem("token");
+                            await axios.post(
+                              `/api/playlists/${selected.id}/toggle-video`,
+                              { videoId: videoObj.id },
+                              { headers: { Authorization: "Bearer " + token } }
+                            );
+                            setSelected((prev) => ({
+                              ...prev,
+                              videos: prev.videos.filter((vid) => vid.id !== videoObj.id),
+                              videoCount: Math.max(0, prev.videoCount - 1)
+                            }));
+                            setPlaylists((prevPls) => 
+                              prevPls.map(p => p.id === selected.id ? { ...p, videoCount: Math.max(0, p.videoCount - 1) } : p)
+                            );
+                            toast.success("Đã xóa video khỏi danh sách phát.");
+                          } catch (error) {
+                            console.error("Error removing video:", error);
+                            toast.error("Lỗi khi xóa video.");
+                          }
+                        }
+                      });
                     }}
                   />
                 ))}
@@ -866,7 +975,7 @@ export default function Playlists() {
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value)}
-                    className="bg-transparent text-white text-xs font-medium focus:outline-none cursor-pointer"
+                    className="bg-[#0F0F0F] text-white text-xs font-medium focus:outline-none cursor-pointer"
                   >
                     <option value="newest">Mới nhất</option>
                     <option value="oldest">Cũ nhất</option>
@@ -991,6 +1100,34 @@ export default function Playlists() {
             </div>
           )}
         </>
+      )}
+
+      {/* ── Confirm Modal ── */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}></div>
+          <div className="bg-[#212121] rounded-2xl w-full max-w-sm relative p-6 border border-white/10 shadow-2xl z-10">
+            <h3 className="text-xl font-bold text-white mb-2">{confirmModal.title}</h3>
+            <p className="text-gray-400 mb-6 leading-relaxed text-[15px]">{confirmModal.message}</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-white/10 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmModal.onConfirm) confirmModal.onConfirm();
+                  setConfirmModal({ ...confirmModal, isOpen: false });
+                }}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 transition-all"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

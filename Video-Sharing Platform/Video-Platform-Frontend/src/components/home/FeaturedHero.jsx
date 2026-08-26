@@ -50,7 +50,7 @@ export default function FeaturedHero({
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         );
       }}
-      className="relative w-full h-[480px] md:h-[520px] rounded-3xl group cursor-pointer select-none"
+      className="relative w-full h-[480px] md:h-[565px] rounded-3xl group cursor-pointer select-none"
     >
       {/* Background container with overflow-hidden */}
       <div className="absolute inset-0 rounded-3xl overflow-hidden">
@@ -97,7 +97,7 @@ export default function FeaturedHero({
         </div>
 
         {/* Title — large with gradient highlight on middle part */}
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
+        <h2 className="text-2xl md:text-4xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
           {part1 && <span>{part1} </span>}
           {part2 && (
             <span className="bg-gradient-to-r from-pink-400 via-[#FF5722] to-orange-400 bg-clip-text text-transparent">

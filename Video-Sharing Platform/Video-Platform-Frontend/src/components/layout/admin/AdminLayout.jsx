@@ -20,6 +20,7 @@ import {
   Activity,
   HandCoins,
   Trophy,
+  HelpCircle,
 } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect } from "react";
@@ -28,6 +29,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+  const [unreadCount, setUnreadCount] = useState(0);
   const currentHandle = localStorage.getItem("handle") || "Admin";
   const currentAvatar =
     localStorage.getItem("avatar") ||
@@ -61,8 +63,26 @@ export default function AdminLayout() {
         console.error("Lỗi khi tải cấu hình public:", err);
       }
     };
+    
+    const fetchUnreadCount = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const res = await axios.get("/api/notifications?limit=100", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const adminTypes = ["Report", "Violation", "Feedback", "Withdrawal", "System", "Admin"];
+          const adminUnread = res.data.filter(n => adminTypes.includes(n.type) && !n.isRead);
+          setUnreadCount(adminUnread.length);
+        } catch (err) {
+          console.error("Lỗi khi tải số thông báo:", err);
+        }
+      }
+    };
+
     fetchPublicSettings();
-  }, []);
+    fetchUnreadCount();
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -72,71 +92,77 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const navGroups = [
-    {
-      label: "TỔNG QUAN",
-      items: [
-        { name: "Tổng quan", path: "/admin", icon: LayoutDashboard },
-        { name: "Báo cáo nhanh", path: "/admin/reports", icon: BarChart2 },
-      ],
-    },
-
-    {
-      label: "QUẢN LÝ NỘI DUNG",
-      items: [
-        { name: "Quản lý Video", path: "/admin/videos", icon: Video },
-        { name: "Danh mục", path: "/admin/categories", icon: List },
-        { name: "Bình luận", path: "/admin/comments", icon: MessageSquare },
-      ],
-    },
-    {
-      label: "QUẢN LÝ NGƯỜI DÙNG",
-      items: [
-        { name: "Quản lý người dùng", path: "/admin/users", icon: Users },
-        { name: "Quản lý Kênh", path: "/admin/channels", icon: Tv },
-        { name: "Vai trò & Phân quyền", path: "/admin/roles", icon: Shield },
-      ],
-    },
-    {
-      label: "KIỂM DUYỆT & TÀI CHÍNH",
-      items: [
-        {
-          name: "Báo cáo & Khiếu nại",
-          path: "/admin/complaints",
-          icon: AlertTriangle,
-        },
-        { name: "Vi phạm", path: "/admin/violations", icon: ShieldAlert },
-        {
-          name: "Phản hồi người dùng",
-          path: "/admin/feedbacks",
-          icon: MessageSquare,
-        },
-        {
-          name: "Yêu cầu rút tiền",
-          path: "/admin/withdrawals",
-          icon: HandCoins,
-        },
-        { name: "Doanh thu", path: "/admin/revenue", icon: DollarSign },
-        { name: "Kiếm tiền", path: "/admin/monetization", icon: Trophy },
-        { name: "Giao dịch", path: "/admin/transactions", icon: CreditCard },
-      ],
-    },
-    {
-      label: "HỆ THỐNG",
-      items: [
-        {
-          name: "Hoạt động hệ thống",
-          path: "/admin/activities",
-          icon: Activity,
-        },
-        { name: "Cài đặt", path: "/admin/settings", icon: SettingsIcon },
-      ],
-    },
-    {
-      label: "Client",
-      items: [{ name: "Tổng quan khách hàng", path: "/", icon: HomeIcon }],
-    },
-  ];
+    const navGroups = [
+      {
+        label: "TỔNG QUAN",
+        items: [
+          { name: "Tổng quan", path: "/admin", icon: LayoutDashboard },
+          { name: "Báo cáo nhanh", path: "/admin/reports", icon: BarChart2 },
+        ],
+      },
+      {
+        label: "NỘI DUNG",
+        items: [
+          { name: "Quản lý Video", path: "/admin/videos", icon: Video },
+          { name: "Danh mục", path: "/admin/categories", icon: List },
+          { name: "Bình luận", path: "/admin/comments", icon: MessageSquare },
+        ],
+      },
+      {
+        label: "NGƯỜI DÙNG & KÊNH",
+        items: [
+          { name: "Quản lý người dùng", path: "/admin/users", icon: Users },
+          { name: "Quản lý Kênh", path: "/admin/channels", icon: Tv },
+          { name: "Vai trò & Quyền", path: "/admin/roles", icon: Shield },
+        ],
+      },
+      {
+        label: "KIỂM DUYỆT & HỖ TRỢ",
+        items: [
+          {
+            name: "Báo cáo & Khiếu nại",
+            path: "/admin/complaints",
+            icon: AlertTriangle,
+          },
+          { name: "Vi phạm", path: "/admin/violations", icon: ShieldAlert },
+          {
+            name: "Phản hồi & Góp ý",
+            path: "/admin/feedbacks",
+            icon: MessageSquare,
+          },
+          { name: "Quản lý FAQs", path: "/admin/faqs", icon: HelpCircle },
+        ],
+      },
+      {
+        label: "TÀI CHÍNH & DOANH THU",
+        items: [
+          { name: "Giao dịch", path: "/admin/transactions", icon: CreditCard },
+          { name: "Doanh thu", path: "/admin/revenue", icon: DollarSign },
+          {
+            name: "Rút tiền",
+            path: "/admin/withdrawals",
+            icon: HandCoins,
+          },
+          { name: "Chính sách kiếm tiền", path: "/admin/monetization", icon: Trophy },
+        ],
+      },
+      {
+        label: "HỆ THỐNG",
+        items: [
+          { name: "Thông báo", path: "/admin/notifications", icon: Bell },
+          {
+            name: "Lịch sử hoạt động",
+            path: "/admin/activities",
+            icon: Activity,
+          },
+          { name: "Cài đặt chung", path: "/admin/settings", icon: SettingsIcon },
+        ],
+      },
+      {
+        label: "TRUY CẬP WEBSITE",
+        items: [{ name: "Trang chủ", path: "/", icon: HomeIcon }],
+      },
+    ];
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white flex font-sans">
@@ -221,12 +247,16 @@ export default function AdminLayout() {
                 className="bg-[#1a1c23] border border-white/10 text-white text-sm rounded-full pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
-            <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-              <button className="relative text-gray-400 hover:text-white transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0f111a]"></span>
-              </button>
-              <div className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center gap-4 border-l border-white/10 pl-6">
+                <Link to="/admin/notifications" className="relative text-gray-400 hover:text-white transition-colors">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-[#0f111a]">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <div className="flex items-center gap-3 cursor-pointer">
                 <img
                   src={currentAvatar}
                   alt={currentHandle}

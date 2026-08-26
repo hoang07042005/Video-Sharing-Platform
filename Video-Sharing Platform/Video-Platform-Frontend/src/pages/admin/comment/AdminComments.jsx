@@ -49,7 +49,10 @@ const AdminComments = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   useEffect(() => {
     fetchComments();
@@ -148,13 +151,25 @@ const AdminComments = () => {
 
   // Filter logic
   const filteredComments = comments.filter((c) => {
-    if (activeTab === "all") return true;
-    if (activeTab === "approved") return c.filterStatus === "Normal";
-    if (activeTab === "pending") return c.filterStatus === "Warning";
+    // 1. Tab Filter
+    let tabMatch = true;
+    if (activeTab === "approved") tabMatch = c.filterStatus === "Normal";
+    if (activeTab === "pending") tabMatch = c.filterStatus === "Warning";
     if (activeTab === "rejected")
-      return c.filterStatus === "Filtered" || c.filterStatus === "Blocked";
-    if (activeTab === "reported") return c.filterStatus === "Reported"; // Assuming we have reported status
-    return true;
+      tabMatch = c.filterStatus === "Filtered" || c.filterStatus === "Blocked";
+    if (activeTab === "reported") tabMatch = c.filterStatus === "Reported";
+    
+    // 2. Search Filter
+    const searchMatch = !searchQuery || 
+      c.content?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.displayContent?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.video?.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    // 3. Status Filter (Dropdown)
+    const statusMatch = statusFilter === "all" || c.filterStatus === statusFilter;
+    
+    return tabMatch && searchMatch && statusMatch;
   });
 
   // Pagination logic
@@ -337,6 +352,8 @@ const AdminComments = () => {
           <input
             type="text"
             placeholder="Tìm kiếm bình luận, tên video, người dùng..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#141418] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
           <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-3" />
@@ -344,29 +361,32 @@ const AdminComments = () => {
 
         <div className="flex gap-3 overflow-x-auto scrollbar-hide">
           <div className="relative shrink-0">
-            <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
-              <option>Tất cả video</option>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="Normal">Bình thường</option>
+              <option value="Warning">Cảnh báo</option>
+              <option value="Blocked">Đã chặn</option>
+              <option value="Filtered">Đã lọc</option>
             </select>
             <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
           </div>
-          <div className="relative shrink-0">
-            <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
-              <option>Tất cả trạng thái</option>
-            </select>
-            <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
-          </div>
-          <div className="relative shrink-0">
-            <select className="appearance-none bg-[#141418] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-purple-500 cursor-pointer">
-              <option>Tất cả thời gian</option>
-            </select>
-            <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
-          </div>
-          <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors cursor-pointer">
+          <button 
+            onClick={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+              setDateFilter("all");
+            }}
+            className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors cursor-pointer"
+          >
             <LucideIcons.RotateCcw className="w-4 h-4" /> Làm mới
           </button>
         </div>
 
-        <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors md:ml-auto cursor-pointer">
+        <button className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#141418] border border-white/10 rounded-xl text-sm font-medium text-gray-300 transition-colors md:ml-auto cursor-pointer hover:bg-white/5">
           <Filter className="w-4 h-4" /> Bộ lọc nâng cao
         </button>
       </div>

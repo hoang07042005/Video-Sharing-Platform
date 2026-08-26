@@ -29,6 +29,10 @@ public partial class User
 
     public bool? IsBanned { get; set; }
 
+    public bool ReceiveNewVideoNotifications { get; set; } = true;
+
+    public bool ReceiveCommentNotifications { get; set; } = true;
+
     public bool? IsPremium { get; set; }
 
     public DateTime? PremiumUntil { get; set; }

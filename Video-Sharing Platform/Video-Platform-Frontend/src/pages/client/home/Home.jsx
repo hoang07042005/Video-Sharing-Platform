@@ -16,6 +16,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import CategoryFilter from "../../../components/home/CategoryFilter";
 import FeaturedHero from "../../../components/home/FeaturedHero";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 import { getIconColor } from "../../../utils/iconHelpers";
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -56,9 +57,12 @@ function SmallVideoCard({ video }) {
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }
-      className="group cursor-pointer flex flex-col gap-2"
+      className="group cursor-pointer flex flex-col gap-2 relative"
     >
-      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#1A1A1A]">
+      <div className="absolute top-2 right-2 z-30">
+        <VideoDropdownMenu video={video} />
+      </div>
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
         {video.isShort ? (
           <>
             <img
@@ -138,8 +142,11 @@ function HorizontalVideoCard({ video }) {
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }
-      className="group cursor-pointer flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+      className="group cursor-pointer flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors relative"
     >
+      <div className="absolute top-2 right-2 z-30">
+        <VideoDropdownMenu video={video} />
+      </div>
       <div className="relative w-50 h-30 aspect-video rounded-lg overflow-hidden bg-[#1A1A1A] shrink-0">
         {video.isShort ? (
           <>
@@ -207,8 +214,11 @@ function ShortVideoCard({ short }) {
   return (
     <div
       onClick={() => navigate(`/shorts?id=${short.id}`)}
-      className="group cursor-pointer flex flex-col gap-2"
+      className="group cursor-pointer flex flex-col gap-2 relative"
     >
+      <div className="absolute top-2 right-2 z-30">
+        <VideoDropdownMenu video={short} />
+      </div>
       <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-[#1A1A1A]">
         <img
           src={
@@ -228,9 +238,9 @@ function ShortVideoCard({ short }) {
             {formatViews(short.viewsCount)} lượt xem
           </p>
         </div>
-        <button className="text-white/60 hover:text-white h-fit mt-1 cursor-pointer">
-          <MoreVertical className="w-4 h-4" />
-        </button>
+        <div className="text-white/60 hover:text-white h-fit mt-1 cursor-pointer">
+          <MoreVertical className="w-4 h-4 opacity-0" />
+        </div>
       </div>
     </div>
   );
@@ -607,7 +617,7 @@ export default function Home() {
       : videos.filter((v) => v.categoryId === activeCategoryId)
   ).filter((v) => !v.isShort);
 
-  const featuredVideos = filteredVideos.slice(0, 4);
+  const featuredVideos = filteredVideos.slice(0, 8);
   const liveNow = liveStreams.filter(
     (stream) => normalizeId(stream.status) === "live",
   );
@@ -617,7 +627,7 @@ export default function Home() {
     if (featuredVideos.length <= 1) return;
     const timer = setInterval(() => {
       setFeaturedSlide((prev) => (prev + 1) % featuredVideos.length);
-    }, 5000);
+    }, 10000);
     return () => clearInterval(timer);
   }, [featuredVideos.length]);
 
@@ -647,51 +657,7 @@ export default function Home() {
   // Mới nhất: Dùng video thường
   const latest = filteredVideos.slice(34, 50);
 
-  // Fallback channels nếu API chưa có
-  const mockChannels = [
-    {
-      id: 1,
-      channelName: "FB Official",
-      handle: "@fbofficial",
-      subscriberCount: 1200000,
-      avatarUrl:
-        "https://api.dicebear.com/7.x/initials/svg?seed=FB&backgroundColor=3b5998",
-    },
-    {
-      id: 2,
-      channelName: "Tony TV",
-      handle: "@tonytv",
-      subscriberCount: 947000,
-      avatarUrl:
-        "https://api.dicebear.com/7.x/initials/svg?seed=Tony&backgroundColor=e91e63",
-    },
-    {
-      id: 3,
-      channelName: "Vanh Leg",
-      handle: "@vanhleg",
-      subscriberCount: 912000,
-      avatarUrl:
-        "https://api.dicebear.com/7.x/initials/svg?seed=VL&backgroundColor=9c27b0",
-    },
-    {
-      id: 4,
-      channelName: "Schannel",
-      handle: "@schannel",
-      subscriberCount: 1500000,
-      avatarUrl:
-        "https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=f44336",
-    },
-    {
-      id: 5,
-      channelName: "Hóng Hứt Công Nghệ",
-      handle: "@honghut",
-      subscriberCount: 1700000,
-      avatarUrl:
-        "https://api.dicebear.com/7.x/initials/svg?seed=HH&backgroundColor=2196f3",
-    },
-  ];
-
-  let featuredChannelsRaw = channels.length > 0 ? channels : mockChannels;
+  let featuredChannelsRaw = channels;
   const currentUserHandle = localStorage.getItem("handle");
   if (currentUserHandle) {
     const handleCheck = currentUserHandle.startsWith("@")
@@ -858,22 +824,24 @@ export default function Home() {
           </section>
 
           {/* Kênh nổi bật */}
-          <section>
-            <SectionHeader
-              icon={Bell}
-              title="Kênh nổi bật"
-              linkTo="/subscriptions"
-            />
-            <div className="grid grid-cols-6 gap-4">
-              {featuredChannels.map((ch) => (
-                <FeaturedChannelCard
-                  key={ch.id}
-                  channel={ch}
-                  initialSubbed={subscribedChannelIds.includes(ch.id)}
-                />
-              ))}
-            </div>
-          </section>
+          {featuredChannels.length > 0 && (
+            <section>
+              <SectionHeader
+                icon={Bell}
+                title="Kênh nổi bật"
+                linkTo="/subscriptions"
+              />
+              <div className="grid grid-cols-6 gap-4">
+                {featuredChannels.map((ch) => (
+                  <FeaturedChannelCard
+                    key={ch.id}
+                    channel={ch}
+                    initialSubbed={subscribedChannelIds.includes(ch.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
         {/* end full-width sections */}
       </div>

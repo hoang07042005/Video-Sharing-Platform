@@ -609,7 +609,11 @@ export default function Header({ toggleSidebar }) {
                 </div>
                 {currentPlan !== "Free" && (
                   <svg
-                    className="w-[16px] h-[16px] text-[#8b5cf6] ml-1"
+                    className={`w-[16px] h-[16px] ml-1 ${
+                      currentPlan === "Premium"
+                        ? "text-[#FF9800]"
+                        : "text-[#9C27B0]"
+                    }`}
                     viewBox="0 0 24 24"
                     fill="currentColor"
                   >

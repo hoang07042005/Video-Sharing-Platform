@@ -262,17 +262,23 @@ export default function WatchHistory() {
     localStorage.getItem("pauseHistory") === "true",
   );
   const [showCount, setShowCount] = useState(10);
+  const [statsData, setStatsData] = useState([]);
 
   useEffect(() => {
     if (!token) return;
     let mounted = true;
-    axios
-      .get("/api/videos/history", {
+    Promise.all([
+      axios.get("/api/videos/history", {
+        headers: { Authorization: "Bearer " + token },
+      }),
+      axios.get("/api/videos/history/stats", {
         headers: { Authorization: "Bearer " + token },
       })
-      .then((r) => {
+    ])
+      .then(([historyRes, statsRes]) => {
         if (!mounted) return;
-        setAllVideos(r.data);
+        setAllVideos(historyRes.data);
+        setStatsData(statsRes.data);
         setLoading(false);
       })
       .catch((err) => {
@@ -305,13 +311,9 @@ export default function WatchHistory() {
     const newState = !paused;
     setPaused(newState);
     localStorage.setItem("pauseHistory", newState);
-    toast.success(
+    toast.info(
       newState ? "Đã tạm dừng lưu lịch sử xem" : "Đã tiếp tục lưu lịch sử xem",
     );
-  };
-
-  const handleManageActivity = () => {
-    toast.info("Tính năng Quản lý hoạt động đang được phát triển");
   };
 
   // Filter by tab
@@ -356,19 +358,9 @@ export default function WatchHistory() {
     (allVideos.reduce((s, v) => s + (v.duration || 0), 0) % 3600) / 60,
   );
 
-  // Bar chart mock data (last 7 days buckets from real data)
-  const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-  const barData = [...Array(7)].map((_, i) => {
-    const targetDay = new Date();
-    targetDay.setDate(targetDay.getDate() - (6 - i));
-    const label = days[targetDay.getDay()];
-    const count = allVideos.filter((v) => {
-      const d = new Date(v.createdAt);
-      return d.toDateString() === targetDay.toDateString();
-    }).length;
-    return { label, count };
-  });
-  const maxBar = Math.max(...barData.map((b) => b.count), 1);
+  // Bar chart using fetched stats
+  const barData = statsData.length > 0 ? statsData : [...Array(7)].map(() => ({ name: "", videos: 0 }));
+  const maxBar = Math.max(...barData.map((b) => b.videos), 1);
 
   /* ── Not logged in ── */
   if (notLoggedIn) {
@@ -493,7 +485,7 @@ export default function WatchHistory() {
                   {/* Date group label */}
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="w-4 h-4 text-[#FF5722]" />
-                    <h2 className="text-white font-bold text-[15px]">
+                    <h2 className="text-white font-bold text-[15px] uppercase">
                       {group.label}
                     </h2>
                   </div>
@@ -588,7 +580,7 @@ export default function WatchHistory() {
                     <div
                       className="w-full rounded-t-md transition-all"
                       style={{
-                        height: `${(b.count / maxBar) * 60}px`,
+                        height: `${(b.videos / maxBar) * 60}px`,
                         minHeight: 4,
                         background:
                           i >= 5
@@ -596,7 +588,7 @@ export default function WatchHistory() {
                             : "linear-gradient(to top,#9C27B0,#673AB7)",
                       }}
                     />
-                    <span className="text-[10px] text-gray-600">{b.label}</span>
+                    <span className="text-[10px] text-gray-500">{b.name}</span>
                   </div>
                 ))}
               </div>
@@ -607,7 +599,6 @@ export default function WatchHistory() {
             </div>
 
             {/* Manage */}
-            {/* Filter by type */}
             <div className="border-b border-white/8 p-5">
               <h3 className="text-sm font-bold text-white mb-4">
                 Quản lý lịch sử
@@ -635,13 +626,6 @@ export default function WatchHistory() {
                       className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${paused ? "translate-x-5" : "translate-x-0.5"}`}
                     />
                   </div>
-                </button>
-                <button
-                  onClick={handleManageActivity}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  Quản lý hoạt động
                 </button>
               </div>
             </div>

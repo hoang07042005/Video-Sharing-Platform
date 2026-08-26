@@ -23,12 +23,21 @@ export default function AdminTransactions() {
   const [membershipData, setMembershipData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Pagination states
+  const [premiumPage, setPremiumPage] = useState(1);
+  const [membershipPage, setMembershipPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Filters for Premium
   const [premiumSearch, setPremiumSearch] = useState("");
+  const [premiumStatusFilter, setPremiumStatusFilter] = useState("all");
+  const [premiumMethodFilter, setPremiumMethodFilter] = useState("all");
   const [premiumDateFilter, setPremiumDateFilter] = useState(""); // YYYY-MM
 
   // Filters for Membership
   const [membershipSearch, setMembershipSearch] = useState("");
+  const [membershipStatusFilter, setMembershipStatusFilter] = useState("all");
+  const [membershipMethodFilter, setMembershipMethodFilter] = useState("all");
   const [membershipDateFilter, setMembershipDateFilter] = useState(""); // YYYY-MM
 
   useEffect(() => {
@@ -92,9 +101,18 @@ export default function AdminTransactions() {
 
   const filteredPremium = premiumData.filter((t) => {
     const matchSearch =
+      !premiumSearch ||
       t.user?.fullName?.toLowerCase().includes(premiumSearch.toLowerCase()) ||
       t.user?.email?.toLowerCase().includes(premiumSearch.toLowerCase()) ||
       t.id.toLowerCase().includes(premiumSearch.toLowerCase());
+
+    const matchStatus =
+      premiumStatusFilter === "all" ||
+      t.status?.toLowerCase() === premiumStatusFilter.toLowerCase();
+
+    const matchMethod =
+      premiumMethodFilter === "all" ||
+      t.paymentMethod?.toLowerCase() === premiumMethodFilter.toLowerCase();
 
     let matchDate = true;
     if (premiumDateFilter && t.createdAt) {
@@ -102,11 +120,18 @@ export default function AdminTransactions() {
       matchDate = txMonth === premiumDateFilter;
     }
 
-    return matchSearch && matchDate;
+    return matchSearch && matchStatus && matchMethod && matchDate;
   });
+
+  const totalPremiumPages = Math.ceil(filteredPremium.length / itemsPerPage) || 1;
+  const paginatedPremium = filteredPremium.slice(
+    (premiumPage - 1) * itemsPerPage,
+    premiumPage * itemsPerPage
+  );
 
   const filteredMembership = membershipData.filter((t) => {
     const matchSearch =
+      !membershipSearch ||
       t.user?.fullName
         ?.toLowerCase()
         .includes(membershipSearch.toLowerCase()) ||
@@ -116,14 +141,28 @@ export default function AdminTransactions() {
         .includes(membershipSearch.toLowerCase()) ||
       t.id.toLowerCase().includes(membershipSearch.toLowerCase());
 
+    const matchStatus =
+      membershipStatusFilter === "all" ||
+      t.status?.toLowerCase() === membershipStatusFilter.toLowerCase();
+
+    const matchMethod =
+      membershipMethodFilter === "all" ||
+      t.paymentMethod?.toLowerCase() === membershipMethodFilter.toLowerCase();
+
     let matchDate = true;
     if (membershipDateFilter && t.createdAt) {
       const txMonth = moment(t.createdAt).format("YYYY-MM");
       matchDate = txMonth === membershipDateFilter;
     }
 
-    return matchSearch && matchDate;
+    return matchSearch && matchStatus && matchMethod && matchDate;
   });
+
+  const totalMembershipPages = Math.ceil(filteredMembership.length / itemsPerPage) || 1;
+  const paginatedMembership = filteredMembership.slice(
+    (membershipPage - 1) * itemsPerPage,
+    membershipPage * itemsPerPage
+  );
   return (
     <div className="min-h-screen p-2 md:p-2">
       <div className="max-w-[1600px] mx-auto space-y-8">
@@ -145,14 +184,42 @@ export default function AdminTransactions() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 w-44 cursor-pointer hover:bg-white/5 transition-colors">
-                <span>Tất cả trạng thái</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+              <div className="relative flex-1 xl:w-64 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo email, tên người dùng..."
+                  value={premiumSearch}
+                  onChange={(e) => setPremiumSearch(e.target.value)}
+                  className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#FF4E00] transition-colors"
+                />
               </div>
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
-                <span>Tất cả phương thức</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+              <div className="relative min-w-[160px]">
+                <select
+                  value={premiumStatusFilter}
+                  onChange={(e) => setPremiumStatusFilter(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-[#FF4E00] transition-colors cursor-pointer"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="success">Thành công</option>
+                  <option value="pending">Đang xử lý</option>
+                  <option value="failed">Thất bại</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <div className="relative min-w-[160px]">
+                <select
+                  value={premiumMethodFilter}
+                  onChange={(e) => setPremiumMethodFilter(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-[#FF4E00] transition-colors cursor-pointer"
+                >
+                  <option value="all">Tất cả phương thức</option>
+                  <option value="vnpay">VNPay</option>
+                  <option value="momo">MoMo</option>
+                  <option value="stripe">Stripe</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <button className="p-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
                 <Calendar className="w-5 h-5" />
@@ -190,8 +257,8 @@ export default function AdminTransactions() {
                       <div className="w-8 h-8 border-2 border-white/20 border-t-[#FF4E00] rounded-full animate-spin mx-auto"></div>
                     </td>
                   </tr>
-                ) : filteredPremium.length > 0 ? (
-                  filteredPremium.map((tx) => (
+                ) : paginatedPremium.length > 0 ? (
+                  paginatedPremium.map((tx) => (
                     <tr
                       key={tx.id}
                       className="hover:bg-white/5 transition-colors group"
@@ -297,16 +364,37 @@ export default function AdminTransactions() {
             </table>
           </div>
 
-          {/* Pagination Mock */}
-          <div className="p-4 border-t border-white/5 flex justify-center bg-[#0f0f0f]/50">
+          {/* Pagination */}
+          <div className="p-4 border-t border-white/5 flex justify-between items-center bg-[#0f0f0f]/50">
+            <div className="text-sm text-gray-400">
+              Hiển thị {filteredPremium.length > 0 ? (premiumPage - 1) * itemsPerPage + 1 : 0} đến {Math.min(premiumPage * itemsPerPage, filteredPremium.length)} trong số {filteredPremium.length}
+            </div>
             <div className="flex gap-2">
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors">
+              <button
+                onClick={() => setPremiumPage(p => Math.max(1, p - 1))}
+                disabled={premiumPage === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors disabled:opacity-50"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FF4E00] text-white font-medium shadow-[0_0_10px_rgba(255,78,0,0.3)]">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors">
+              {Array.from({ length: totalPremiumPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setPremiumPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg font-medium transition-all ${
+                    premiumPage === page
+                      ? "bg-[#FF4E00] text-white shadow-[0_0_10px_rgba(255,78,0,0.3)]"
+                      : "bg-white/5 hover:bg-white/10 text-gray-400"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setPremiumPage(p => Math.min(totalPremiumPages, p + 1))}
+                disabled={premiumPage === totalPremiumPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors disabled:opacity-50"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -331,18 +419,42 @@ export default function AdminTransactions() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-44 cursor-pointer hover:bg-white/5 transition-colors">
-                <span>Tất cả trạng thái</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+              <div className="relative flex-1 xl:w-64 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo email, tên kênh..."
+                  value={membershipSearch}
+                  onChange={(e) => setMembershipSearch(e.target.value)}
+                  className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#9C27B0] transition-colors"
+                />
               </div>
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
-                <span>Tất cả phương thức</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+              <div className="relative min-w-[160px]">
+                <select
+                  value={membershipStatusFilter}
+                  onChange={(e) => setMembershipStatusFilter(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-[#9C27B0] transition-colors cursor-pointer"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="success">Thành công</option>
+                  <option value="pending">Đang xử lý</option>
+                  <option value="failed">Thất bại</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
-              <div className="flex items-center justify-between px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 w-48 cursor-pointer hover:bg-white/5 transition-colors">
-                <span>Tất cả kênh đăng ký</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+              <div className="relative min-w-[160px]">
+                <select
+                  value={membershipMethodFilter}
+                  onChange={(e) => setMembershipMethodFilter(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 bg-[#141418] border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-[#9C27B0] transition-colors cursor-pointer"
+                >
+                  <option value="all">Tất cả phương thức</option>
+                  <option value="vnpay">VNPay</option>
+                  <option value="momo">MoMo</option>
+                  <option value="stripe">Stripe</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <button className="p-2.5 bg-[#141418] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
                 <Calendar className="w-5 h-5" />
@@ -394,8 +506,8 @@ export default function AdminTransactions() {
                       <div className="w-8 h-8 border-2 border-white/20 border-t-[#9C27B0] rounded-full animate-spin mx-auto"></div>
                     </td>
                   </tr>
-                ) : filteredMembership.length > 0 ? (
-                  filteredMembership.map((tx) => (
+                ) : paginatedMembership.length > 0 ? (
+                  paginatedMembership.map((tx) => (
                     <tr
                       key={tx.id}
                       className="hover:bg-white/5 transition-colors group"
@@ -520,16 +632,37 @@ export default function AdminTransactions() {
             </table>
           </div>
 
-          {/* Pagination Mock */}
-          <div className="p-4 border-t border-white/5 flex justify-center bg-[#0f0f0f]/50">
+          {/* Pagination */}
+          <div className="p-4 border-t border-white/5 flex justify-between items-center bg-[#0f0f0f]/50">
+            <div className="text-sm text-gray-400">
+              Hiển thị {filteredMembership.length > 0 ? (membershipPage - 1) * itemsPerPage + 1 : 0} đến {Math.min(membershipPage * itemsPerPage, filteredMembership.length)} trong số {filteredMembership.length}
+            </div>
             <div className="flex gap-2">
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors">
+              <button
+                onClick={() => setMembershipPage(p => Math.max(1, p - 1))}
+                disabled={membershipPage === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors disabled:opacity-50"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#9C27B0] text-white font-medium shadow-[0_0_10px_rgba(156,39,176,0.3)]">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors">
+              {Array.from({ length: totalMembershipPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setMembershipPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg font-medium transition-all ${
+                    membershipPage === page
+                      ? "bg-[#9C27B0] text-white shadow-[0_0_10px_rgba(156,39,176,0.3)]"
+                      : "bg-white/5 hover:bg-white/10 text-gray-400"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setMembershipPage(p => Math.min(totalMembershipPages, p + 1))}
+                disabled={membershipPage === totalMembershipPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors disabled:opacity-50"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

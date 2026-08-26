@@ -196,6 +196,27 @@ namespace Video_Platform_Backend.Controllers
                 };
                 _context.AuditLogs.Add(log);
 
+                // Notify all admins
+                var adminIds = await _context.Users
+                    .Where(u => u.Role == "Admin")
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                foreach (var adminId in adminIds)
+                {
+                    _context.Notifications.Add(new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = adminId,
+                        Type = "Withdrawal",
+                        Title = "Yêu cầu rút tiền mới",
+                        Message = $"Có yêu cầu rút {dto.AmountVnd.ToString("N0")} VNĐ từ ngân hàng {dto.BankName}.",
+                        TargetUrl = "/admin/withdrawals",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 

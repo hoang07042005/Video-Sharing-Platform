@@ -189,11 +189,50 @@ namespace Video_Platform_Backend.Controllers
                     .OrderBy(x => x.Date)
                     .ToListAsync();
 
+                // Calculate Available Balance
+                var totalGiftedCoins = await _context.Donations
+                    .Include(d => d.Livestream)
+                    .ThenInclude(l => l.Channel)
+                    .Where(d => d.Livestream != null && d.Livestream.Channel != null && d.Livestream.Channel.UserId == userId && d.Status == "completed" && d.Currency == "Xu")
+                    .SumAsync(d => d.Amount);
+
+                var totalDonatedMoney = await _context.Donations
+                    .Include(d => d.Livestream)
+                    .ThenInclude(l => l.Channel)
+                    .Where(d => d.Livestream != null && d.Livestream.Channel != null && d.Livestream.Channel.UserId == userId && d.Status == "completed" && d.Currency != "Xu")
+                    .SumAsync(d => d.Amount);
+
+                var totalMembershipRevenue = await _context.Transactions
+                    .Include(t => t.Payment)
+                    .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
+                    .SumAsync(t => t.Amount);
+
+                var totalWithdrawnCoins = await _context.WithdrawalRequests
+                    .Where(w => w.UserId == userId && w.Status != "Rejected")
+                    .SumAsync(w => w.Coins);
+
+                decimal feeCoinGift = 0.30m;
+                decimal feeDonate = 0.10m;
+                decimal feeMembership = 0.30m;
+                decimal feeVideo = 0.30m;
+
+                var virtualBalanceCoins = 
+                    (int)((decimal)totalGiftedCoins * (1m - feeCoinGift)) + 
+                    (int)((totalDonatedMoney / 100m) * (1m - feeDonate)) + 
+                    (int)((totalMembershipRevenue / 100m) * (1m - feeMembership)) +
+                    (int)((totalEarnings / 100m) * (1m - feeVideo));
+
+                var remainingVirtualBalance = virtualBalanceCoins - totalWithdrawnCoins;
+                if (remainingVirtualBalance < 0) remainingVirtualBalance = 0;
+
+                var availableBalanceVnd = remainingVirtualBalance * 100m;
+
                 return Ok(new
                 {
                     TotalEarnings = totalEarnings,
                     ThisMonthEarnings = thisMonthEarnings,
                     Last30DaysEarnings = last30DaysEarnings,
+                    AvailableBalanceVnd = availableBalanceVnd,
                     TopVideos = topVideosWithThumbnails,
                     DailyChart = dailyChart
                 });

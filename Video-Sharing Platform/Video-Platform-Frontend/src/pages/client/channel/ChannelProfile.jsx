@@ -2350,6 +2350,11 @@ export default function ChannelProfile() {
               ((videoEarnings?.totalEarnings || 0) / COIN_RATE) * (1 - FEE_VIDEO),
             );
 
+            const initialGiftCoins = giftCoins;
+            const initialDonateCoins = donateCoins;
+            const initialMembershipCoins = membershipCoins;
+            const initialVideoCoins = videoCoins;
+
             const withdrawals = revenueStats?.withdrawals || [];
             const totalWithdrawnCoins = withdrawals.reduce(
               (sum, w) => sum + w.coins,
@@ -2394,20 +2399,17 @@ export default function ChannelProfile() {
               remainingWithdrawn = 0;
             }
 
-            const remainingDonateVND = Math.floor(
-              (donateCoins / (1 - FEE_DONATE)) * COIN_RATE,
-            );
-            const remainingGiftCoins = Math.floor(
-              giftCoins / (1 - FEE_COIN_GIFT),
-            );
-            const remainingMembershipVND = Math.floor(
-              (membershipCoins / (1 - FEE_MEMBERSHIP)) * COIN_RATE,
-            );
-            const remainingVideoVND = Math.floor(
-              (videoCoins / (1 - FEE_VIDEO)) * COIN_RATE,
-            );
+            const remainingDonateVND = donateCoins * COIN_RATE;
+            const remainingGiftCoins = giftCoins;
+            const remainingMembershipVND = membershipCoins * COIN_RATE;
+            const remainingVideoVND = videoCoins * COIN_RATE;
             const totalRemainingRevenueVND =
               remainingDonateVND + remainingMembershipVND + remainingVideoVND;
+
+            const withdrawnGiftCoins = initialGiftCoins - giftCoins;
+            const withdrawnDonateVND = (initialDonateCoins - donateCoins) * COIN_RATE;
+            const withdrawnMembershipVND = (initialMembershipCoins - membershipCoins) * COIN_RATE;
+            const withdrawnVideoVND = (initialVideoCoins - videoCoins) * COIN_RATE;
 
             // Timeline processing
             const allActivities = [
@@ -2585,17 +2587,17 @@ export default function ChannelProfile() {
                         trendDown={totalWithdrawnVND > 0}
                       />
                       <DashboardCard
-                        title="TỔNG XU NHẬN (CÒN LẠI)"
+                        title="TỔNG XU (CÒN LẠI)"
                         value={`${remainingGiftCoins.toLocaleString("vi-VN")} Xu`}
-                        icon={<Star className="w-5 h-5" />}
-                        gradient="from-orange-500/80 to-orange-800/80"
+                        icon={<Gift className="w-5 h-5" />}
+                        gradient="from-orange-600/80 to-red-900/80"
                         color="text-orange-400"
                         trend={
-                          totalWithdrawnCoins > 0
-                            ? `Đã đổi: ${Math.floor(totalWithdrawnCoins / (1 - FEE_COIN_GIFT)).toLocaleString("vi-VN")} Xu`
+                          withdrawnGiftCoins > 0
+                            ? `Đã rút: ${withdrawnGiftCoins.toLocaleString("vi-VN")} Xu`
                             : "Chưa rút"
                         }
-                        trendDown={totalWithdrawnCoins > 0}
+                        trendDown={withdrawnGiftCoins > 0}
                       />
                       <DashboardCard
                         title="XU ĐÃ NẠP"
@@ -2618,14 +2620,14 @@ export default function ChannelProfile() {
                         title="TỔNG DONATE (CÒN LẠI)"
                         value={`${remainingDonateVND.toLocaleString("vi-VN")} đ`}
                         icon={<Activity className="w-5 h-5" />}
-                        gradient="from-fuchsia-600/80 to-purple-900/80"
+                        gradient="from-purple-600/80 to-purple-900/80"
                         color="text-purple-400"
                         trend={
-                          totalDonateVND - remainingDonateVND > 0
-                            ? `Đã rút: ${(totalDonateVND - remainingDonateVND).toLocaleString("vi-VN")}đ`
+                          withdrawnDonateVND > 0
+                            ? `Đã rút: ${withdrawnDonateVND.toLocaleString("vi-VN")}đ`
                             : "Chưa rút"
                         }
-                        trendDown={totalDonateVND - remainingDonateVND > 0}
+                        trendDown={withdrawnDonateVND > 0}
                       />
                       <DashboardCard
                         title="TIỀN HỘI VIÊN (CÒN LẠI)"
@@ -2634,13 +2636,11 @@ export default function ChannelProfile() {
                         gradient="from-teal-500/80 to-teal-800/80"
                         color="text-teal-400"
                         trend={
-                          membershipRevenue - remainingMembershipVND > 0
-                            ? `Đã rút: ${(membershipRevenue - remainingMembershipVND).toLocaleString("vi-VN")}đ`
+                          withdrawnMembershipVND > 0
+                            ? `Đã rút: ${withdrawnMembershipVND.toLocaleString("vi-VN")}đ`
                             : "Chưa rút"
                         }
-                        trendDown={
-                          membershipRevenue - remainingMembershipVND > 0
-                        }
+                        trendDown={withdrawnMembershipVND > 0}
                       />
                       {videoEarnings && (
                         <DashboardCard
@@ -2650,11 +2650,11 @@ export default function ChannelProfile() {
                           gradient="from-green-600/80 to-emerald-900/80"
                           color="text-green-400"
                           trend={
-                            (videoEarnings.totalEarnings || 0) - remainingVideoVND > 0
-                              ? `Đã rút: ${((videoEarnings.totalEarnings || 0) - remainingVideoVND).toLocaleString("vi-VN")}đ`
+                            withdrawnVideoVND > 0
+                              ? `Đã rút: ${withdrawnVideoVND.toLocaleString("vi-VN")}đ`
                               : "Chưa rút"
                           }
-                          trendDown={(videoEarnings.totalEarnings || 0) - remainingVideoVND > 0}
+                          trendDown={withdrawnVideoVND > 0}
                         />
                       )}
                     </div>

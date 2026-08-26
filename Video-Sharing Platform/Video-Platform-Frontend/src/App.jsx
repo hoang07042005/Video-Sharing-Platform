@@ -55,6 +55,8 @@ import AdminActivities from './pages/admin/activities/AdminActivities';
 import AdminWithdrawals from './pages/admin/transactions/AdminWithdrawals';
 import AdminRevenue from './pages/admin/revenue/AdminRevenue';
 import AdminMonetization from './pages/admin/monetization/AdminMonetization';
+import AdminFaqs from './pages/admin/faq/AdminFaqs';
+import AdminNotifications from './pages/admin/notifications/AdminNotifications';
 import NotFound from './pages/error/NotFound';
 
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -189,6 +191,8 @@ function App() {
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="revenue" element={<AdminRevenue />} />
             <Route path="monetization" element={<AdminMonetization />} />
+            <Route path="faqs" element={<AdminFaqs />} />
+            <Route path="notifications" element={<AdminNotifications />} />
             {/* Catch-all for Admin */}
             <Route path="*" element={<NotFound isAdmin={true} />} />
           </Route>

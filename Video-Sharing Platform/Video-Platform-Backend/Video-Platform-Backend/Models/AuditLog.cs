@@ -26,6 +26,15 @@ namespace Video_Platform_Backend.Models
         [MaxLength(500)]
         public string Details { get; set; }
 
+        [MaxLength(50)]
+        public string IpAddress { get; set; }
+
+        [MaxLength(255)]
+        public string Browser { get; set; }
+
+        [MaxLength(50)]
+        public string Status { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

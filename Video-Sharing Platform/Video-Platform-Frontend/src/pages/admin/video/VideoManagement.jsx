@@ -397,20 +397,6 @@ const VideoManagement = () => {
         <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] text-gray-500 font-medium ml-1">
-              Danh mục
-            </label>
-            <div className="relative">
-              <select className="appearance-none bg-bg-[#0F0F0F] border border-white/10 text-gray-300 text-xs rounded-lg pl-4 pr-10 py-2.5 focus:border-purple-500 focus:outline-none cursor-pointer w-44">
-                <option>Tất cả danh mục</option>
-                <option>Âm nhạc</option>
-                <option>Giáo dục</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] text-gray-500 font-medium ml-1">
               Trạng thái
             </label>
             <div className="relative">
@@ -429,7 +415,13 @@ const VideoManagement = () => {
           </div>
 
           <div className="flex flex-col gap-1.5 mt-5">
-            <button className="px-5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-transparent">
+            <button 
+              onClick={() => {
+                setSearchQuery("");
+                setFilterVisibility("all");
+              }}
+              className="px-5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-transparent cursor-pointer"
+            >
               Xóa lọc
             </button>
           </div>

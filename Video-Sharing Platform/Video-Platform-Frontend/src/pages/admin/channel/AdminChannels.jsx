@@ -23,6 +23,7 @@ import {
 
 export default function AdminChannels() {
   const [channels, setChannels] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // State for Filters & Pagination
@@ -36,6 +37,7 @@ export default function AdminChannels() {
 
   useEffect(() => {
     fetchChannels();
+    fetchActivities();
   }, []);
 
   useEffect(() => {
@@ -64,6 +66,18 @@ export default function AdminChannels() {
       console.error("Error fetching channels:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("/api/admin/audit-logs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setActivities(res.data.slice(0, 4));
+    } catch (error) {
+      console.error("Error fetching activities:", error);
     }
   };
 
@@ -468,6 +482,11 @@ export default function AdminChannels() {
                                   src={channel.avatarUrl}
                                   alt=""
                                   className="w-8 h-8 rounded-full object-cover border border-white/10"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.channelName || 'U')}&background=random`;
+                                  }}
                                 />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center shadow-inner">
@@ -805,68 +824,46 @@ export default function AdminChannels() {
           <div className="bg-[#141418] border border-white/5 rounded-2xl p-6">
             <h3 className="font-semibold text-white mb-6">Hoạt động gần đây</h3>
             <div className="space-y-5">
-              {/* Mock activities based on the screenshot */}
-              <div className="flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                  <Tv className="w-4 h-4 text-green-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[13px] font-medium text-white mb-0.5">
-                    Kênh mới được thêm
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Kênh Giải Trí Official
-                  </p>
-                </div>
-                <div className="text-[11px] text-gray-600 mt-1">
-                  2 giờ trước
-                </div>
-              </div>
+              {activities.length > 0 ? (
+                activities.map((activity) => {
+                  let Icon = Activity;
+                  let colorClass = "text-blue-500 bg-blue-500/10";
+                  
+                  if (activity.actionType === "delete") {
+                    Icon = ShieldOff;
+                    colorClass = "text-red-500 bg-red-500/10";
+                  } else if (activity.actionType === "update") {
+                    Icon = CheckCircle;
+                    colorClass = "text-green-500 bg-green-500/10";
+                  } else if (activity.actionType === "create") {
+                    Icon = Tv;
+                    colorClass = "text-green-500 bg-green-500/10";
+                  }
 
-              <div className="flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  return (
+                    <div key={activity.id} className="flex gap-4">
+                      <div className={`w-9 h-9 rounded-full ${colorClass.split(' ')[1]} flex items-center justify-center shrink-0`}>
+                        <Icon className={`w-4 h-4 ${colorClass.split(' ')[0]}`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[13px] font-medium text-white mb-0.5">
+                          {activity.action}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {activity.user}
+                        </p>
+                      </div>
+                      <div className="text-[11px] text-gray-600 mt-1">
+                        {activity.time}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-gray-500 text-center py-4">
+                  Không có hoạt động nào
                 </div>
-                <div className="flex-1">
-                  <p className="text-[13px] font-medium text-white mb-0.5">
-                    Kênh được xác minh
-                  </p>
-                  <p className="text-xs text-gray-500">Hoàng Đỗ</p>
-                </div>
-                <div className="text-[11px] text-gray-600 mt-1">
-                  5 giờ trước
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                  <ShieldOff className="w-4 h-4 text-red-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[13px] font-medium text-white mb-0.5">
-                    Kênh bị đình chỉ
-                  </p>
-                  <p className="text-xs text-gray-500">Streamer XYZ</p>
-                </div>
-                <div className="text-[11px] text-gray-600 mt-1">
-                  1 ngày trước
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 text-blue-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[13px] font-medium text-white mb-0.5">
-                    Chủ sở hữu mới
-                  </p>
-                  <p className="text-xs text-gray-500">user_new@test.com</p>
-                </div>
-                <div className="text-[11px] text-gray-600 mt-1">
-                  2 ngày trước
-                </div>
-              </div>
+              )}
             </div>
 
             <button className="w-full mt-6 pt-4 border-t border-white/5 text-[13px] text-purple-400 hover:text-purple-300 font-medium text-left transition-colors">
