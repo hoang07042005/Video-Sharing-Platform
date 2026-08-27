@@ -129,7 +129,7 @@ namespace Video_Platform_Backend.Controllers
                 FullName = user.Profile?.FullName,
                 Roles = userRoles,
                 Handle = user.Channel?.Handle,
-                AvatarUrl = user.Profile?.AvatarUrl,
+                AvatarUrl = user.Channel?.AvatarUrl ?? user.Profile?.AvatarUrl,
                 Coins = user.Coins
             });
         }
@@ -165,6 +165,7 @@ namespace Video_Platform_Backend.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine("EMAIL EXCEPTION: " + ex.ToString());
                 // In production, log this exception
                 return StatusCode(500, new { Message = "Could not send email. Please try again later." });
             }
@@ -308,7 +309,7 @@ namespace Video_Platform_Backend.Controllers
                     };
 
                     // Generate a default handle based on email or name
-                    var baseHandle = email.Split('@')[0];
+                    var baseHandle = "@" + email.Split('@')[0];
                     var uniqueHandle = baseHandle;
                     int count = 1;
                     while (await _context.Channels.AnyAsync(c => c.Handle == uniqueHandle))
@@ -333,11 +334,23 @@ namespace Video_Platform_Backend.Controllers
                 }
                 else
                 {
+                    bool isUpdated = false;
                     // If user exists but doesn't have GoogleId set, update it
                     if (string.IsNullOrEmpty(user.GoogleId))
                     {
                         user.GoogleId = subject;
-                        _context.Users.Update(user);
+                        isUpdated = true;
+                    }
+
+                    // Fix missing '@' prefix for old accounts
+                    if (user.Channel != null && !user.Channel.Handle.StartsWith("@"))
+                    {
+                        user.Channel.Handle = "@" + user.Channel.Handle;
+                        isUpdated = true;
+                    }
+
+                    if (isUpdated)
+                    {
                         await _context.SaveChangesAsync();
                     }
                 }
@@ -358,7 +371,7 @@ namespace Video_Platform_Backend.Controllers
                     FullName = user.Profile?.FullName,
                     Roles = roles,
                     Handle = user.Channel?.Handle,
-                    AvatarUrl = user.Profile?.AvatarUrl,
+                    AvatarUrl = user.Channel?.AvatarUrl ?? user.Profile?.AvatarUrl,
                     Coins = user.Coins,
                     IsNewUser = isNewUser
                 });

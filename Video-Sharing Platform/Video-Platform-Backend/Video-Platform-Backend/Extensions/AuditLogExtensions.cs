@@ -22,6 +22,9 @@ namespace Video_Platform_Backend.Extensions
                     ActionType = actionType,
                     Target = target,
                     Details = details,
+                    IpAddress = string.IsNullOrEmpty(controller.HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : controller.HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(controller.HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : controller.HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
                     CreatedAt = DateTime.UtcNow
                 });
             }

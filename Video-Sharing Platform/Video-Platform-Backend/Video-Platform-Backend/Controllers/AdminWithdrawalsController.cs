@@ -122,6 +122,9 @@ namespace Video_Platform_Backend.Controllers
                     ActionType = "update",
                     Target = $"Payment:{id}",
                     Details = actionDetails,
+                    IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.AuditLogs.Add(log);
@@ -153,12 +156,12 @@ namespace Video_Platform_Backend.Controllers
 
                         // Email
                         string emailHtml = $@"
-                        <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #ffffff; color: #333333; padding: 0; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+                        <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #333333; padding: 0;  overflow: hidden;'>
                             <div style='padding: 15px 30px; font-size: 14px; color: #666666; border-bottom: 1px solid #eeeeee; background-color: #f9f9f9;'>
                                 Thông báo: Yêu cầu rút tiền của bạn đã được xử lý thành công
                             </div>
                             
-                            <div style='padding: 30px;'>
+                            <div>
                                 <div style='margin-bottom: 20px; text-align: center;'>
                                     <img src='https://dummyimage.com/200x50/3C1671/ffffff.png&text=VIDEO+PLATFORM' alt='Video Platform' style='height: 40px;' />
                                 </div>

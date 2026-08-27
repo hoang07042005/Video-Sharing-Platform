@@ -43,7 +43,7 @@ namespace Video_Platform_Backend.Controllers
                 .Include(d => d.Livestream)
                 .ThenInclude(l => l.Channel)
                 .Where(d => d.Livestream != null && d.Livestream.Channel != null && d.Livestream.Channel.UserId == userId && d.Status == "completed" && d.Currency == "Xu")
-                .SumAsync(d => d.Amount);
+                .SumAsync(d => (decimal?)d.Amount) ?? 0;
 
             var channel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userId);
             decimal totalMembershipRevenue = 0;
@@ -53,7 +53,7 @@ namespace Video_Platform_Backend.Controllers
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
                     .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
-                    .SumAsync(t => t.Amount);
+                    .SumAsync(t => (decimal?)t.Amount) ?? 0;
 
                 totalVideoEarnings = await _context.DailyVideoEarnings
                     .Where(e => e.Video.ChannelId == channel.Id)
@@ -64,11 +64,11 @@ namespace Video_Platform_Backend.Controllers
                 .Include(d => d.Livestream)
                 .ThenInclude(l => l.Channel)
                 .Where(d => d.Livestream != null && d.Livestream.Channel != null && d.Livestream.Channel.UserId == userId && d.Status == "completed" && d.Currency != "Xu")
-                .SumAsync(d => d.Amount);
+                .SumAsync(d => (decimal?)d.Amount) ?? 0;
 
             var totalWithdrawnCoins = await _context.WithdrawalRequests
                 .Where(w => w.UserId == userId && w.Status != "Rejected")
-                .SumAsync(w => w.Coins);
+                .SumAsync(w => (int?)w.Coins) ?? 0;
 
             // Platform Fees
             decimal feeCoinOwn = 0.05m;
@@ -192,13 +192,16 @@ namespace Video_Platform_Backend.Controllers
                     ActionType = "add",
                     Target = "WithdrawalRequest",
                     Details = $"Rút {dto.AmountVnd.ToString("N0")} VNĐ về NH {dto.BankName}",
+                    IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.AuditLogs.Add(log);
 
                 // Notify all admins
                 var adminIds = await _context.Users
-                    .Where(u => u.Role == "Admin")
+                    .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "Admin"))
                     .Select(u => u.Id)
                     .ToListAsync();
 
@@ -280,7 +283,7 @@ namespace Video_Platform_Backend.Controllers
                 totalMembershipRevenue = await _context.Transactions
                     .Include(t => t.Payment)
                     .Where(t => t.TargetChannelId == channel.Id && t.TransactionType != null && t.TransactionType.StartsWith("ChannelMembership") && t.Payment != null && (t.Payment.Status == "Completed" || t.Payment.Status == "Success"))
-                    .SumAsync(t => t.Amount);
+                    .SumAsync(t => (decimal?)t.Amount) ?? 0;
 
                 totalVideoEarnings = await _context.DailyVideoEarnings
                     .Where(e => e.Video.ChannelId == channel.Id)

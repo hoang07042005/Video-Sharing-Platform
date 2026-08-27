@@ -14,7 +14,8 @@ export default function MainLayout() {
       location.pathname.startsWith("/watch") ||
       location.pathname.startsWith("/live") ||
       location.pathname.startsWith("/studio/live") ||
-      location.pathname.startsWith("/settings")
+      location.pathname.startsWith("/settings") ||
+      location.pathname.startsWith("/policies")
     ) {
       setIsSidebarOpen(false);
     } else {

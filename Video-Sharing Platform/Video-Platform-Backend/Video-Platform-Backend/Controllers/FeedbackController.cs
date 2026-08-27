@@ -40,7 +40,7 @@ public class FeedbackController : ControllerBase
         
         // Notify all admins
         var adminIds = await _context.Users
-            .Where(u => u.Role == "Admin")
+            .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "Admin"))
             .Select(u => u.Id)
             .ToListAsync();
 

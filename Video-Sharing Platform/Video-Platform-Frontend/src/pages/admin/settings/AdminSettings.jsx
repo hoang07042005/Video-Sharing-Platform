@@ -11,6 +11,7 @@ import {
   Loader2,
   Upload,
   PlaySquare,
+  Share2,
 } from "lucide-react";
 import axios from "axios";
 
@@ -67,6 +68,10 @@ export default function AdminSettings() {
     gaId: "G-XXXXXXXXXX",
     fbPixelId: "123456789012345",
     recaptchaSiteKey: "6LeKbCAAAAAJcZRqyHh71UMIEGNQ_MZjK2kH",
+    facebookLink: "https://facebook.com",
+    instagramLink: "https://instagram.com",
+    tiktokLink: "https://tiktok.com",
+    youtubeLink: "https://youtube.com",
   };
 
   const [settings, setSettings] = useState(defaultSettings);
@@ -613,6 +618,37 @@ export default function AdminSettings() {
                   width="w-56"
                 />
               </div>
+            </div>
+          </Card>
+
+          {/* MẠNG XÃ HỘI */}
+          <Card
+            icon={<Share2 className="w-5 h-5 text-pink-500" />}
+            iconBg="bg-pink-600/20"
+            title="MẠNG XÃ HỘI"
+            subtitle="Liên kết các kênh mạng xã hội của nền tảng"
+          >
+            <div className="space-y-4 pt-2">
+              <InputGroup
+                label="Facebook"
+                value={settings.facebookLink}
+                onChange={(v) => handleChange("facebookLink", v)}
+              />
+              <InputGroup
+                label="Instagram"
+                value={settings.instagramLink}
+                onChange={(v) => handleChange("instagramLink", v)}
+              />
+              <InputGroup
+                label="TikTok"
+                value={settings.tiktokLink}
+                onChange={(v) => handleChange("tiktokLink", v)}
+              />
+              <InputGroup
+                label="YouTube"
+                value={settings.youtubeLink}
+                onChange={(v) => handleChange("youtubeLink", v)}
+              />
             </div>
           </Card>
         </div>

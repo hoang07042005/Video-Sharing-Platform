@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import {
   Home,
   TrendingUp,
@@ -17,6 +19,7 @@ import {
   Crown,
   Radio,
   Download,
+  Shield,
 } from "lucide-react";
 
 // Social icons (SVG inline vì lucide-react không có)
@@ -79,6 +82,24 @@ const SectionLabel = ({ label }) => (
 
 export default function Sidebar({ isOpen }) {
   const location = useLocation();
+  const [publicSettings, setPublicSettings] = useState({});
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await axios.get("/api/admin/settings/public");
+        if (mounted && res.data) {
+          setPublicSettings(res.data);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy cài đặt trong Sidebar:", err);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const navGroups = [
     {
@@ -118,13 +139,14 @@ export default function Sidebar({ isOpen }) {
   const bottomLinks = [
     { name: "Cài đặt", icon: Settings, path: "/settings" },
     { name: "Trợ giúp & phản hồi", icon: HelpCircle, path: "/help-feedback" },
+    { name: "Chính sách", icon: Shield, path: "/policies" },
   ];
 
   const socialLinks = [
-    { icon: FacebookIcon, href: "#", label: "Facebook" },
-    { icon: InstagramIcon, href: "#", label: "Instagram" },
-    { icon: TikTokIcon, href: "#", label: "TikTok" },
-    { icon: YoutubeIcon, href: "#", label: "YouTube" },
+    { icon: FacebookIcon, href: publicSettings?.facebookLink || "#", label: "Facebook" },
+    { icon: InstagramIcon, href: publicSettings?.instagramLink || "#", label: "Instagram" },
+    { icon: TikTokIcon, href: publicSettings?.tiktokLink || "#", label: "TikTok" },
+    { icon: YoutubeIcon, href: publicSettings?.youtubeLink || "#", label: "YouTube" },
   ];
 
   return (
@@ -198,6 +220,8 @@ export default function Sidebar({ isOpen }) {
             <a
               key={label}
               href={href}
+              target={href !== "#" ? "_blank" : undefined}
+              rel={href !== "#" ? "noopener noreferrer" : undefined}
               aria-label={label}
               className="text-gray-500 hover:text-white transition-colors"
             >

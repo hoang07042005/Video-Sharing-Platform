@@ -21,5 +21,9 @@ namespace Video_Platform_Backend.Models
         public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
 
         public string? AdminNote { get; set; }
+
+        public string? RejectReason { get; set; }
+
+        public string? EvidenceUrl { get; set; }
     }
 }

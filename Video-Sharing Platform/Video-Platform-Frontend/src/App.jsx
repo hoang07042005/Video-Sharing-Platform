@@ -35,6 +35,7 @@ import CommunityPage from './pages/client/channel/CommunityPage';
 import BuyCoins from './pages/client/Coins/BuyCoins';
 import LivePages from './pages/client/live/LivePage';
 import NotificationsPage from './pages/client/notifications/NotificationsPage';
+import Policies from './pages/client/help/Policies';
 
 import MainLayout from './components/layout/client/MainLayout';
 import AdminRoute from './components/layout/admin/AdminRoute';
@@ -167,6 +168,7 @@ function App() {
           <Route path="/studio/monetization" element={<StudioMonetization />} />
           <Route path="/studio/dashboard" element={<CreatorDashboard />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/policies" element={<Policies />} />
 
           {/* 404 Catch-all */}
           <Route path="*" element={<NotFound />} />

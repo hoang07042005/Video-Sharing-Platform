@@ -604,6 +604,9 @@ namespace Video_Platform_Backend.Controllers
                 ActionType = "assign",
                 Target = user.Email,
                 Details = $"Cập nhật quyền thành {string.Join(", ", dto.Roles)}",
+                IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                Status = "Success",
                 CreatedAt = DateTime.UtcNow
             };
             _context.AuditLogs.Add(log);
@@ -693,7 +696,11 @@ namespace Video_Platform_Backend.Controllers
                     Action = "Thêm vai trò",
                     ActionType = "add",
                     Target = dto.Label,
-                    Details = $"Tạo mới vai trò {dto.Label}"
+                    Details = $"Tạo mới vai trò {dto.Label}",
+                    IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -732,7 +739,11 @@ namespace Video_Platform_Backend.Controllers
                     Action = "Cập nhật vai trò",
                     ActionType = "update",
                     Target = dto.Label,
-                    Details = $"Cập nhật vai trò {dto.Label}"
+                    Details = $"Cập nhật vai trò {dto.Label}",
+                    IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -764,7 +775,11 @@ namespace Video_Platform_Backend.Controllers
                     Action = "Xóa vai trò",
                     ActionType = "delete",
                     Target = role.Label,
-                    Details = $"Xóa vai trò {role.Label}"
+                    Details = $"Xóa vai trò {role.Label}",
+                    IpAddress = string.IsNullOrEmpty(HttpContext.Connection.RemoteIpAddress?.ToString()) ? "Unknown" : HttpContext.Connection.RemoteIpAddress.ToString(),
+                    Browser = string.IsNullOrEmpty(HttpContext.Request.Headers["User-Agent"].ToString()) ? "Unknown" : HttpContext.Request.Headers["User-Agent"].ToString(),
+                    Status = "Success",
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
