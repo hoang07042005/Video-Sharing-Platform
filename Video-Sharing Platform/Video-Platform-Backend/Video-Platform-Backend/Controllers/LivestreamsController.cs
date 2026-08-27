@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Video_Platform_Backend.Models;
 using Video_Platform_Backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
+
+using Microsoft.AspNetCore.SignalR;
+using Video_Platform_Backend.Hubs;
 
 namespace Video_Platform_Backend.Controllers;
 
@@ -15,10 +19,12 @@ namespace Video_Platform_Backend.Controllers;
 public class LivestreamsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IHubContext<LivestreamHub> _hubContext;
 
-    public LivestreamsController(ApplicationDbContext db)
+    public LivestreamsController(ApplicationDbContext db, IHubContext<LivestreamHub> hubContext)
     {
         _db = db;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -314,6 +320,109 @@ public class LivestreamsController : ControllerBase
 
         await _db.SaveChangesAsync();
         return Ok(new { success = true });
+    }
+
+    [HttpPost("{id}/report")]
+    [Authorize]
+    public async Task<IActionResult> ReportLivestream(Guid id, [FromBody] CreateReportDTO request)
+    {
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+        if (!Guid.TryParse(userIdStr, out Guid userId)) return Unauthorized();
+
+        var livestream = await _db.Livestreams.Include(l => l.Channel).FirstOrDefaultAsync(l => l.Id == id);
+        if (livestream == null) return NotFound(new { message = "Livestream không tồn tại." });
+
+        var report = new Report
+        {
+            Id = Guid.NewGuid(),
+            ReporterId = userId,
+            TargetId = id,
+            TargetType = "Livestream",
+            Reason = request.Reason,
+            Description = request.Description,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Reports.Add(report);
+        await _db.SaveChangesAsync();
+
+        // Automated Strike Logic
+        var tenMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
+        var recentReportsCount = await _db.Reports
+            .Where(r => r.TargetId == id && r.TargetType == "Livestream" && r.CreatedAt >= tenMinutesAgo)
+            .Select(r => r.ReporterId)
+            .Distinct()
+            .CountAsync();
+
+        var strikeThreshold = 5; // Threshold for automatic strike
+
+        if (recentReportsCount >= strikeThreshold && livestream.Status == "live")
+        {
+            // End livestream
+            livestream.Status = "banned";
+            livestream.EndTime = DateTime.UtcNow;
+            
+            // Add strike to channel
+            if (livestream.Channel != null)
+            {
+                livestream.Channel.Strikes += 1;
+                
+                // Suspend channel if strikes >= 3
+                if (livestream.Channel.Strikes >= 3)
+                {
+                    livestream.Channel.IsSuspended = true;
+                }
+
+                // Notify channel owner
+                _db.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = livestream.Channel.UserId,
+                    Type = "System",
+                    Title = "Livestream bị ngắt do vi phạm",
+                    Message = $"Livestream '{livestream.Title}' của bạn đã bị ngắt do nhận quá nhiều báo cáo vi phạm tiêu chuẩn cộng đồng. Kênh của bạn bị cảnh cáo 1 gậy (Tổng: {livestream.Channel.Strikes}/3).",
+                    TargetUrl = $"/c/{livestream.Channel.Handle}",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Drop publisher from Media Server
+            if (!string.IsNullOrEmpty(livestream.StreamKey))
+            {
+                try
+                {
+                    using (var httpClient = new System.Net.Http.HttpClient())
+                    {
+                        var payload = new { streamKey = livestream.StreamKey };
+                        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+                        await httpClient.PostAsync("http://localhost:8001/api/drop", content);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail the request
+                    Console.WriteLine($"[Drop Stream] Error calling media server: {ex.Message}");
+                }
+            }
+
+            var recentReports = await _db.Reports
+                .Where(r => r.TargetId == id && r.TargetType == "Livestream" && r.Status == "Pending")
+                .ToListAsync();
+
+            foreach (var r in recentReports)
+            {
+                r.Status = "Resolved";
+            }
+
+            await _db.SaveChangesAsync();
+            
+            // SignalR event to disconnect viewers
+            await _hubContext.Clients.Group(livestream.Id.ToString()).SendAsync("StreamEnded", livestream.Id.ToString());
+        }
+
+        return Ok(new { message = "Báo cáo của bạn đã được gửi. Hệ thống sẽ xử lý." });
     }
 
     [HttpPost("webhook/vod")]

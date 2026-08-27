@@ -258,6 +258,7 @@ const LivestreamChat = ({
   userId,
   isChannelOwner = false,
   disabled = false,
+  onStreamEnded,
 }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -365,15 +366,25 @@ const LivestreamChat = ({
       setMessages((prev) => prev.filter((msg) => msg.id !== data.messageId));
     };
 
+    const handleStreamEnded = (lsId) => {
+      const normalizedId = String(livestreamId || "").toLowerCase();
+      if (String(lsId || "").toLowerCase() !== normalizedId) return;
+      if (onStreamEnded) {
+        onStreamEnded();
+      }
+    };
+
     conn.on("ReceiveMessage", onMessage);
     conn.on("ReceiveSuperChat", onSuperChat);
     conn.on("MessageDeleted", onMessageDeleted);
+    conn.on("StreamEnded", handleStreamEnded);
     return () => {
       conn.off("ReceiveMessage", onMessage);
       conn.off("ReceiveSuperChat", onSuperChat);
       conn.off("MessageDeleted", onMessageDeleted);
+      conn.off("StreamEnded", handleStreamEnded);
     };
-  }, [connRef, livestreamId]);
+  }, [connRef, livestreamId, onStreamEnded]);
 
   // Auto-scroll
   useEffect(() => {

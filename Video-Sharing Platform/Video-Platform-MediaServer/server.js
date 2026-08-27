@@ -102,6 +102,35 @@ nms.run();
 // ── 2. Express: serve HLS files + WebSocket bridge ─────────────────────────
 const app = express();
 app.use(cors());
+app.use(express.json());
+
+app.post('/api/drop', async (req, res) => {
+  const { streamKey } = req.body;
+  if (!streamKey) return res.status(400).json({ error: 'missing streamKey' });
+
+  // 1. Kill any active ffmpeg transcoder
+  const ffmpeg = transcoders.get(streamKey);
+  if (ffmpeg) {
+    ffmpeg.kill('SIGINT');
+    transcoders.delete(streamKey);
+  }
+
+  // 2. Query NMS API for active sessions and drop the one matching the streamKey
+  try {
+    const { data: sessions } = await axios.get('http://localhost:8000/api/server/sessions');
+    for (const [id, session] of Object.entries(sessions)) {
+      if (session.publishStreamPath && session.publishStreamPath.endsWith(`/${streamKey}`)) {
+        await axios.delete(`http://localhost:8000/api/server/sessions/${id}`);
+        console.log(`[API Drop] Dropped NMS session ${id} for stream ${streamKey}`);
+      }
+    }
+  } catch (err) {
+    console.error(`[API Drop] Failed to drop NMS session:`, err.message);
+  }
+
+  res.json({ success: true, message: `Dropped stream ${streamKey}` });
+});
+
 // Serve HLS static files on /live/...
 app.use('/live', express.static(path.join(MEDIA_ROOT, 'live'), {
   setHeaders: (res) => {

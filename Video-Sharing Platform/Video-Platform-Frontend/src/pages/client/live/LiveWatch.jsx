@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -58,6 +58,11 @@ export default function LiveWatch() {
   const [isLiked, setIsLiked] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showDonateModal, setShowDonateModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("Spam hoặc lừa đảo");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const handleLike = async () => {
     if (!stream) return;
@@ -104,6 +109,37 @@ export default function LiveWatch() {
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("Đã sao chép liên kết livestream!");
+  };
+
+  const handleStreamEnded = useCallback(() => {
+    setStream((prev) => {
+      if (!prev) return prev;
+      return { ...prev, status: "banned" };
+    });
+    alert("Livestream này đã bị ngắt do vi phạm tiêu chuẩn cộng đồng.");
+  }, []);
+
+  const handleReportSubmit = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Vui lòng đăng nhập để báo cáo!");
+      return;
+    }
+    try {
+      setIsSubmittingReport(true);
+      await axios.post(
+        `/api/livestreams/${id}/report`,
+        { reason: reportReason, description: reportDescription },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Cảm ơn bạn. Báo cáo của bạn đã được gửi và hệ thống sẽ xử lý.");
+      setShowReportModal(false);
+      setReportDescription("");
+    } catch (err) {
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi gửi báo cáo.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
   };
 
   const handleGift = () => {
@@ -530,7 +566,7 @@ export default function LiveWatch() {
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 sm:pb-0">
+                <div className="flex items-center gap-2 flex-wrap pb-2 sm:pb-0">
                   <button
                     onClick={handleLike}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-colors shrink-0 ${
@@ -556,9 +592,28 @@ export default function LiveWatch() {
                   >
                     <Gift className="w-4 h-4" /> Quà tặng
                   </button>
-                  <button className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors shrink-0">
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors shrink-0"
+                    >
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                    {showMoreMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-[#212121] rounded-xl shadow-xl border border-white/10 overflow-hidden z-50">
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            setShowReportModal(true);
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                          Báo cáo livestream
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -864,6 +919,79 @@ export default function LiveWatch() {
           livestreamId={id}
           onClose={() => setShowDonateModal(false)}
         />
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowReportModal(false)}
+        >
+          <div
+            className="bg-[#212121] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h3 className="text-lg font-bold text-white">Báo cáo livestream</h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <div className="space-y-3">
+                <p className="text-sm text-gray-300 font-medium">Chọn lý do báo cáo:</p>
+                {[
+                  "Spam hoặc lừa đảo",
+                  "Bạo lực hoặc phản cảm",
+                  "Quấy rối",
+                  "Tin giả",
+                  "Khác",
+                ].map((reason) => (
+                  <label key={reason} className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="reportReason"
+                      value={reason}
+                      checked={reportReason === reason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      className="w-4 h-4 text-[#FF5722] bg-[#151515] border-gray-600 focus:ring-[#FF5722] focus:ring-offset-gray-800"
+                    />
+                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                      {reason}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="space-y-2 mt-2">
+                <p className="text-sm text-gray-300 font-medium">Chi tiết thêm:</p>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Mô tả cụ thể vấn đề..."
+                  className="w-full bg-[#151515] border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#FF5722]/50 resize-none h-24"
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-[#1A1A1A]">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 rounded-full transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleReportSubmit}
+                disabled={isSubmittingReport}
+                className="px-4 py-2 text-sm font-semibold bg-[#FF5722] hover:bg-[#F4511E] text-white rounded-full transition-colors disabled:opacity-50"
+              >
+                {isSubmittingReport ? "Đang gửi..." : "Gửi báo cáo"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

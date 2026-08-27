@@ -43,6 +43,8 @@ public partial class Channel
 
     public string MonetizationStatus { get; set; } = "None"; // None, Eligible, Pending, Approved, Rejected
 
+    public int Strikes { get; set; } = 0;
+
     public virtual ICollection<Follower> Followers { get; set; } = new List<Follower>();
 
     public virtual ICollection<Livestream> Livestreams { get; set; } = new List<Livestream>();
