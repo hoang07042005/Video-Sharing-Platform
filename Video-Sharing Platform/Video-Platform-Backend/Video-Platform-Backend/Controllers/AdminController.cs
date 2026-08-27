@@ -239,7 +239,7 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(u => u.Profile)
                 .Where(r => r.CreatedAt >= rangeStart && r.CreatedAt < rangeEnd)
                 .OrderByDescending(r => r.CreatedAt)
-                .Take(5)
+                .Take(7)
                 .Select(r => new {
                     Id = r.Id,
                     User = r.Reporter.Profile != null && !string.IsNullOrWhiteSpace(r.Reporter.Profile.FullName)
@@ -254,7 +254,7 @@ namespace Video_Platform_Backend.Controllers
             var recentActivities = await _context.AuditLogs
                 .Where(a => a.CreatedAt >= rangeStart && a.CreatedAt < rangeEnd)
                 .OrderByDescending(a => a.CreatedAt)
-                .Take(5)
+                .Take(7)
                 .Select(a => new {
                     Id = a.Id,
                     Action = a.Action,
@@ -269,7 +269,7 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(u => u.Profile)
                 .Where(t => t.CreatedAt >= rangeStart && t.CreatedAt < rangeEnd)
                 .OrderByDescending(t => t.CreatedAt)
-                .Take(5)
+                .Take(7)
                 .Select(t => new {
                     Id = t.Id,
                     User = t.Payment.User.Profile != null && !string.IsNullOrWhiteSpace(t.Payment.User.Profile.FullName)
@@ -303,6 +303,23 @@ namespace Video_Platform_Backend.Controllers
                 })
                 .ToListAsync();
 
+            var recentMonetizationRequests = await _context.MonetizationApplications
+                .Include(a => a.Channel)
+                .ThenInclude(c => c.User)
+                .ThenInclude(u => u.Profile)
+                .OrderByDescending(a => a.AppliedAt)
+                .Take(7)
+                .Select(a => new {
+                    Id = a.Id,
+                    ChannelName = a.Channel.ChannelName,
+                    AvatarUrl = a.Channel.AvatarUrl ?? (a.Channel.User.Profile != null ? a.Channel.User.Profile.AvatarUrl : null),
+                    SubscribersCount = _context.Subscriptions.Count(s => s.ChannelId == a.ChannelId && s.Status == "Active"),
+                    Status = a.Status,
+                    RejectReason = a.RejectReason,
+                    Time = FormatRelativeTime(a.AppliedAt)
+                })
+                .ToListAsync();
+
             return Ok(new
             {
                 TotalUsers = currentPeriodUsers,
@@ -324,7 +341,8 @@ namespace Video_Platform_Backend.Controllers
                 RecentReports = recentReports,
                 RecentActivities = recentActivities,
                 RecentTransactions = recentTransactions,
-                RecentPremiumUpgrades = recentPremiumUpgrades
+                RecentPremiumUpgrades = recentPremiumUpgrades,
+                RecentMonetizationRequests = recentMonetizationRequests
             });
         }
 
@@ -620,23 +638,32 @@ namespace Video_Platform_Backend.Controllers
         public async Task<IActionResult> GetAuditLogs()
         {
             var logs = await _context.AuditLogs
-                .Include(l => l.User)
-                    .ThenInclude(u => u.Profile)
-                .OrderByDescending(l => l.CreatedAt)
-                .Take(500)
-                .Select(l => new {
-                    Id = l.Id,
-                    Time = l.CreatedAt.ToString("HH:mm dd/MM/yyyy"),
-                    Date = l.CreatedAt,
-                    User = l.User != null ? l.User.Email : "Hệ thống",
-                    Role = "Quản trị viên", // Assuming only admins can do this for now
-                    Avatar = l.User != null && l.User.Profile != null && !string.IsNullOrEmpty(l.User.Profile.AvatarUrl)
+            .Include(l => l.User)
+                .ThenInclude(u => u.Profile)
+            .Include(l => l.User)
+                .ThenInclude(u => u.Channel)
+            .OrderByDescending(l => l.CreatedAt)
+            .Take(500)
+            .Select(l => new {
+                Id = l.Id,
+                Time = l.CreatedAt.ToString("HH:mm dd/MM/yyyy"),
+                Date = l.CreatedAt,
+                User = l.User != null 
+                    ? (l.User.Channel != null ? l.User.Channel.ChannelName : (l.User.Profile != null && !string.IsNullOrEmpty(l.User.Profile.FullName) ? l.User.Profile.FullName : l.User.Email)) 
+                    : "Hệ thống",
+                Handle = l.User != null && l.User.Channel != null ? l.User.Channel.Handle : null,
+                Email = l.User != null ? l.User.Email : "",
+                Role = "Quản trị viên", // Assuming only admins can do this for now
+                Avatar = l.User != null && l.User.Profile != null && !string.IsNullOrEmpty(l.User.Profile.AvatarUrl)
                         ? l.User.Profile.AvatarUrl
                         : "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (l.User != null ? l.User.Email : "System"),
                     Action = l.Action,
                     ActionType = l.ActionType,
                     Target = l.Target,
-                    Details = l.Details
+                    Details = l.Details,
+                    IpAddress = l.IpAddress ?? "Không xác định",
+                    Browser = l.Browser ?? "Không xác định",
+                    Status = l.Status == "Success" ? "Thành công" : l.Status == "Warning" ? "Cảnh báo" : l.Status == "Failed" ? "Thất bại" : l.Status ?? "Không rõ"
                 })
                 .ToListAsync();
 
@@ -785,6 +812,63 @@ namespace Video_Platform_Backend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Xóa vai trò thành công." });
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> GlobalSearch([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return Ok(new { users = new object[] { }, channels = new object[] { }, videos = new object[] { } });
+            }
+
+            var queryLower = q.ToLower();
+
+            // Search Users
+            var users = await _context.Users
+                .Include(u => u.Profile)
+                .Where(u => u.Email.ToLower().Contains(queryLower) || 
+                            (u.Profile != null && u.Profile.FullName != null && u.Profile.FullName.ToLower().Contains(queryLower)))
+                .Take(5)
+                .Select(u => new {
+                    id = u.Id,
+                    email = u.Email,
+                    fullName = u.Profile != null ? u.Profile.FullName : null,
+                    avatarUrl = u.Profile != null ? u.Profile.AvatarUrl : null
+                })
+                .ToListAsync();
+
+            // Search Channels
+            var channels = await _context.Channels
+                .Where(c => c.ChannelName.ToLower().Contains(queryLower) || c.Handle.ToLower().Contains(queryLower))
+                .Take(5)
+                .Select(c => new {
+                    id = c.Id,
+                    channelName = c.ChannelName,
+                    handle = c.Handle,
+                    avatarUrl = c.AvatarUrl
+                })
+                .ToListAsync();
+
+            // Search Videos
+            var videos = await _context.Videos
+                .Include(v => v.Channel)
+                .Include(v => v.VideoThumbnails)
+                .Where(v => v.Title.ToLower().Contains(queryLower))
+                .Take(5)
+                .Select(v => new {
+                    id = v.Id,
+                    title = v.Title,
+                    thumbnailUrl = v.VideoThumbnails.FirstOrDefault() != null ? v.VideoThumbnails.FirstOrDefault().ThumbnailUrl : null,
+                    channelName = v.Channel != null ? v.Channel.ChannelName : "Unknown"
+                })
+                .ToListAsync();
+
+            return Ok(new {
+                users,
+                channels,
+                videos
+            });
         }
     }
 }

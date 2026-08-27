@@ -38,6 +38,7 @@ import NotificationsPage from './pages/client/notifications/NotificationsPage';
 import Policies from './pages/client/help/Policies';
 
 import MainLayout from './components/layout/client/MainLayout';
+import MaintenanceGuard from './components/layout/client/MaintenanceGuard';
 import AdminRoute from './components/layout/admin/AdminRoute';
 import AdminLayout from './components/layout/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -137,8 +138,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
+        <Route element={<MaintenanceGuard />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
           <Route path="/c/:handle" element={<ChannelProfile />} />
           <Route path="/c/:handle/membership" element={<MembershipPage />} />
           <Route path="/c/:handle/community" element={<CommunityPage />} />
@@ -173,8 +175,9 @@ function App() {
           {/* 404 Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Route>
+      </Route>
 
-        <Route path="/admin" element={<AdminRoute />}>
+      <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />

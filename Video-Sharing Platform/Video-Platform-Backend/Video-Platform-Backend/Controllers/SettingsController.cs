@@ -39,7 +39,7 @@ public class SettingsController : ControllerBase
             }
             else
             {
-                if (setting.Key == "smtpPass")
+                if (setting.Key == "smtpPass" || setting.Key == "vnpayHashSecret")
                 {
                     result[setting.Key] = "********";
                 }
@@ -59,7 +59,7 @@ public class SettingsController : ControllerBase
     public async Task<ActionResult<Dictionary<string, object>>> GetPublicSettings()
     {
         var settings = await _context.SystemSettings
-            .Where(s => s.Key == "siteName" || s.Key == "logoUrl" || s.Key == "faviconUrl" || s.Key == "allowRegistration" || s.Key == "allowDownloads" || s.Key == "maintenanceMode" || s.Key == "maxUploadSize" || s.Key == "contactEmail" || s.Key == "supportPhone" || s.Key == "facebookLink" || s.Key == "instagramLink" || s.Key == "tiktokLink" || s.Key == "youtubeLink")
+            .Where(s => s.Key == "siteName" || s.Key == "logoUrl" || s.Key == "faviconUrl" || s.Key == "allowRegistration" || s.Key == "allowDownloads" || s.Key == "maintenanceMode" || s.Key == "maxUploadSize" || s.Key == "contactEmail" || s.Key == "supportPhone" || s.Key == "facebookLink" || s.Key == "instagramLink" || s.Key == "tiktokLink" || s.Key == "youtubeLink" || s.Key == "googleLoginEnabled" || s.Key == "facebookLoginEnabled")
             .ToListAsync();
         
         var result = new Dictionary<string, object>();
@@ -89,7 +89,7 @@ public class SettingsController : ControllerBase
             var key = kvp.Key;
             var value = kvp.Value?.ToString() ?? "";
             
-            if (key == "smtpPass" && value == "********")
+            if ((key == "smtpPass" || key == "vnpayHashSecret") && value == "********")
             {
                 continue; // Do not overwrite with placeholder
             }

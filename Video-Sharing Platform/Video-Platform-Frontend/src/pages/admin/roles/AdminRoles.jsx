@@ -77,6 +77,10 @@ export default function AdminRoles() {
   const [selectedGroupFilter, setSelectedGroupFilter] =
     useState("Tất cả nhóm quyền");
 
+  // Pagination for Audit Logs
+  const [auditLogsPage, setAuditLogsPage] = useState(1);
+  const [auditLogsPerPage, setAuditLogsPerPage] = useState(10);
+
   // Role Modal State
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [modalRoleData, setModalRoleData] = useState({
@@ -806,34 +810,39 @@ export default function AdminRoles() {
                   Lịch sử thay đổi vai trò và phân quyền
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1c23] border border-white/10 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/5 transition-colors cursor-pointer">
-                Xem tất cả <ChevronRight className="w-3 h-3" />
-              </button>
             </div>
 
             <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[600px] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-[#141418] [&::-webkit-scrollbar-thumb]:bg-[#374151] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#4b5563] [scrollbar-width:thin] [scrollbar-color:#374151_#141418]">
               <table className="w-full text-left">
                 <thead className="text-[10px] uppercase text-gray-500 border-b border-white/5 bg-[#141418] sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-2 font-semibold">THỜI GIAN</th>
-                    <th className="px-2 py-2 font-semibold">NGƯỜI THỰC HIỆN</th>
-                    <th className="px-8 py-2 font-semibold">HÀNH ĐỘNG</th>
-                    <th className="px-2 py-2 font-semibold">ĐỐI TƯỢNG</th>
-                    <th className="px-2 py-2 font-semibold">CHI TIẾT</th>
+                    <th className="pl-6 pr-4 py-4 font-semibold tracking-wider">THỜI GIAN</th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">NGƯỜI THỰC HIỆN</th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">HÀNH ĐỘNG</th>
+                    <th className="px-4 py-4 font-semibold tracking-wider">ĐỐI TƯỢNG</th>
+                    <th className="pr-6 pl-4 py-4 font-semibold tracking-wider">CHI TIẾT</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {auditLogs.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="6"
-                        className="px-6 py-8 text-center text-gray-500 text-sm"
-                      >
-                        Chưa có dữ liệu nhật ký nào.
-                      </td>
-                    </tr>
-                  ) : (
-                    auditLogs.map((log) => {
+                  {(() => {
+                    const indexOfLastLog = auditLogsPage * auditLogsPerPage;
+                    const indexOfFirstLog = indexOfLastLog - auditLogsPerPage;
+                    const currentLogs = auditLogs.slice(indexOfFirstLog, indexOfLastLog);
+                    
+                    if (currentLogs.length === 0) {
+                      return (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="px-6 py-8 text-center text-gray-500 text-sm"
+                          >
+                            Chưa có dữ liệu nhật ký nào.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return currentLogs.map((log) => {
                       let actionBadgeClass =
                         "bg-gray-500/10 text-gray-400 border-gray-500/20";
                       if (log.actionType === "update")
@@ -854,43 +863,48 @@ export default function AdminRoles() {
                           key={log.id}
                           className="hover:bg-white/[0.02] transition-colors group"
                         >
-                          <td className="px-2 py-2 text-xs text-gray-400 whitespace-nowrap">
-                            {log.time}
+                          <td className="pl-2 pr-2 py-4 text-xs whitespace-nowrap">
+                            <div className="font-medium text-gray-300">
+                              {log.time?.split(" ")[0]}
+                            </div>
+                            <div className="text-[11px] text-gray-500 mt-0.5">
+                              {log.time?.split(" ")[1]}
+                            </div>
                           </td>
-                          <td className="px-2 py-2">
-                            <div className="flex items-center gap-2">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
                               <img
                                 src={log.avatar}
                                 alt="User"
-                                className="w-7 h-7 rounded-full bg-gray-800"
+                                className="w-8 h-8 rounded-full object-cover bg-gray-800"
                               />
                               <div>
-                                <div className="text-xs font-semibold text-gray-200">
+                                <div className="text-[13px] font-bold text-gray-200">
                                   {log.user}
                                 </div>
-                                <div className="text-[10px] text-gray-500">
+                                <div className="text-[11px] text-gray-500 mt-0.5">
                                   {log.role}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-8 py-2">
+                          <td className="px-4 py-4">
                             <span
-                              className={`px-2.5 py-1 text-[10px] font-semibold border rounded-md whitespace-nowrap ${actionBadgeClass}`}
+                              className={`px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap border rounded-full ${actionBadgeClass}`}
                             >
                               {log.action}
                             </span>
                           </td>
-                          <td className=" py-2 text-xs text-gray-300 font-medium">
+                          <td className="px-2 py-2 text-[13px] max-w-[220px] text-gray-200 font-medium">
                             {log.target}
                           </td>
-                          <td className="px-2 py-2 text-xs text-gray-400 min-w-[150px]">
+                          <td className="px-2 py-2 text-[13px] text-gray-400">
                             {log.details}
                           </td>
                         </tr>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -898,26 +912,48 @@ export default function AdminRoles() {
             <div className="p-4 border-t border-white/5 flex items-center justify-between bg-[#141418]">
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 Hiển thị
-                <select className="bg-[#1a1c23] border border-white/10 rounded px-2 py-1 text-white focus:outline-none">
-                  <option>10</option>
-                  <option>20</option>
+                <select 
+                  className="bg-[#1a1c23] border border-white/10 rounded px-2 py-1 text-white focus:outline-none"
+                  value={auditLogsPerPage}
+                  onChange={(e) => {
+                    setAuditLogsPerPage(Number(e.target.value));
+                    setAuditLogsPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
                 </select>
                 trên mỗi trang
               </div>
               <div className="flex items-center gap-1">
-                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer disabled:opacity-50">
+                <button 
+                  onClick={() => setAuditLogsPage(prev => Math.max(prev - 1, 1))}
+                  disabled={auditLogsPage === 1}
+                  className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer disabled:opacity-50"
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <button className="w-7 h-7 flex items-center justify-center rounded bg-purple-600 text-white font-medium text-xs cursor-pointer">
-                  1
-                </button>
-                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-400 hover:text-white hover:bg-white/5 border border-white/5 font-medium text-xs cursor-pointer">
-                  2
-                </button>
-                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-400 hover:text-white hover:bg-white/5 border border-white/5 font-medium text-xs cursor-pointer">
-                  3
-                </button>
-                <button className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer">
+                
+                {Array.from({ length: Math.ceil(auditLogs.length / auditLogsPerPage) || 1 }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setAuditLogsPage(page)}
+                    className={`w-7 h-7 flex items-center justify-center rounded border border-white/5 font-medium text-xs cursor-pointer ${
+                      auditLogsPage === page
+                        ? "bg-purple-600 text-white"
+                        : "bg-[#1a1c23] text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button 
+                  onClick={() => setAuditLogsPage(prev => Math.min(prev + 1, Math.ceil(auditLogs.length / auditLogsPerPage) || 1))}
+                  disabled={auditLogsPage === Math.ceil(auditLogs.length / auditLogsPerPage) || auditLogs.length === 0}
+                  className="w-7 h-7 flex items-center justify-center rounded bg-[#1a1c23] text-gray-500 hover:text-white border border-white/5 cursor-pointer disabled:opacity-50"
+                >
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

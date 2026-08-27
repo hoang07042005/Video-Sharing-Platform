@@ -11,6 +11,7 @@ import {
   Link as LinkIcon,
   X,
   Mail,
+  UserMinus,
   MonitorPlay,
   Globe,
   Info,
@@ -1001,6 +1002,7 @@ export default function ChannelProfile() {
   const [error, setError] = useState("");
   const [isChannelSuspended, setIsChannelSuspended] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [showUnsubscribeDropdown, setShowUnsubscribeDropdown] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
@@ -1085,8 +1087,13 @@ export default function ChannelProfile() {
         if (channelData && channelData.id) {
           if (channelData.socialLinks) {
             try {
-              channelData.links = JSON.parse(channelData.socialLinks);
-            } catch {
+              let parsed = JSON.parse(channelData.socialLinks);
+              if (typeof parsed === "string") {
+                parsed = JSON.parse(parsed);
+              }
+              channelData.links = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+              console.error("Failed to parse social links:", e);
               channelData.links = [];
             }
           } else {
@@ -1546,30 +1553,72 @@ export default function ChannelProfile() {
                       Tùy chỉnh kênh
                     </button>
                   ) : (
-                    <button
-                      onClick={async () => {
-                        const token = localStorage.getItem("token");
-                        if (!token) return;
-                        try {
-                          const res = await axios.post(
-                            `/api/channels/${channel.id}/follow`,
-                            {},
-                            { headers: { Authorization: `Bearer ${token}` } }
-                          );
-                          setIsSubscribed(res.data.isSubscribed);
-                        } catch (err) {
-                          console.error("Failed to toggle subscription", err);
-                        }
-                      }}
-                      className={`px-5 py-2 rounded-full font-semibold text-sm transition-all flex items-center gap-1.5 ${
-                        isSubscribed
-                          ? "bg-white/10 text-white hover:bg-white/20"
-                          : "bg-[#FF4E00] text-white hover:bg-[#FF4E00]/90"
-                      }`}
-                    >
-                      {isSubscribed && <Bell className="w-4 h-4" />}
-                      {isSubscribed ? "Đã đăng ký" : "Đăng ký"}
-                    </button>
+                    <div className="relative">
+                      {isSubscribed ? (
+                        <>
+                          <button
+                            onClick={() => setShowUnsubscribeDropdown(!showUnsubscribeDropdown)}
+                            className="px-5 py-2 rounded-full font-semibold text-sm transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20"
+                          >
+                            <Bell className="w-4 h-4" />
+                            Đã đăng ký
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showUnsubscribeDropdown ? "rotate-180" : ""}`} />
+                          </button>
+                          
+                          {showUnsubscribeDropdown && (
+                            <>
+                              {/* Overlay for clicking outside */}
+                              <div 
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowUnsubscribeDropdown(false)}
+                              />
+                              <div className="absolute top-full mt-2 right-0 w-48 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                                <button
+                                  onClick={async () => {
+                                    const token = localStorage.getItem("token");
+                                    if (!token) return;
+                                    try {
+                                      const res = await axios.post(
+                                        `/api/channels/${channel.id}/follow`,
+                                        {},
+                                        { headers: { Authorization: `Bearer ${token}` } }
+                                      );
+                                      setIsSubscribed(res.data.isSubscribed);
+                                      setShowUnsubscribeDropdown(false);
+                                    } catch (err) {
+                                      console.error("Failed to toggle subscription", err);
+                                    }
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/5 flex items-center gap-2"
+                                >
+                                  <UserMinus className="w-4 h-4" /> Hủy đăng ký
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            if (!token) return;
+                            try {
+                              const res = await axios.post(
+                                `/api/channels/${channel.id}/follow`,
+                                {},
+                                { headers: { Authorization: `Bearer ${token}` } }
+                              );
+                              setIsSubscribed(res.data.isSubscribed);
+                            } catch (err) {
+                              console.error("Failed to toggle subscription", err);
+                            }
+                          }}
+                          className="px-5 py-2 rounded-full font-semibold text-sm transition-all flex items-center gap-1.5 bg-[#FF4E00] text-white hover:bg-[#FF4E00]/90"
+                        >
+                          Đăng ký
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   {channelBtnSettings.showJoinButton && (

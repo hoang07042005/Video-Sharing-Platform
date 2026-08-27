@@ -352,10 +352,6 @@ const AdminActivities = () => {
             thống.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10 transition-colors font-medium text-sm">
-          <Download className="w-4 h-4" />
-          Xuất báo cáo
-        </button>
       </div>
 
       {/* Top Cards */}
@@ -592,9 +588,21 @@ const AdminActivities = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-[13px] text-gray-300">
-                          {activity.user}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={activity.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=System"}
+                            alt=""
+                            className="w-8 h-8 rounded-full bg-[#1a1a1f] object-cover"
+                          />
+                          <div>
+                            <div className="text-[13px] text-gray-200 font-medium line-clamp-1">
+                              {activity.user}
+                            </div>
+                            <div className="text-[11px] text-gray-500 line-clamp-1">
+                              {activity.handle ? activity.handle : activity.email}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="text-[13px] text-gray-300 font-mono mb-0.5">
@@ -607,7 +615,6 @@ const AdminActivities = () => {
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-between">
                           {getStatusBadge(activity.status)}
-                          <IconChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-300 transition-colors opacity-0 group-hover:opacity-100" />
                         </div>
                       </td>
                     </tr>

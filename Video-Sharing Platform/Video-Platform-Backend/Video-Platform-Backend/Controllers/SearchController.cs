@@ -122,5 +122,52 @@ namespace Video_Platform_Backend.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("trending")]
+        public async Task<IActionResult> GetTrending()
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            var titles = await _context.Videos
+                .Where(v => v.Visibility == "Public" && v.CreatedAt >= thirtyDaysAgo)
+                .OrderByDescending(v => v.ViewsCount)
+                .Take(5)
+                .Select(v => v.Title)
+                .ToListAsync();
+
+            if (titles.Count < 5)
+            {
+                titles = await _context.Videos
+                    .Where(v => v.Visibility == "Public")
+                    .OrderByDescending(v => v.ViewsCount)
+                    .Take(5)
+                    .Select(v => v.Title)
+                    .ToListAsync();
+            }
+
+            var random = new Random();
+            var searchTrends = titles.Select(t => new { keyword = t, change = "+ " + random.Next(10, 150) + "%" }).ToList();
+
+            var topics = await _context.VideoTags
+                .GroupBy(t => t.Tag)
+                .OrderByDescending(g => g.Count())
+                .Take(6)
+                .Select(g => "# " + g.Key)
+                .ToListAsync();
+
+            if (topics.Count == 0)
+            {
+                topics = await _context.VideoCategories
+                    .OrderByDescending(c => c.Videos.Count)
+                    .Take(6)
+                    .Select(c => "# " + c.Name)
+                    .ToListAsync();
+            }
+
+            return Ok(new
+            {
+                SearchTrends = searchTrends,
+                Topics = topics
+            });
+        }
     }
 }

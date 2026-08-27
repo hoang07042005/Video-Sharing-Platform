@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import AdminGlobalSearch from "./AdminGlobalSearch";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -232,21 +233,12 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col bg-[#0F0F0F] h-screen overflow-hidden">
         {/* Top Header */}
         <header className="h-[80px] px-8 flex items-center justify-between shrink-0">
-          <div>
-            {/* <h2 className="text-1xl font-bold text-white flex items-center gap-2">
-              Chào mừng trở lại, Admin! <span className="text-yellow-400 animate-wave">👋</span>
-            </h2>
-            <p className="text-xs text-gray-400 mt-1">Đây là tổng quan hoạt động của hệ thống hôm nay.</p> */}
+          <div className="flex-1">
           </div>
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="bg-[#1a1c23] border border-white/10 text-white text-sm rounded-full pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-purple-500 transition-colors"
-              />
-            </div>
+          <div className="flex-1 flex justify-center">
+            <AdminGlobalSearch className="" />
+          </div>
+          <div className="flex-1 flex justify-end items-center gap-6">
               <div className="flex items-center gap-4 border-l border-white/10 pl-6">
                 <Link to="/admin/notifications" className="relative text-gray-400 hover:text-white transition-colors">
                   <Bell className="w-5 h-5" />

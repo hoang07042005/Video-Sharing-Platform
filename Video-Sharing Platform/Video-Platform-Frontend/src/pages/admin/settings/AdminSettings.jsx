@@ -12,6 +12,8 @@ import {
   Upload,
   PlaySquare,
   Share2,
+  CreditCard,
+  Settings
 } from "lucide-react";
 import axios from "axios";
 
@@ -72,6 +74,15 @@ export default function AdminSettings() {
     instagramLink: "https://instagram.com",
     tiktokLink: "https://tiktok.com",
     youtubeLink: "https://youtube.com",
+    // VNPay
+    vnpayEnabled: true,
+    vnpayTmnCode: "",
+    vnpayHashSecret: "********",
+    vnpayBaseUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    coinExchangeRate: 100,
+    // Social Login
+    googleLoginEnabled: true,
+    facebookLoginEnabled: true,
   };
 
   const [settings, setSettings] = useState(defaultSettings);
@@ -168,6 +179,12 @@ export default function AdminSettings() {
       )}
 
       <div className="max-w-[1600px] mx-auto">
+
+      <h1 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <Settings className="w-6 h-6 text-gray-400" />
+        CÀI ĐẶT HỆ THỐNG
+      </h1>
+
         {/* Grid Bố cục 3 Cột */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-24 ">
           {/* THÔNG TIN WEBSITE */}
@@ -621,6 +638,145 @@ export default function AdminSettings() {
             </div>
           </Card>
 
+          {/* THANH TOÁN / VNPAY */}
+          <Card
+            icon={<CreditCard className="w-5 h-5 text-emerald-400" />}
+            iconBg="bg-emerald-600/20"
+            title="THANH TOÁN / VNPAY"
+            subtitle="Cấu hình cổng thanh toán VNPay cho hệ thống"
+          >
+            <div className="space-y-4">
+              <ToggleRow
+                label="Bật thanh toán VNPay"
+                checked={!!settings.vnpayEnabled}
+                onChange={() => handleToggle("vnpayEnabled")}
+                color="green"
+              />
+
+              <div className="pt-2">
+                <label className="text-[13px] text-gray-300">Cấu hình VNPay</label>
+                <div className="mt-2 space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-[12px] text-gray-400">TMN Code (Mã thương nhân)</label>
+                    <input
+                      type="text"
+                      value={settings.vnpayTmnCode}
+                      onChange={(e) => handleChange("vnpayTmnCode", e.target.value)}
+                      placeholder="Ví dụ: ABCD1234"
+                      className="w-full bg-[#0F0F0F] px-3 py-1.5 text-[12px] rounded border border-white/8 outline-none focus:border-slate-700"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[12px] text-gray-400">Hash Secret Key</label>
+                    <input
+                      type="password"
+                      value={settings.vnpayHashSecret}
+                      onChange={(e) => handleChange("vnpayHashSecret", e.target.value)}
+                      placeholder="Secret key từ VNPay"
+                      className="w-full bg-[#0F0F0F] px-3 py-1.5 text-[12px] rounded border border-white/8 outline-none focus:border-slate-700"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[12px] text-gray-400">VNPay URL</label>
+                    <select
+                      value={settings.vnpayBaseUrl}
+                      onChange={(e) => handleChange("vnpayBaseUrl", e.target.value)}
+                      className="w-full bg-[#0F0F0F] px-3 py-1.5 text-[12px] text-gray-200 rounded border border-white/8 outline-none focus:border-slate-700 cursor-pointer"
+                    >
+                      <option value="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html">
+                        Sandbox (Kiểm thử)
+                      </option>
+                      <option value="https://pay.vnpay.vn/vpcpay.html">
+                        Production (Thật)
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <label className="text-[13px] text-gray-300">Tỉ lệ quy đổi Xu</label>
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="text-[12px] text-gray-400">1 Xu =</span>
+                  <input
+                    type="number"
+                    value={settings.coinExchangeRate}
+                    onChange={(e) => handleChange("coinExchangeRate", e.target.value)}
+                    className="w-24 bg-[#0F0F0F] px-3 py-1.5 text-[12px] text-center rounded border border-white/8 outline-none focus:border-slate-700"
+                  />
+                  <span className="text-[12px] text-gray-400">VNĐ</span>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Hiện tại: {settings.coinExchangeRate} VNĐ/Xu. Người dùng mua 50.000đ sẽ nhận{" "}
+                  {Math.floor(50000 / (settings.coinExchangeRate || 100)).toLocaleString()} Xu.
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* MẠNG XÃ HỘI */}
+          {/* ĐĂNG NHẬP MỞ RỘNG */}
+          <Card
+            icon={<Users className="w-5 h-5 text-sky-400" />}
+            iconBg="bg-sky-600/20"
+            title="ĐĂNG NHẬP MỞ RỘNG"
+            subtitle="Bật/tắt các phương thức đăng nhập mạng xã hội"
+          >
+            <div className="space-y-4">
+              {/* Google */}
+              <div className="flex items-center justify-between p-3 bg-[#0F0F0F] rounded-xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${settings.googleLoginEnabled ? "bg-white/10" : "bg-white/5 opacity-40"}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className={`text-[13px] font-medium ${settings.googleLoginEnabled ? "text-gray-200" : "text-gray-500"}`}>Google</p>
+                    <p className="text-[11px] text-gray-500">{settings.googleLoginEnabled ? "Cho phép đăng nhập bằng tài khoản Google" : "Đang tắt"}</p>
+                  </div>
+                </div>
+                <ToggleRow
+                  label=""
+                  checked={!!settings.googleLoginEnabled}
+                  onChange={() => handleToggle("googleLoginEnabled")}
+                  color="green"
+                />
+              </div>
+
+              {/* Facebook */}
+              <div className="flex items-center justify-between p-3 bg-[#0F0F0F] rounded-xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${settings.facebookLoginEnabled ? "bg-[#1877F2]/20" : "bg-white/5 opacity-40"}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
+                      <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                      <path fill="#ffffff" d="M16.671 15.542l.532-3.469h-3.328V9.823c0-.949.465-1.874 1.956-1.874h1.514V5.008s-1.374-.235-2.686-.235c-2.741 0-4.533 1.662-4.533 4.669v2.63H7.078v3.469h3.047v8.385a12.09 12.09 0 003.75 0v-8.385h2.796z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className={`text-[13px] font-medium ${settings.facebookLoginEnabled ? "text-gray-200" : "text-gray-500"}`}>Facebook</p>
+                    <p className="text-[11px] text-gray-500">{settings.facebookLoginEnabled ? "Cho phép đăng nhập bằng tài khoản Facebook" : "Đang tắt"}</p>
+                  </div>
+                </div>
+                <ToggleRow
+                  label=""
+                  checked={!!settings.facebookLoginEnabled}
+                  onChange={() => handleToggle("facebookLoginEnabled")}
+                  color="green"
+                />
+              </div>
+
+              <p className="text-[11px] text-gray-500 pt-1">
+                ⚠️ Khi tắt, nút đăng nhập bằng phương thức đó sẽ bị mờ và không nhấn được trên trang đăng nhập.
+              </p>
+            </div>
+          </Card>
+
           {/* MẠNG XÃ HỘI */}
           <Card
             icon={<Share2 className="w-5 h-5 text-pink-500" />}
@@ -733,10 +889,10 @@ function InlineInput({ label, value, onChange, width = "w-24", suffix = "" }) {
 function ToggleRow({ label, checked, onChange, color = "purple" }) {
   const activeBg =
     color === "purple"
-      ? "bg-[#8B5CF6]"
+      ? "bg-[#1d8500]"
       : color === "green"
-        ? "bg-[#10B981]"
-        : "bg-gray-400";
+        ? "bg-[#1d8500]"
+        : "bg-[#1d8500]";
 
   return (
     <div className="flex items-center justify-between py-1.5">

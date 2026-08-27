@@ -221,9 +221,6 @@ export default function AdminTransactions() {
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
-              <button className="p-2.5 bg-[#1A1A1A] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                <Calendar className="w-5 h-5" />
-              </button>
             </div>
           </div>
 
@@ -456,9 +453,6 @@ export default function AdminTransactions() {
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
-              <button className="p-2.5 bg-[#141418] border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                <Calendar className="w-5 h-5" />
-              </button>
             </div>
           </div>
 

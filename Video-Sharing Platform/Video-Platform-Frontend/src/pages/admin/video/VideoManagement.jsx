@@ -280,9 +280,6 @@ const VideoManagement = () => {
               <span className="text-[10px] text-gray-400 font-mono">⌘K</span>
             </button>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 transition-colors">
-            <Filter className="w-4 h-4" /> Bộ lọc
-          </button>
         </div>
       </div>
 

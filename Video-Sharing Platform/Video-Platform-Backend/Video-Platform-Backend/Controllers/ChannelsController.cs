@@ -514,6 +514,7 @@ namespace Video_Platform_Backend.Controllers
                     Handle = f.Channel.Handle,
                     AvatarUrl = f.Channel.User.Profile != null ? (f.Channel.User.Profile.AvatarUrl ?? "") : "",
                     SubscriberCount = _context.Followers.Count(x => x.ChannelId == f.ChannelId),
+                    VideoCount = _context.Videos.Count(v => v.ChannelId == f.ChannelId && v.Visibility == "Public"),
                     IsVerified = f.Channel.IsVerified
                 })
                 .ToListAsync();

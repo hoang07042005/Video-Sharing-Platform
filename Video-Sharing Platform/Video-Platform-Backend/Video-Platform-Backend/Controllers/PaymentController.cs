@@ -29,7 +29,7 @@ public class PaymentController : ControllerBase
 
     [HttpPost("create-payment-url")]
     [Authorize]
-    public IActionResult CreatePaymentUrl([FromBody] PaymentRequestModel model)
+    public async Task<IActionResult> CreatePaymentUrl([FromBody] PaymentRequestModel model)
     {
         try
         {
@@ -73,7 +73,7 @@ public class PaymentController : ControllerBase
                 }
             }
 
-            var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, model.Amount, orderInfo, returnUrl);
+            var paymentUrl = await _vnPayService.CreatePaymentUrl(HttpContext, model.Amount, orderInfo, returnUrl);
 
             return Ok(new { url = paymentUrl });
         }
@@ -85,13 +85,13 @@ public class PaymentController : ControllerBase
 
     [HttpGet("test-url")]
     [AllowAnonymous]
-    public IActionResult TestCreatePaymentUrl()
+    public async Task<IActionResult> TestCreatePaymentUrl()
     {
         try
         {
             var returnUrl = "http://localhost:5173/payment-result";
             var orderInfo = "Test order info";
-            var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, 129000, orderInfo, returnUrl);
+            var paymentUrl = await _vnPayService.CreatePaymentUrl(HttpContext, 129000, orderInfo, returnUrl);
             return Ok(new { url = paymentUrl });
         }
         catch (Exception ex)

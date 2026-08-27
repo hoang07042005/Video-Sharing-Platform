@@ -55,13 +55,13 @@ export default function AdminReports() {
         setStats(statsRes.data);
 
         const reportsRes = await axios.get(
-          `/api/admin/reports?page=${page}&pageSize=5`,
+          `/api/admin/reports?page=${page}&pageSize=20`,
           { headers },
         );
         setReports(reportsRes.data);
 
         // Mocking total pages since it's not implemented on backend yet
-        setTotalPages(Math.ceil(statsRes.data.totalReports / 5) || 1);
+        setTotalPages(Math.ceil(statsRes.data.totalReports / 20) || 1);
       } catch (error) {
         console.error("Error fetching admin reports data:", error);
       } finally {
@@ -82,7 +82,7 @@ export default function AdminReports() {
       const statsRes = await axios.get("/api/admin/reports/stats");
       setStats(statsRes.data);
       const reportsRes = await axios.get(
-        `/api/admin/reports?page=1&pageSize=5`,
+        `/api/admin/reports?page=1&pageSize=20`,
       );
       setReports(reportsRes.data);
     } catch (error) {
@@ -148,7 +148,7 @@ export default function AdminReports() {
         axios.get("/api/admin/reports/stats", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`/api/admin/reports?page=${page}&pageSize=5`, {
+        axios.get(`/api/admin/reports?page=${page}&pageSize=20`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -177,10 +177,7 @@ export default function AdminReports() {
             <span>12/05/2024 - 18/05/2024</span>
             <Calendar className="w-4 h-4 text-gray-500" />
           </div>
-          <button className="flex items-center gap-2 bg-[#1a1c23] border border-white/5 text-gray-200 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-white/5 transition-colors cursor-pointer">
-            <Download className="w-4 h-4" />
-            Xuất báo cáo
-          </button>
+
         </div>
       </div>
 

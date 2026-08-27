@@ -162,9 +162,6 @@ export default function AdminComplaints() {
               className="w-full bg-[#141418] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 transition-colors"
             />
           </div>
-          <button className="p-2 bg-[#141418] border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
-            <Filter className="w-5 h-5" />
-          </button>
         </div>
       </div>
 

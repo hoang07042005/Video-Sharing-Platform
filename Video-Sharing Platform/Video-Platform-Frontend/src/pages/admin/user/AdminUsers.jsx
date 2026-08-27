@@ -229,16 +229,6 @@ export default function AdminUsers() {
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#0F0F0F] text-gray-300 text-sm font-medium rounded-xl border border-white/10 hover:border-gray-500 hover:bg-white/5 transition-colors">
-            <Download className="w-4 h-4" /> Xuất dữ liệu
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF5722] to-[#CE1414FA] text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-[#FF5722]/20">
-            <UserCheck className="w-4 h-4" /> Thao tác hàng loạt
-            <ChevronDown className="w-4 h-4 ml-1 opacity-70" />
-          </button>
-        </div>
       </div>
 
       {/* ─── KPI Cards ─── */}

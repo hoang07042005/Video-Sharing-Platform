@@ -619,8 +619,8 @@ const AdminVideoCategory = () => {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0F0F0F] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0F0F0F] border border-white/10 rounded-1xl w-full h-full max-w-lg shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h2 className="text-white font-bold text-lg">
                 {modalMode === "add"

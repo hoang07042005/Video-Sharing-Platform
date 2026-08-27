@@ -121,23 +121,7 @@ const INSPIRATIONS = [
   },
 ];
 
-const SEARCH_TRENDS = [
-  { keyword: "iPhone 16 Pro Max", change: "+ 120%" },
-  { keyword: "Build PC Gaming", change: "+ 87%" },
-  { keyword: "Nhạc Chill", change: "+ 65%" },
-  { keyword: "Du lịch Đà Lạt", change: "+ 58%" },
-  { keyword: "ReactJS cơ bản", change: "+ 42%" },
-];
-
-const TOPICS = [
-  "# Nhạc Remix",
-  "# Công nghệ",
-  "# Học Lập Trình",
-  "# Đà Lạt",
-  "# Nấu Ăn",
-  "# Bóng Đá",
-];
-
+// Constants removed as they will be fetched dynamically
 function CatIcon({ cat, active, onClick }) {
   const IconComponent = LucideIcons[cat.icon] || LucideIcons.LayoutGrid;
   return (
@@ -247,6 +231,8 @@ export default function Explore() {
   const [searchResults, setSearchResults] = useState([]);
   const [featuredChannels, setFeaturedChannels] = useState([]);
   const [dbCategories, setDbCategories] = useState([]);
+  const [searchTrends, setSearchTrends] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const activeCategory = searchParams.get("category") || "all";
@@ -272,6 +258,13 @@ export default function Explore() {
     axios
       .get("/api/videos/categories")
       .then((res) => setDbCategories(res.data))
+      .catch(console.error);
+    axios
+      .get("/api/search/trending")
+      .then((res) => {
+        setSearchTrends(res.data.searchTrends || []);
+        setTopics(res.data.topics || []);
+      })
       .catch(console.error);
   }, []);
 
@@ -553,24 +546,28 @@ export default function Explore() {
               kiếm
             </h3>
             <div className="space-y-4">
-              {SEARCH_TRENDS.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-xs font-bold w-4 text-center">
-                      {idx + 1}
-                    </span>
-                    <span className="text-[13px] text-gray-300 group-hover:text-white transition-colors">
-                      {item.keyword}
-                    </span>
+              {searchTrends.length > 0 ? (
+                searchTrends.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-500 text-xs font-bold w-4 text-center">
+                        {idx + 1}
+                      </span>
+                      <span className="text-[13px] text-gray-300 group-hover:text-white transition-colors">
+                        {item.keyword}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-emerald-500 text-[11px] font-bold">
+                      <ArrowUpRight className="w-3 h-3" /> {item.change}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-emerald-500 text-[11px] font-bold">
-                    <ArrowUpRight className="w-3 h-3" /> {item.change}
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-gray-500 text-xs">Đang tải...</div>
+              )}
             </div>
           </div>
 
@@ -633,14 +630,18 @@ export default function Explore() {
               <Compass className="w-4 h-4 text-green-400" /> Chủ đề thịnh hành
             </h3>
             <div className="flex flex-wrap gap-2.5">
-              {TOPICS.map((topic, idx) => (
-                <button
-                  key={idx}
-                  className="bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 hover:text-white border border-white/5 text-[12px] font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer shadow-sm"
-                >
-                  {topic}
-                </button>
-              ))}
+              {topics.length > 0 ? (
+                topics.map((topic, idx) => (
+                  <button
+                    key={idx}
+                    className="bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 hover:text-white border border-white/5 text-[12px] font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer shadow-sm"
+                  >
+                    {topic}
+                  </button>
+                ))
+              ) : (
+                <div className="text-gray-500 text-xs">Đang tải...</div>
+              )}
             </div>
           </div>
         </div>

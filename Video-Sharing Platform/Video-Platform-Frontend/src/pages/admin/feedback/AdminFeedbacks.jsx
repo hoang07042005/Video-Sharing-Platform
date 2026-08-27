@@ -278,12 +278,12 @@ export default function AdminFeedbacks() {
             </p>
           </div>
         </div>
-        <button
+        {/* <button
           onClick={exportFeedbacks}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#8b3dff] hover:bg-[#7b32e6] text-white rounded-lg text-sm font-semibold transition-colors"
         >
           <Download className="w-4 h-4" /> Xuất dữ liệu
-        </button>
+        </button> */}
       </div>
 
       {/* Stat Cards */}

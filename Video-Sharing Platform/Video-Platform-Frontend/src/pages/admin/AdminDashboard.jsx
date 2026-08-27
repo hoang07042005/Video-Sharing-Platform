@@ -1076,21 +1076,26 @@ export default function AdminDashboard() {
 
             {/* Báo cáo chờ duyệt */}
             <div className="bg-[#141418] p-4 rounded-xl border border-white/5">
-              <h3 className="text-xs font-semibold text-white mb-3">
-                Báo cáo chờ duyệt
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-white">
+                  Báo cáo chờ duyệt
+                </h3>
+                <a href="/admin/activities" className="text-[11px] text-purple-400 cursor-pointer hover:underline">
+                  Xem tất cả →
+                </a>
+              </div>
               <table className="w-full text-left table-fixed">
                 <thead className="text-[9px] uppercase text-gray-500 border-b border-white/10">
                   <tr>
                     <th className="pb-2 pr-2 font-medium w-[22%]">
                       Người báo cáo
                     </th>
-                    <th className="pb-2 px-2 font-medium w-[32%]">Lý do</th>
-                    <th className="pb-2 px-2 font-medium w-[18%]">Thời gian</th>
-                    <th className="pb-2 px-2 font-medium text-center w-[14%]">
+                    <th className="pb-1 px-2 font-medium w-[32%]">Lý do</th>
+                    <th className="pb-1 px-2 font-medium w-[18%]">Thời gian</th>
+                    <th className="pb-1 px-2 font-medium text-center w-[14%]">
                       Trạng thái
                     </th>
-                    <th className="pb-2 pl-2 font-medium text-right w-[14%]">
+                    <th className="pb-1 pl-2 font-medium text-right w-[14%]">
                       Hành động
                     </th>
                   </tr>
@@ -1101,43 +1106,61 @@ export default function AdminDashboard() {
                       key={idx}
                       className="group hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-2 pr-2 text-[11px] text-gray-300 font-medium truncate">
+                      <td className="py-1 pr-2 text-[11px] text-gray-300 font-medium truncate">
                         {report.user}
                       </td>
                       <td className="py-1 px-1 text-[10px] text-red-400 line-clamp-2">
                         {report.reason}
                       </td>
-                      <td className="py-2 px-2 text-[10px] text-gray-500 whitespace-nowrap">
+                      <td className="py-1 px-2 text-[10px] text-gray-500 whitespace-nowrap">
                         {report.time}
                       </td>
-                      <td className="py-2 px-2 text-center">
-                        <span
-                          className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-medium ${report.status === "Pending" ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" : "bg-green-500/10 text-green-400 border border-green-500/20"}`}
-                        >
-                          {report.status === "Pending" ? "Mới" : report.status}
-                        </span>
+                      <td className="py-1 px-2 text-center">
+                        {(() => {
+                          let badgeClass = "";
+                          let badgeText = report.status;
+                          switch (report.status) {
+                            case "Pending":
+                              badgeClass = "text-orange-400";
+                              badgeText = "Chờ duyệt";
+                              break;
+                            case "Resolved":
+                              badgeClass = "text-green-400";
+                              badgeText = "Đã xử lý";
+                              break;
+                            case "Rejected":
+                              badgeClass = "text-red-400";
+                              badgeText = "Từ chối";
+                              break;
+                          }
+                          return (
+                            <span className={`inline-block text-[9px] font-medium  ${badgeClass}`}>
+                              {badgeText}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-2 pl-2 text-right">
-                        <button className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+                        <a href="/admin/activities" className="inline-block text-[10px] px-2 py-0.5 rounded-md font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
                           Xem
-                        </button>
+                        </a>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="mt-3 pt-2 border-t border-white/5">
-                <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">
-                  Xem tất cả →
-                </span>
-              </div>
             </div>
 
             {/* Giao dịch gần nhất */}
             <div className="bg-[#141418] p-4 rounded-xl border border-white/5">
-              <h3 className="text-xs font-semibold text-white mb-3">
-                Giao dịch gần nhất
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-white">
+                  Giao dịch gần nhất
+                </h3>
+                <a href="/admin/settings" className="text-[11px] text-purple-400 cursor-pointer hover:underline">
+                  Xem tất cả giao dịch →
+                </a>
+                </div>
               <div className="flex flex-col gap-2.5">
                 {stats?.recentTransactions?.map((trx, idx) => {
                   const typeStr = trx.type || "Other";
@@ -1159,7 +1182,7 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={idx}
-                      className="flex items-center justify-between pb-2.5 border-b border-white/5 last:border-0 last:pb-0"
+                      className="flex items-center justify-between pb-1.5 border-b border-white/5 last:border-0 last:pb-0"
                     >
                       <div className="flex items-center gap-2.5">
                         {trx.userAvatar ? (
@@ -1196,128 +1219,265 @@ export default function AdminDashboard() {
                   );
                 })}
               </div>
-              <div className="mt-3 pt-2 border-t border-white/5">
-                <span className="text-[11px] text-purple-400 cursor-pointer hover:underline">
-                  Xem tất cả giao dịch →
-                </span>
-              </div>
             </div>
           </div>{" "}
           {/* Kết thúc phần trên */}
-          {/* Phần dưới: Phản hồi người dùng mới nhất */}
-          <div className="bg-[#141418] p-4 rounded-xl border border-white/5 flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold text-white">
-                Phản hồi người dùng mới nhất
-              </h3>
-              <a
-                href="/admin/feedbacks"
-                className="text-[11px] text-purple-400 cursor-pointer hover:underline"
-              >
-                Xem tất cả phản hồi →
-              </a>
-            </div>
-            <table className="w-full text-left table-fixed">
-              <thead className="text-[9px] uppercase text-gray-500 border-b border-white/10">
-                <tr>
-                  <th className="pb-2 pr-2 font-medium w-[22%]">Người dùng</th>
-                  <th className="pb-2 px-2 font-medium w-[15%]">Loại</th>
-                  <th className="pb-2 px-2 font-medium w-[31%]">Nội dung</th>
-                  <th className="pb-2 px-2 font-medium text-center w-[18%]">
-                    Trạng thái
-                  </th>
-                  <th className="pb-2 pl-2 font-medium text-right w-[14%]">
-                    Hành động
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {recentFeedbacks.length > 0 ? (
-                  recentFeedbacks.map((fb, idx) => (
-                    <tr
-                      key={idx}
-                      className="group hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="py-2 pr-2">
-                        <div className="flex items-center gap-2">
-                          {fb.userAvatarUrl ? (
-                            <img
-                              src={fb.userAvatarUrl}
-                              alt="Avatar"
-                              className="w-5 h-5 rounded-full object-cover shrink-0"
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#FF5722]/20 flex items-center justify-center text-[#FF5722] font-bold text-[8px] shrink-0">
-                              {fb.userFullName?.charAt(0) || "U"}
-                            </div>
-                          )}
-                          <span
-                            className="text-[11px] text-gray-300 font-medium truncate max-w-[80px]"
-                            title={fb.userFullName || "Người dùng"}
-                          >
-                            {fb.userFullName || "Người dùng"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 text-[10px] text-gray-400 capitalize">
-                        {fb.type === "bug"
-                          ? "Báo lỗi"
-                          : fb.type === "feature"
-                            ? "Góp ý"
-                            : fb.type === "ui"
-                              ? "Giao diện"
-                              : "Khác"}
-                      </td>
-                      <td className="py-1 px-1 text-[10px] text-gray-400">
-                        <div className="flex items-start gap-2">
-                          <span className="line-clamp-2 flex-1">
-                            {fb.content}
-                          </span>
-                          {fb.attachmentUrl && (
-                            <a
-                              href={fb.attachmentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0"
-                            >
-                              <img
-                                src={fb.attachmentUrl}
-                                alt="Đính kèm"
-                                className="w-8 h-8 rounded object-cover border border-white/10 hover:border-white/30 transition-colors"
-                              />
-                            </a>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 text-center">
-                        <span
-                          className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-medium ${fb.status === "Pending" ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" : "bg-green-500/10 text-green-400 border border-green-500/20"}`}
-                        >
-                          {fb.status === "Pending" ? "Chờ xử lý" : "Đã trả lời"}
-                        </span>
-                      </td>
-                      <td className="py-2 pl-2 text-right">
-                        <a
-                          href="/admin/feedbacks"
-                          className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-[#272727] hover:bg-[#353535] text-white transition-colors"
-                        >
-                          Xem
-                        </a>
-                      </td>
+          
+          {/* Phần dưới: 2 Cột (Phản hồi & Đăng ký kiếm tiền) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1">
+            {/* Cột trái: Phản hồi người dùng mới nhất */}
+            <div className="bg-[#141418] p-4 rounded-xl border border-white/5 flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-white">
+                  Phản hồi người dùng mới nhất
+                </h3>
+                <a
+                  href="/admin/feedbacks"
+                  className="text-[11px] text-purple-400 cursor-pointer hover:underline"
+                >
+                  Xem tất cả phản hồi →
+                </a>
+              </div>
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                <table className="w-full text-left table-fixed min-w-full">
+                  <thead className="text-[9px] uppercase text-gray-500 border-b border-white/10">
+                    <tr>
+                      <th className="pb-2 pr-2 font-medium w-[25%]">Người dùng</th>
+                      <th className="pb-2 px-2 font-medium w-[15%]">Loại</th>
+                      <th className="pb-2 px-2 font-medium w-[30%]">Nội dung</th>
+                      <th className="pb-2 px-2 font-medium text-center w-[16%]">Trạng thái</th>
+                      <th className="pb-2 pl-2 font-medium text-right w-[14%]">Hành động</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="py-4 text-center text-xs text-gray-500"
-                    >
-                      Không có phản hồi mới
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {recentFeedbacks.length > 0 ? (
+                      recentFeedbacks.map((fb, idx) => (
+                        <tr
+                          key={idx}
+                          className="group hover:bg-white/[0.02] transition-colors"
+                        >
+                          <td className="py-2 pr-2">
+                            <div className="flex items-center gap-2">
+                              {fb.userAvatarUrl ? (
+                                <img
+                                  src={fb.userAvatarUrl}
+                                  alt="Avatar"
+                                  className="w-5 h-5 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-[#FF5722]/20 flex items-center justify-center text-[#FF5722] font-bold text-[8px] shrink-0">
+                                  {fb.userFullName?.charAt(0) || "U"}
+                                </div>
+                              )}
+                              <span
+                                className="text-[11px] text-gray-300 font-medium truncate max-w-[80px]"
+                                title={fb.userFullName || "Người dùng"}
+                              >
+                                {fb.userFullName || "Người dùng"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 text-[10px] text-gray-400 capitalize">
+                            {fb.type === "bug"
+                              ? "Báo lỗi"
+                              : fb.type === "feature"
+                                ? "Góp ý"
+                                : fb.type === "ui"
+                                  ? "Giao diện"
+                                  : "Khác"}
+                          </td>
+                          <td className="py-1 px-1 text-[10px] text-gray-400">
+                            <div className="flex items-start gap-2">
+                              <span className="line-clamp-2 flex-1">
+                                {fb.content}
+                              </span>
+                              {fb.attachmentUrl && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {(() => {
+                                    let images = [];
+                                    try {
+                                      images = JSON.parse(fb.attachmentUrl);
+                                      if (!Array.isArray(images)) images = [fb.attachmentUrl];
+                                    } catch {
+                                      images = [fb.attachmentUrl];
+                                    }
+                                    return images.slice(0, 1).map((url, i) => (
+                                      <a
+                                        key={i}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-8 h-8 rounded border border-white/10 overflow-hidden hover:border-white/30 transition-colors relative shrink-0"
+                                      >
+                                        <img
+                                          src={url}
+                                          alt="Đính kèm"
+                                          className="w-full h-full object-cover"
+                                        />
+                                        {images.length > 1 && (
+                                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-[10px] font-bold text-white">
+                                            +{images.length - 1}
+                                          </div>
+                                        )}
+                                      </a>
+                                    ));
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <span
+                              className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-medium ${fb.status === "Pending" ? "border-none text-orange-400 " : "border-none text-green-400"}`}
+                            >
+                              {fb.status === "Pending" ? "Chờ xử lý" : "Đã trả lời"}
+                            </span>
+                          </td>
+                          <td className="py-2 pl-2 text-center">
+                            <a
+                              href="/admin/feedbacks"
+                              className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-[#272727] hover:bg-[#353535] text-white transition-colors"
+                            >
+                              Xem
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="py-6 text-center text-xs text-gray-500"
+                        >
+                          Không có phản hồi mới
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Cột phải: Duyệt Đăng Ký Kiếm Tiền mới nhất */}
+            <div className="bg-[#141418] p-4 rounded-xl border border-white/5 flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-white">
+                  Duyệt Đăng Ký Kiếm Tiền mới nhất
+                </h3>
+                <a
+                  href="/admin/monetization"
+                  className="text-[11px] text-purple-400 cursor-pointer hover:underline"
+                >
+                  Xem tất cả đơn →
+                </a>
+              </div>
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                <table className="w-full text-left table-fixed min-w-[600px]">
+                  <thead className="text-[9px] uppercase text-gray-500 border-b border-white/10">
+                    <tr>
+                      <th className="pb-2 pr-2 font-medium w-[24%]">Kênh</th>
+                      <th className="pb-2 px-2 font-medium w-[28%]">Lý do</th>
+                      <th className="pb-2 px-2 font-medium w-[16%] text-center">Ngày gửi</th>
+                      <th className="pb-2 px-2 font-medium w-[15%] text-center">Trạng thái</th>
+                      <th className="pb-2 pl-2 font-medium text-right w-[17%]">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {stats?.recentMonetizationRequests?.length > 0 ? (
+                      stats.recentMonetizationRequests.map((req, idx) => (
+                        <tr key={idx} className="group hover:bg-white/[0.02] transition-colors">
+                          <td className="py-2.5 pr-2">
+                            <div className="flex items-center gap-2.5">
+                              {req.avatarUrl ? (
+                                <img
+                                  src={req.avatarUrl}
+                                  alt="Avatar"
+                                  className="w-7 h-7 rounded-full object-cover shrink-0 ring-2 ring-transparent group-hover:ring-green-500/30 transition-all"
+                                />
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold text-[10px] shrink-0">
+                                  {req.channelName?.charAt(0) || "C"}
+                                </div>
+                              )}
+                              <div className="flex flex-col min-w-0">
+                                <span
+                                  className="text-[11px] text-gray-200 font-semibold truncate"
+                                  title={req.channelName}
+                                >
+                                  {req.channelName}
+                                </span>
+                                <span className="text-[9px] text-gray-500 mt-0.5">
+                                  {req.subscribersCount?.toLocaleString() || 0} đăng ký
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2">
+                            {req.rejectReason ? (
+                              <p className="text-[10px] text-gray-400 line-clamp-2" title={req.rejectReason}>
+                                {req.rejectReason}
+                              </p>
+                            ) : (
+                              <span className="text-gray-600 text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2 text-center text-[10px] text-gray-400">
+                            {req.time}
+                          </td>
+                          <td className="py-2.5 px-2 text-center">
+                            {(() => {
+                              let badgeClass = "";
+                              let badgeText = req.status;
+                              switch (req.status) {
+                                case "Pending":
+                                  badgeClass = "text-yellow-400 border-none bg-none";
+                                  badgeText = "Chờ duyệt";
+                                  break;
+                                case "Checking":
+                                  badgeClass = "text-blue-400 border-none bg-none";
+                                  badgeText = "Đang kiểm tra";
+                                  break;
+                                case "Approved":
+                                  badgeClass = "text-green-400 border-none bg-none";
+                                  badgeText = "Đã duyệt";
+                                  break;
+                                case "Rejected":
+                                  badgeClass = "text-red-400 border-none bg-none";
+                                  badgeText = "Từ chối";
+                                  break;
+                                case "Revoked":
+                                  badgeClass = "text-orange-400 border-none bg-none";
+                                  badgeText = "Thu hồi";
+                                  break;
+                              }
+                              return (
+                                <span className={`inline-block text-[9px] font-medium  ${badgeClass}`}>
+                                  {badgeText}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td className="py-2.5 pl-2 text-right">
+                            <a
+                              href={`/admin/monetization`}
+                              className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md font-medium bg-[#272727] hover:bg-[#353535] border border-white/10 hover:border-white/20 text-white transition-all"
+                            >
+                              Duyệt ngay
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="py-6 text-center text-xs text-gray-500">
+                          Không có đơn đăng ký mới
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>{" "}
         {/* Kết thúc cột phải */}

@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 
 const formatSubscribers = (count) => {
   if (count >= 1000000)
-    return `${(count / 1000000).toFixed(1)} Tr người đăng ký`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)} N người đăng ký`;
-  return `${count} người đăng ký`;
+    return `${(count / 1000000).toFixed(1)} Tr đăng ký`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)} N đăng ký`;
+  return `${count}  đăng ký`;
 };
 
 export default function Subscriptions() {
@@ -146,8 +146,8 @@ export default function Subscriptions() {
                     <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
                   )}
                 </p>
-                <p className="text-gray-400 text-xs mt-0.5">
-                  {formatSubscribers(channel.subscriberCount)}
+                <p className="text-gray-400 text-[11px] mt-0.5">
+                  {formatSubscribers(channel.subscriberCount)} • {channel.videoCount || 0} video
                 </p>
               </div>
             </Link>
