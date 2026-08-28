@@ -449,4 +449,22 @@ public class LivestreamsController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(new { success = true });
     }
+
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteLivestream(Guid id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var livestream = await _db.Livestreams.Include(l => l.Channel).FirstOrDefaultAsync(l => l.Id == id);
+        if (livestream == null) return NotFound("Livestream not found");
+
+        if (livestream.Channel.UserId.ToString() != userId) return Forbid();
+
+        _db.Livestreams.Remove(livestream);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Đã xóa livestream" });
+    }
 }
