@@ -187,24 +187,34 @@ function HorizontalVideoCard({ video }) {
         <h3 className="text-white text-xs font-medium line-clamp-2 leading-snug group-hover:text-[#FF5722] transition-colors">
           {video.title}
         </h3>
-        <Link
-          to={`/c/${video.channelHandle}`}
-          onClick={(e) => e.stopPropagation()}
-          className="text-gray-500 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
-        >
-          {video.channelName}
-          {video.channelIsVerified && (
-            <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
-          )}
-        </Link>
-        <p className="text-gray-500 text-xs mt-0.5">
-          {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
-        </p>
+       
         {video.description && (
-          <p className="text-gray-600 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+          <p className="text-gray-400 text-xs mt-1.5 line-clamp-2 leading-relaxed">
             {video.description}
           </p>
         )}
+        <Link
+          to={`/c/${video.channelHandle}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-gray-500 text-xs mt-2 flex items-center gap-2 hover:text-white transition-colors"
+        >
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0">
+            <img
+              src={video.channelAvatarUrl || "https://via.placeholder.com/40"}
+              alt={video.channelName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="flex items-center gap-1">
+            {video.channelName}
+            {video.channelIsVerified && (
+              <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+            )}
+          </span>
+        </Link>
+        <p className="text-gray-500 text-[10px] mt-0.5">
+          {formatViews(video.viewsCount)} lượt xem • {timeAgo(video.createdAt)}
+        </p>
       </div>
     </div>
   );

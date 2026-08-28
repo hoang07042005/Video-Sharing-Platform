@@ -97,7 +97,7 @@ export default function FeaturedHero({
         </div>
 
         {/* Title — large with gradient highlight on middle part */}
-        <h2 className="text-2xl md:text-4xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
+        <h2 className="text-2xl md:text-5xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
           {part1 && <span>{part1} </span>}
           {part2 && (
             <span className="bg-gradient-to-r from-pink-400 via-[#FF5722] to-orange-400 bg-clip-text text-transparent">
@@ -108,7 +108,7 @@ export default function FeaturedHero({
         </h2>
 
         {/* Description */}
-        <p className="text-gray-300 text-[15px] leading-relaxed mb-6 line-clamp-2 max-w-lg">
+        <p className="text-gray-300 text-[18px] leading-relaxed mb-6 line-clamp-2 max-w-lg">
           {video.description ||
             "Tuyển chọn những ca khúc nổi bật nhất đang làm mưa làm gió trên mọi bảng xếp hạng."}
         </p>
@@ -124,18 +124,18 @@ export default function FeaturedHero({
               <img
                 src={video.channelAvatarUrl}
                 alt=""
-                className="w-8 h-8 rounded-full object-cover ring-2 ring-white/10"
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5722] to-[#9C27B0] flex items-center justify-center text-white text-[12px] font-bold">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5722] to-[#9C27B0] flex items-center justify-center text-white text-[12px] font-bold">
                 {(video.channelName || "A")[0].toUpperCase()}
               </div>
             )}
-            <span className="text-white font-semibold text-[15px] ml-1">
+            <span className="text-white font-semibold text-[18px] ml-1">
               {video.channelName}
             </span>
             {video.channelIsVerified && (
-              <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />
+              <CheckCircle className="w-4 h-4 text-white fill-green-500 shrink-0" />
             )}
           </Link>
 

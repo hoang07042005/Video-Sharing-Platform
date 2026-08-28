@@ -234,6 +234,7 @@ export default function Explore() {
   const [searchTrends, setSearchTrends] = useState([]);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [subscribedChannelIds, setSubscribedChannelIds] = useState([]);
 
   const activeCategory = searchParams.get("category") || "all";
   const searchQuery = searchParams.get("q") || "";
@@ -251,22 +252,42 @@ export default function Explore() {
       .get("/api/videos/explore?sort=newest&limit=8")
       .then((res) => setLatest(res.data.slice(0, 8)))
       .catch(console.error);
-    axios
-      .get("/api/channels?limit=5")
-      .then((res) => setFeaturedChannels(res.data))
-      .catch(console.error);
+      axios
+        .get("/api/channels?limit=5")
+        .then((res) => {
+          const currentHandle = localStorage.getItem("handle");
+          if (currentHandle) {
+            setFeaturedChannels(res.data.filter(c => c.handle !== currentHandle));
+          } else {
+            setFeaturedChannels(res.data);
+          }
+        })
+        .catch(console.error);
     axios
       .get("/api/videos/categories")
       .then((res) => setDbCategories(res.data))
       .catch(console.error);
-    axios
-      .get("/api/search/trending")
-      .then((res) => {
-        setSearchTrends(res.data.searchTrends || []);
-        setTopics(res.data.topics || []);
-      })
-      .catch(console.error);
-  }, []);
+      axios
+        .get("/api/search/trending")
+        .then((res) => {
+          setSearchTrends(res.data.searchTrends || []);
+          setTopics(res.data.topics || []);
+        })
+        .catch(console.error);
+
+      // Load subscribed channels if logged in
+      const token = localStorage.getItem("token");
+      if (token) {
+        axios
+          .get("/api/channels/subscribed", {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((res) => {
+            setSubscribedChannelIds((res.data || []).map((c) => c.id));
+          })
+          .catch(console.error);
+      }
+    }, []);
 
   // Re-fetch when search query or category changes
   useEffect(() => {
@@ -285,6 +306,31 @@ export default function Explore() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [searchQuery, activeCategory]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    setSearchParams({ q: inputValue.trim() });
+  };
+
+  const toggleSubscription = async (channelId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await axios.post(
+        `/api/channels/${channelId}/subscribe`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSubscribedChannelIds((prev) =>
+        res.data.isSubscribed
+          ? [...new Set([...prev, channelId])]
+          : prev.filter((id) => id !== channelId)
+      );
+    } catch (error) {
+      console.error("Failed to toggle subscription:", error);
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -613,8 +659,15 @@ export default function Explore() {
                         {formatViews(channel.subscriberCount)} người đăng ký
                       </p>
                     </div>
-                    <button className="shrink-0 px-3 py-1.5 rounded-lg border border-[#FF5722]/30 text-[#FF5722] text-[11px] font-bold hover:bg-[#FF5722]/10 transition-colors cursor-pointer">
-                      Đăng ký
+                    <button 
+                      onClick={() => toggleSubscription(channel.id)}
+                      className={`shrink-0 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-colors cursor-pointer ${
+                        subscribedChannelIds.includes(channel.id)
+                          ? "border-gray-500/30 text-gray-400 hover:bg-white/5"
+                          : "border-[#FF5722]/30 text-[#FF5722] hover:bg-[#FF5722]/10"
+                      }`}
+                    >
+                      {subscribedChannelIds.includes(channel.id) ? "Đã đăng ký" : "Đăng ký"}
                     </button>
                   </div>
                 ))

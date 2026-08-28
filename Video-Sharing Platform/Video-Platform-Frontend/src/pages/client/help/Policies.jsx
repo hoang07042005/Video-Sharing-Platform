@@ -15,7 +15,7 @@ const ClockIcon = () => <Clock className="w-5 h-5" />;
 
 // Reusable component for policy sections
 const PolicySection = ({ title, icon: Icon, index, children, highlightClass = "from-purple-500 to-blue-500", iconClass = "text-purple-400 bg-purple-500/10" }) => (
-  <div className="bg-[#1C1C1C] rounded-1xl p-6 md:p-8 border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all duration-300 hover:shadow-2xl hover:shadow-black/50">
+  <div className="bg-[#1C1C1C] rounded-[5px] p-6 md:p-8 border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all duration-300 hover:shadow-2xl hover:shadow-black/50">
     <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${highlightClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconClass}`}>
@@ -46,26 +46,17 @@ export default function Policies() {
               <FileText className="w-8 h-8 text-purple-400" />
               Điều khoản dịch vụ
             </h2>
-            <div className="flex items-center gap-2 text-gray-400 text-sm mt-2">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              Cập nhật lần cuối: 08/05/2025
-            </div>
           </div>
 
           {/* Banner */}
           <div 
-            className="relative rounded-1xl p-8 md:p-10 flex items-center border border-white/5 overflow-hidden mb-8 min-h-[200px] shadow-lg bg-[#18181B]"
+            className="relative rounded-[5px] p-8 md:p-10 flex items-center border border-white/5 overflow-hidden mb-8 min-h-[200px] shadow-lg bg-[#18181B]"
           >
             {/* Background Image - Bạn thay đổi đường dẫn ảnh ở thuộc tính src bên dưới nhé */}
             <img 
               src="./Điều khoản dịch vụ (2).png" 
               alt="Policy Banner Background" 
-              className="absolute inset-0 w-full" 
+              className="absolute inset-0 w-full h-full" 
             />
 
             
@@ -78,12 +69,12 @@ export default function Policies() {
           </div>
 
           {/* Sections Container */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg flex flex-col divide-y divide-white/5">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg flex flex-col divide-y divide-white/5">
             
             {/* Section 1 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
                   <svg className="w-6 h-6 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                   </svg>
@@ -103,7 +94,7 @@ export default function Policies() {
             {/* Section 2 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-pink-900 to-rose-900 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-pink-900 to-rose-900 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-inner">
                   <Lock className="w-6 h-6 text-pink-300" />
                 </div>
                 <div>
@@ -135,7 +126,7 @@ export default function Policies() {
             {/* Section 3 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6 mb-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
                   <FileText className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
@@ -184,7 +175,7 @@ export default function Policies() {
             {/* Section 4 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6 mb-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-emerald-900 to-green-900 flex items-center justify-center shrink-0 border border-green-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-emerald-900 to-green-900 flex items-center justify-center shrink-0 border border-green-500/20 shadow-inner">
                   <AlertTriangle className="w-6 h-6 text-green-400" />
                 </div>
                 <div>
@@ -221,7 +212,7 @@ export default function Policies() {
             {/* Section 5 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-amber-900 to-orange-900 flex items-center justify-center shrink-0 border border-orange-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-amber-900 to-orange-900 flex items-center justify-center shrink-0 border border-orange-500/20 shadow-inner">
                   <X className="w-6 h-6 text-orange-400" />
                 </div>
                 <div>
@@ -239,7 +230,7 @@ export default function Policies() {
             {/* Section 6 */}
             <div className="p-6 md:p-8">
               <div className="flex gap-6">
-                <div className="w-12 h-12 rounded-1xl bg-gradient-to-br from-purple-900 to-fuchsia-900 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
+                <div className="w-12 h-12 rounded-[5px] bg-gradient-to-br from-purple-900 to-fuchsia-900 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
                   <Scale className="w-6 h-6 text-purple-400" />
                 </div>
                 <div>
@@ -273,14 +264,11 @@ export default function Policies() {
              <div className="relative z-10 w-full max-w-[55%]">
                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Chính sách Quyền riêng tư</h2>
                  <p className="text-gray-400 mb-6 text-sm md:text-base leading-relaxed">VideoSharing cam kết bảo vệ thông tin cá nhân của bạn.<br/>Chúng tôi minh bạch về cách thu thập, sử dụng và bảo vệ dữ liệu của bạn.</p>
-                 <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-gray-300 font-medium">
-                     <ClockIcon /> Cập nhật lần cuối: 08/05/2025
-                 </div>
              </div>
           </div>
 
           {/* Sections Container */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg flex flex-col divide-y divide-white/5">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg flex flex-col divide-y divide-white/5">
             
             {/* Section 01 */}
             <div className="p-6 md:p-8">
@@ -477,7 +465,7 @@ export default function Policies() {
           </div>
 
           {/* Footer Commitment & Feedback */}
-          <div className="bg-[#1A1A1D] border border-white/5 rounded-1xl p-6">
+          <div className="bg-[#1A1A1D] border border-white/5 rounded-[5px] p-6">
             <div className="flex gap-4 mb-6">
               <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
                 <Info className="w-5 h-5 text-blue-400" />
@@ -526,7 +514,7 @@ export default function Policies() {
           </div>
 
           {/* Zero Tolerance */}
-          <div className="bg-[#1A1111] border border-red-500/30 rounded-1xl p-6 md:p-8 mb-8 shadow-lg shadow-red-500/5">
+          <div className="bg-[#1A1111] border border-red-500/30 rounded-[5px] p-6 md:p-8 mb-8 shadow-lg shadow-red-500/5">
             <div className="flex items-center gap-3 mb-6">
               <AlertTriangle className="w-6 h-6 text-red-500" />
               <h3 className="text-xl font-bold text-red-500">KHÔNG DUNG THỨ <span className="text-red-400/80 text-base font-medium ml-1">(Cấm vĩnh viễn ngay vi phạm đầu tiên)</span></h3>
@@ -555,12 +543,12 @@ export default function Policies() {
           </div>
 
           {/* Rules Container */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg flex flex-col divide-y divide-white/5 mb-8">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg flex flex-col divide-y divide-white/5 mb-8">
             
             {/* 01 */}
             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-white/[0.02] transition-colors">
                <div className="lg:w-1/3 flex gap-4">
-                  <div className="w-14 h-14 rounded-1xl bg-purple-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(147,51,234,0.3)]">
+                  <div className="w-14 h-14 rounded-[5px] bg-purple-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(147,51,234,0.3)]">
                     <ShieldAlert className="w-7 h-7 text-white" />
                   </div>
                   <div className="pt-1">
@@ -595,7 +583,7 @@ export default function Policies() {
             {/* 02 */}
             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-white/[0.02] transition-colors">
                <div className="lg:w-1/3 flex gap-4">
-                  <div className="w-14 h-14 rounded-1xl bg-pink-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(219,39,119,0.3)]">
+                  <div className="w-14 h-14 rounded-[5px] bg-pink-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(219,39,119,0.3)]">
                     <Heart className="w-7 h-7 text-white" />
                   </div>
                   <div className="pt-1">
@@ -630,7 +618,7 @@ export default function Policies() {
             {/* 03 */}
             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-white/[0.02] transition-colors">
                <div className="lg:w-1/3 flex gap-4">
-                  <div className="w-14 h-14 rounded-1xl bg-orange-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(234,88,12,0.3)]">
+                  <div className="w-14 h-14 rounded-[5px] bg-orange-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(234,88,12,0.3)]">
                     <Frown className="w-7 h-7 text-white" />
                   </div>
                   <div className="pt-1">
@@ -665,7 +653,7 @@ export default function Policies() {
             {/* 04 */}
             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-white/[0.02] transition-colors">
                <div className="lg:w-1/3 flex gap-4">
-                  <div className="w-14 h-14 rounded-1xl bg-yellow-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(202,138,4,0.3)]">
+                  <div className="w-14 h-14 rounded-[5px] bg-yellow-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(202,138,4,0.3)]">
                     <Megaphone className="w-7 h-7 text-white" />
                   </div>
                   <div className="pt-1">
@@ -692,7 +680,7 @@ export default function Policies() {
             {/* 05 */}
             <div className="p-6 md:p-8 flex flex-col lg:flex-row gap-8 hover:bg-white/[0.02] transition-colors">
                <div className="lg:w-1/3 flex gap-4">
-                  <div className="w-14 h-14 rounded-1xl bg-teal-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(13,148,136,0.3)]">
+                  <div className="w-14 h-14 rounded-[5px] bg-teal-600 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(13,148,136,0.3)]">
                     <Mail className="w-7 h-7 text-white" />
                   </div>
                   <div className="pt-1">
@@ -730,7 +718,7 @@ export default function Policies() {
           </div>
 
           {/* Violations System */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8">
             <div className="flex gap-4 mb-8">
               <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-500/20 shadow-inner">
                 <ShieldAlert className="w-6 h-6 text-indigo-400" />
@@ -775,7 +763,7 @@ export default function Policies() {
           </div>
 
           {/* Footer Commitment */}
-          <div className="bg-[#1A1A1D] border border-white/5 rounded-1xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-[#1A1A1D] border border-white/5 rounded-[5px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex gap-4">
               <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
                 <Heart className="w-6 h-6 text-purple-400" />
@@ -818,8 +806,8 @@ export default function Policies() {
           </div>
 
           {/* Commitment */}
-          <div className="bg-[#18181B] border border-purple-500/20 rounded-1xl p-6 flex items-center gap-6 mb-8 shadow-[0_0_20px_rgba(168,85,247,0.05)]">
-            <div className="w-14 h-14 rounded-1xl bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/30">
+          <div className="bg-[#18181B] border border-purple-500/20 rounded-[5px] p-6 flex items-center gap-6 mb-8 shadow-[0_0_20px_rgba(168,85,247,0.05)]">
+            <div className="w-14 h-14 rounded-[5px] bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/30">
               <Scale className="w-7 h-7 text-purple-400" />
             </div>
             <div>
@@ -829,16 +817,16 @@ export default function Policies() {
           </div>
 
           {/* Rule 01 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 flex flex-col lg:flex-row gap-8 mb-8 hover:border-pink-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 flex flex-col lg:flex-row gap-8 mb-8 hover:border-pink-500/20 transition-colors">
             <div className="lg:w-1/2 flex gap-4">
-              <div className="w-14 h-14 rounded-1xl bg-pink-500/10 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-inner">
+              <div className="w-14 h-14 rounded-[5px] bg-pink-500/10 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-inner">
                 <span className="text-2xl font-black text-pink-400">01</span>
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white mb-4">Quy tắc cơ bản về Bản quyền</h3>
                 <p className="text-sm text-gray-300 leading-relaxed mb-4">Người sáng tạo chỉ nên tải lên những nội dung mà họ có quyền sở hữu hoặc được phép sử dụng.</p>
                 <p className="text-sm text-gray-300 leading-relaxed mb-6">Điều này giúp bảo vệ công việc của người khác và duy trì môi trường sáng tạo lành mạnh.</p>
-                <div className="w-16 h-16 rounded-1xl bg-pink-500/10 flex items-center justify-center border border-pink-500/20 relative">
+                <div className="w-16 h-16 rounded-[5px] bg-pink-500/10 flex items-center justify-center border border-pink-500/20 relative">
                    <ClipboardList className="w-8 h-8 text-pink-400" />
                    <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center shadow-lg">
                       <Shield className="w-3 h-3 text-white" />
@@ -846,7 +834,7 @@ export default function Policies() {
                 </div>
               </div>
             </div>
-            <div className="lg:w-1/2 bg-[#1A1111] border border-red-500/20 rounded-1xl p-6">
+            <div className="lg:w-1/2 bg-[#1A1111] border border-red-500/20 rounded-[5px] p-6">
               <h4 className="text-red-400 font-bold mb-4">Không được phép:</h4>
               <ul className="space-y-4">
                 <li className="flex gap-3 items-start">
@@ -870,10 +858,10 @@ export default function Policies() {
           </div>
 
           {/* Rule 02 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-purple-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-purple-500/20 transition-colors">
             <div className="flex justify-between items-start mb-8">
                <div className="flex gap-4 max-w-2xl">
-                 <div className="w-14 h-14 rounded-1xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
+                 <div className="w-14 h-14 rounded-[5px] bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
                    <span className="text-2xl font-black text-purple-400">02</span>
                  </div>
                  <div className="pt-1">
@@ -930,9 +918,9 @@ export default function Policies() {
 
           <div className="grid lg:grid-cols-2 gap-8 mb-8">
             {/* Rule 03 */}
-            <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 hover:border-blue-500/20 transition-colors">
+            <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 hover:border-blue-500/20 transition-colors">
               <div className="flex gap-4 mb-6">
-                 <div className="w-14 h-14 rounded-1xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
+                 <div className="w-14 h-14 rounded-[5px] bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
                    <span className="text-2xl font-black text-blue-400">03</span>
                  </div>
                  <div className="pt-2">
@@ -957,9 +945,9 @@ export default function Policies() {
             </div>
 
             {/* Rule 04 */}
-            <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 hover:border-teal-500/20 transition-colors">
+            <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 hover:border-teal-500/20 transition-colors">
               <div className="flex gap-4 mb-6">
-                 <div className="w-14 h-14 rounded-1xl bg-teal-500/10 flex items-center justify-center shrink-0 border border-teal-500/20 shadow-inner">
+                 <div className="w-14 h-14 rounded-[5px] bg-teal-500/10 flex items-center justify-center shrink-0 border border-teal-500/20 shadow-inner">
                    <span className="text-2xl font-black text-teal-400">04</span>
                  </div>
                  <div className="pt-2">
@@ -981,9 +969,9 @@ export default function Policies() {
           </div>
 
           {/* Rule 05 */}
-          <div className="bg-[#1A1811] rounded-1xl border border-yellow-500/30 shadow-lg p-6 md:p-8 hover:shadow-[0_0_20px_rgba(234,179,8,0.1)] transition-shadow">
+          <div className="bg-[#1A1811] rounded-[5px] border border-yellow-500/30 shadow-lg p-6 md:p-8 hover:shadow-[0_0_20px_rgba(234,179,8,0.1)] transition-shadow">
             <div className="flex gap-4 mb-6">
-               <div className="w-14 h-14 rounded-1xl bg-yellow-500/10 flex items-center justify-center shrink-0 border border-yellow-500/20 shadow-inner">
+               <div className="w-14 h-14 rounded-[5px] bg-yellow-500/10 flex items-center justify-center shrink-0 border border-yellow-500/20 shadow-inner">
                  <span className="text-2xl font-black text-yellow-500">05</span>
                </div>
                <div className="pt-1">
@@ -1038,7 +1026,7 @@ export default function Policies() {
           </div>
 
           {/* Conditions Block */}
-          <div className="bg-[#18181B] border border-white/5 rounded-1xl p-6 md:p-8 mb-8 shadow-lg hover:border-white/10 transition-colors">
+          <div className="bg-[#18181B] border border-white/5 rounded-[5px] p-6 md:p-8 mb-8 shadow-lg hover:border-white/10 transition-colors">
              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">ĐIỀU KIỆN THAM GIA CHƯƠNG TRÌNH ĐỐI TÁC</h3>
              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 
@@ -1095,7 +1083,7 @@ export default function Policies() {
           </div>
 
           {/* Section 1 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-purple-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-purple-500/20 transition-colors">
             <div className="flex gap-4 mb-6">
                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
                  <span className="text-xl font-black text-purple-400">1</span>
@@ -1137,7 +1125,7 @@ export default function Policies() {
           </div>
 
           {/* Section 2 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-green-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-green-500/20 transition-colors">
             <div className="flex gap-4 mb-6">
                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 border border-green-500/20 shadow-inner">
                  <span className="text-xl font-black text-green-400">2</span>
@@ -1181,7 +1169,7 @@ export default function Policies() {
           </div>
 
           {/* Section 3 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-red-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-red-500/20 transition-colors">
             <div className="flex gap-4 mb-6">
                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20 shadow-inner">
                  <Ban className="w-6 h-6 text-red-500" />
@@ -1217,7 +1205,7 @@ export default function Policies() {
           </div>
 
           {/* Section 4 */}
-          <div className="bg-[#18181B] rounded-1xl border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-yellow-500/20 transition-colors">
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg p-6 md:p-8 mb-8 hover:border-yellow-500/20 transition-colors">
             <div className="flex gap-4 mb-6">
                <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0 border border-yellow-500/20 shadow-inner">
                  <span className="text-xl font-black text-yellow-500">4</span>
@@ -1260,7 +1248,7 @@ export default function Policies() {
           </div>
 
           {/* Help */}
-          <div className="bg-[#15121B] rounded-1xl border border-purple-500/20 shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-purple-500/40 transition-colors">
+          <div className="bg-[#15121B] rounded-[5px] border border-purple-500/20 shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-purple-500/40 transition-colors">
             <div className="flex items-center gap-4">
                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30">
                   <HelpCircle className="w-6 h-6 text-purple-400" />
@@ -1283,7 +1271,7 @@ export default function Policies() {
   const activeContent = policies.find(p => p.id === activeTab)?.content;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] pt-20 pb-16">
+    <div className="min-h-screen bg-[#0F0F0F] pt-6 pb-16">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
         
         {/* Header */}
@@ -1293,7 +1281,7 @@ export default function Policies() {
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 tracking-tight">
                 Trung tâm
               </h1>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 mb-6 tracking-tight">
+              <h2 className="text-4xl md:text-5xl h-18 lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 mb-3 tracking-tight">
                 Chính sách & Quy định
               </h2>
               <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
@@ -1310,7 +1298,7 @@ export default function Policies() {
           
           {/* Mobile Menu Toggle */}
           <button 
-            className="lg:hidden w-full flex items-center justify-between p-4 bg-[#151515] border border-white/10 rounded-1xl text-white font-bold shadow-lg"
+            className="lg:hidden w-full flex items-center justify-between p-4 bg-[#151515] border border-white/10 rounded-[5px] text-white font-bold shadow-lg"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             <span className="flex items-center gap-3">
@@ -1321,11 +1309,13 @@ export default function Policies() {
           </button>
 
           {/* Sidebar / Tabs */}
-          <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-[320px] shrink-0 bg-[#151515] rounded-1xl border border-white/5 overflow-hidden sticky top-24 shadow-2xl`}>
-            <div className="p-6 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5 bg-[#111]">
-              Danh mục
+          <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-[320px] shrink-0 bg-[#121212] rounded-[5px] border border-white/10 overflow-hidden sticky top-24 shadow-2xl`}>
+            <div className="px-6 py-5 border-b border-white/5 bg-gradient-to-r from-purple-500/5 to-transparent">
+              <h3 className="text-[11px] font-black text-purple-400/80 uppercase tracking-[0.2em]">
+                Danh mục chính sách
+              </h3>
             </div>
-            <div className="p-3 space-y-2">
+            <div className="p-3">
               {policies.map((policy) => {
                 const Icon = policy.icon;
                 const isActive = activeTab === policy.id;
@@ -1338,20 +1328,31 @@ export default function Policies() {
                       setIsMobileMenuOpen(false);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`w-full flex items-center justify-between p-4 rounded-1xl text-left transition-all duration-300 relative overflow-hidden group ${
+                    className={`w-full flex items-center justify-between p-3.5 mb-1 rounded-[5px] text-left transition-all duration-300 group relative overflow-hidden ${
                       isActive 
-                        ? 'bg-purple-500/10 text-white' 
-                        : 'bg-transparent text-gray-400 hover:bg-white/[0.04] hover:text-gray-200'
+                        ? 'bg-purple-500/10 border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.05)]' 
+                        : 'bg-transparent border border-transparent hover:bg-white/5'
                     }`}
                   >
-                    {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1/2 bg-purple-500 rounded-r-full" />}
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className={`p-2.5 rounded-xl transition-colors ${isActive ? 'bg-purple-500/20 text-purple-400' : 'bg-black/50 text-gray-500 group-hover:bg-black group-hover:text-gray-300'}`}>
-                        <Icon className="w-5 h-5" />
+                    {/* Active indicator bar */}
+                    {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-400 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />}
+                    
+                    <div className="flex items-center gap-4 relative z-10 pl-1">
+                      <div className={`p-2 rounded-lg transition-all duration-300 ${
+                        isActive 
+                          ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30' 
+                          : 'bg-[#1f1f1f] text-gray-400 group-hover:bg-purple-500/20 group-hover:text-purple-400'
+                      }`}>
+                        <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 2} />
                       </div>
-                      <span className={`font-bold text-[15px] ${isActive ? 'text-white' : ''}`}>{policy.title}</span>
+                      <span className={`font-semibold text-[14px] ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                        {policy.title}
+                      </span>
                     </div>
-                    {isActive && <ChevronRight className="w-5 h-5 text-purple-400 opacity-70 relative z-10" />}
+                    
+                    {isActive && (
+                      <ChevronRight className="w-4 h-4 text-pink-400 relative z-10" strokeWidth={2.5} />
+                    )}
                   </button>
                 );
               })}
