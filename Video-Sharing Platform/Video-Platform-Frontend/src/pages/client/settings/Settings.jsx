@@ -118,6 +118,7 @@ function SettingItem({
 // ----- Main Settings Page -----
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("account");
+
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("userSettings");
@@ -896,83 +897,6 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-8">
-                  {/* Theme Settings */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-white/5">
-                    <div className="max-w-xs">
-                      <h3 className="text-white font-bold text-sm mb-1">Chủ đề màu</h3>
-                      <p className="text-[11px] text-gray-500 leading-relaxed">Chọn chủ đề phù hợp với phong cách của bạn.</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="cursor-pointer group relative bg-[#110D15] border border-purple-500 rounded-[5px] p-3 w-32 transition-all shadow-[0_0_15px_rgba(168,85,247,0.15)]">
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center border-2 border-[#110D15]">
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                        </div>
-                        <div className="flex flex-col items-center gap-3">
-                           <div className="w-full h-10 bg-[#1A1625] rounded-lg flex items-center justify-center relative overflow-hidden">
-                              <Moon className="w-4 h-4 text-purple-400" />
-                           </div>
-                           <div className="text-center">
-                             <p className="text-white text-xs font-bold mb-0.5">Tối</p>
-                             <p className="text-purple-400 text-[10px]">Hiện tại</p>
-                           </div>
-                        </div>
-                      </div>
-
-                      <div className="cursor-pointer group relative bg-[#181520] border border-white/5 rounded-[5px] p-3 w-32 hover:bg-white/[0.02] transition-all">
-                        <div className="flex flex-col items-center gap-3">
-                           <div className="w-full h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                              <Sun className="w-4 h-4 text-gray-400" />
-                           </div>
-                           <div className="text-center">
-                             <p className="text-gray-300 group-hover:text-white text-xs font-bold mb-0.5 transition-colors">Sáng</p>
-                             <p className="text-gray-500 text-[10px]">Trải nghiệm sáng</p>
-                           </div>
-                        </div>
-                      </div>
-
-                      <div className="cursor-pointer group relative bg-[#181520] border border-white/5 rounded-[5px] p-3 w-32 hover:bg-white/[0.02] transition-all">
-                        <div className="flex flex-col items-center gap-3">
-                           <div className="w-full h-10 rounded-lg flex items-center justify-center overflow-hidden relative border border-white/5">
-                              <div className="absolute inset-y-0 left-0 w-1/2 bg-gray-100 flex items-center justify-center">
-                                 <Sun className="w-3.5 h-3.5 text-gray-400 -mr-3" />
-                              </div>
-                              <div className="absolute inset-y-0 right-0 w-1/2 bg-[#1A1625] flex items-center justify-center">
-                                 <Moon className="w-3.5 h-3.5 text-gray-500 -ml-3" />
-                              </div>
-                           </div>
-                           <div className="text-center">
-                             <p className="text-gray-300 group-hover:text-white text-xs font-bold mb-0.5 transition-colors">Tự động</p>
-                             <p className="text-gray-500 text-[10px]">Theo hệ thống</p>
-                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Accent Color */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-white/5">
-                    <div className="max-w-xs">
-                      <h3 className="text-white font-bold text-sm mb-1">Màu nhấn</h3>
-                      <p className="text-[11px] text-gray-500 leading-relaxed">Chọn màu nhấn cho các nút, liên kết và điểm nhấn.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3">
-                         <div className="w-7 h-7 rounded-full bg-[#F05123] border-2 border-white flex items-center justify-center shadow-[0_0_0_2px_#F05123] cursor-pointer">
-                            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                         </div>
-                         <div className="w-6 h-6 rounded-full bg-purple-500 cursor-pointer hover:scale-110 transition-transform"></div>
-                         <div className="w-6 h-6 rounded-full bg-pink-500 cursor-pointer hover:scale-110 transition-transform"></div>
-                         <div className="w-6 h-6 rounded-full bg-blue-500 cursor-pointer hover:scale-110 transition-transform"></div>
-                         <div className="w-6 h-6 rounded-full bg-green-500 cursor-pointer hover:scale-110 transition-transform"></div>
-                         <div className="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer hover:scale-110 transition-transform"></div>
-                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 cursor-pointer hover:scale-110 transition-transform"></div>
-                      </div>
-                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition-colors text-[11px] text-gray-300">
-                        Tùy chỉnh
-                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500"></div>
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Display Density */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-white/5">

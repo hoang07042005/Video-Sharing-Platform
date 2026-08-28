@@ -50,8 +50,18 @@ namespace Video_Platform_Backend.Controllers
                 // 2. Add Users, Profiles, Channels
                 var users = new List<User>();
                 var channels = new List<Channel>();
+                var fullNames = new string[] {
+                    "Nguyễn Minh Tuấn", "Trần Thị Lan", "Lê Hoàng Bách", "Phạm Thanh Hương", "Hoàng Ngọc Hùng",
+                    "Đỗ Hải Đăng", "Vũ Mai Phương", "Đặng Quang Minh", "Bùi Thị Yến", "Ngô Đức Trí"
+                };
+                var channelNames = new string[] {
+                    "Tuấn Nguyễn Official", "Lan Góc Bếp", "Bách Gaming", "Hương Beauty & Life", "Hùng Tech Review",
+                    "Đăng Vlogs", "Phương Daily", "Quang Minh Studio", "Yến ASMR", "Trí Đức Education"
+                };
+
                 for (int i = 1; i <= 10; i++)
                 {
+                    int index = i - 1;
                     var email = $"user{i}_{Guid.NewGuid().ToString().Substring(0, 5)}@test.com";
                     var user = new User
                     {
@@ -68,17 +78,18 @@ namespace Video_Platform_Backend.Controllers
                     var profile = new Profile
                     {
                         UserId = user.Id,
-                        FullName = $"Người Dùng {i}",
-                        Bio = $"Đây là tiểu sử của Người Dùng {i}",
-                        AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={i}"
+                        FullName = fullNames[index],
+                        Bio = $"Xin chào! Mình là {fullNames[index]}. Rất vui được chia sẻ những video thú vị đến mọi người.",
+                        AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={fullNames[index]}"
                     };
                     _context.Profiles.Add(profile);
 
+                    var handleName = fullNames[index].Split(' ').Last().ToLower() + i.ToString();
                     var channel = new Channel
                     {
                         UserId = user.Id,
-                        ChannelName = $"Kênh của Người Dùng {i}",
-                        Handle = $"@user{i}_{Guid.NewGuid().ToString().Substring(0, 4)}",
+                        ChannelName = channelNames[index],
+                        Handle = $"@{handleName}_{Guid.NewGuid().ToString().Substring(0, 4)}",
                         TotalViews = random.Next(100, 10000),
                         CreatedAt = DateTime.UtcNow
                     };
@@ -90,19 +101,47 @@ namespace Video_Platform_Backend.Controllers
                 // Fetch real categories from DB
                 var dbCategories = await _context.VideoCategories.ToListAsync();
 
+                string[] normalTitles = new string[] {
+                    "10 Mẹo Lập Trình Giúp Bạn Code Nhanh Hơn", "Khám Phá Vẻ Đẹp Miền Tây Sông Nước", "Đánh Giá Chi Tiết iPhone Mới Nhất Năm Nay", 
+                    "Học Tiếng Anh Giao Tiếp Cơ Bản", "Hướng Dẫn Làm Bánh Flan Caramel Ngon Tại Nhà", "Những Điều Cần Biết Trước Khi Đi Du Lịch Đà Lạt", 
+                    "Tổng Hợp Bàn Thắng Đẹp Nhất Tuần", "Vlog 1 Ngày Của Một Sinh Viên IT", "Phân Tích Chuyên Sâu Về Công Nghệ AI", 
+                    "Nghe Nhạc Thư Giãn Khó Ngủ - Lofi Chill", "Review Quán Ăn Ngon Nhất Sài Gòn", "Cách Setup Góc Làm Việc Tối Ưu",
+                    "Hành Trình Chinh Phục Đỉnh Fansipan", "Bí Quyết Chụp Ảnh Bằng Điện Thoại Cực Đẹp", "Hướng Dẫn Tự Học Guitar Tại Nhà",
+                    "Toàn Cảnh Sự Kiện Ra Mắt Công Nghệ Mới", "Trải Nghiệm Xe Hơi Điện Tương Lai", "Phim Ngắn Hài Hước Cuối Tuần",
+                    "Chơi Thử Tựa Game Đang Hot Nhất Hiện Nay", "Góc Nhìn Chuyên Gia Về Thị Trường Tài Chính"
+                };
+
+                string[] shortTitles = new string[] {
+                    "Mẹo vặt cuộc sống cực hay #shorts", "Khi sếp bảo bạn làm gấp #funny", "Thử thách ăn cay cấp độ 7",
+                    "Cách làm ảo thuật với đồng xu", "Khoảnh khắc hài hước của thú cưng", "Tricks chơi game bạn chưa biết",
+                    "Review món ăn vặt tuổi thơ", "Nhảy trend TikTok cực cháy", "Đừng bao giờ làm điều này khi lái xe",
+                    "Bí kíp thả thính 100% dính #shorts", "Góc lầy lội cùng hội bạn thân", "Hướng dẫn makeup đi chơi 5 phút",
+                    "Hậu trường quay phim siêu bựa", "Trend biến hình cực ngầu", "Khám phá ẩm thực đường phố nhanh"
+                };
+
+                string[] descriptions = new string[] {
+                    "Video này sẽ mang đến cho bạn những thông tin cực kỳ hữu ích và thú vị. Đừng quên like, share và subscribe kênh để ủng hộ mình ra thêm nhiều nội dung chất lượng hơn nhé!",
+                    "Cùng khám phá những bí mật chưa từng được bật mí. Chúc các bạn xem video vui vẻ và để lại bình luận chia sẻ cảm nhận bên dưới nhé.",
+                    "Review chân thực, khách quan và chi tiết nhất. Nếu thấy hay hãy cho mình 1 nút đăng ký để không bỏ lỡ các video tiếp theo.",
+                    "Trải nghiệm tuyệt vời ngày hôm nay được gói gọn trong video này. Cảm ơn mọi người đã luôn đồng hành và ủng hộ kênh thời gian qua."
+                };
+
                 // 3. Add 40 Videos
                 var videos = new List<Video>();
                 for (int i = 1; i <= 40; i++)
                 {
                     var channel = channels[random.Next(channels.Count)];
                     var category = dbCategories[random.Next(dbCategories.Count)];
+                    var title = normalTitles[random.Next(normalTitles.Length)];
+                    var desc = descriptions[random.Next(descriptions.Length)];
+                    
                     var video = new Video
                     {
                         Id = Guid.NewGuid(),
                         ChannelId = channel.Id,
                         CategoryId = category.Id,
-                        Title = $"Video thông thường số {i}",
-                        Description = $"Mô tả cho video thông thường số {i}. Nội dung hấp dẫn.",
+                        Title = $"{title} (Phần {random.Next(1, 5)})",
+                        Description = desc,
                         ViewsCount = random.Next(10, 5000),
                         LikesCount = random.Next(1, 500),
                         Visibility = "Public",
@@ -126,13 +165,15 @@ namespace Video_Platform_Backend.Controllers
                 {
                     var channel = channels[random.Next(channels.Count)];
                     var category = dbCategories[random.Next(dbCategories.Count)];
+                    var shortTitle = shortTitles[random.Next(shortTitles.Length)];
+                    
                     var shortVideo = new Video
                     {
                         Id = Guid.NewGuid(),
                         ChannelId = channel.Id,
                         CategoryId = category.Id,
-                        Title = $"Video Short số {i}",
-                        Description = $"Mô tả ngắn gọn cho short {i}",
+                        Title = shortTitle,
+                        Description = "Video ngắn giải trí, đăng ký kênh để xem thêm nhiều #shorts thú vị nhé!",
                         ViewsCount = random.Next(100, 10000),
                         LikesCount = random.Next(10, 1000),
                         Visibility = "Public",
