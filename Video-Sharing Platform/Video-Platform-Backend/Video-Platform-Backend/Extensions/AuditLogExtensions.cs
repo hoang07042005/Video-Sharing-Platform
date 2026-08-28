@@ -10,14 +10,21 @@ namespace Video_Platform_Backend.Extensions
         /// <summary>
         /// Thêm bản ghi AuditLog vào DbContext (Chưa gọi SaveChanges)
         /// </summary>
-        public static void AddAuditLog(this ControllerBase controller, ApplicationDbContext context, string action, string actionType, string target, string details)
+        public static void AddAuditLog(this ControllerBase controller, ApplicationDbContext context, string action, string actionType, string target, string details, Guid? explicitUserId = null)
         {
             var adminIdStr = controller.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(adminIdStr, out Guid adminGuid))
+            Guid? finalUserId = explicitUserId;
+            
+            if (finalUserId == null && Guid.TryParse(adminIdStr, out Guid adminGuid))
+            {
+                finalUserId = adminGuid;
+            }
+
+            if (finalUserId.HasValue)
             {
                 context.AuditLogs.Add(new AuditLog
                 {
-                    UserId = adminGuid,
+                    UserId = finalUserId.Value,
                     Action = action,
                     ActionType = actionType,
                     Target = target,

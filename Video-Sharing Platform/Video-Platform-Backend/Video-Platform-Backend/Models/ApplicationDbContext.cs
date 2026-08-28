@@ -16,7 +16,11 @@ public partial class ApplicationDbContext : DbContext
     }
 
     public virtual DbSet<Channel> Channels { get; set; }
+    
+    public virtual DbSet<ChannelStrike> ChannelStrikes { get; set; }
+
     public virtual DbSet<MonetizationApplication> MonetizationApplications { get; set; }
+
     public virtual DbSet<DailyVideoEarnings> DailyVideoEarnings { get; set; }
 
     public virtual DbSet<BannedWord> BannedWords { get; set; }
@@ -108,8 +112,11 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<CommunityPostCommentLike> CommunityPostCommentLikes { get; set; }
 
     public virtual DbSet<CommunityPostImage> CommunityPostImages { get; set; }
+
     public virtual DbSet<CommunityPostPollOption> CommunityPostPollOptions { get; set; }
+    
     public virtual DbSet<CommunityPostVote> CommunityPostVotes { get; set; }
+    
     public virtual DbSet<CommunityPostLike> CommunityPostLikes { get; set; }
 
     public virtual DbSet<Faq> Faqs { get; set; }

@@ -21,6 +21,10 @@ import {
   DollarSign,
   Ban,
   ChevronLeft,
+  LogIn,
+  Shield,
+  CreditCard,
+  CheckCircle,
   ChevronRight as IconChevronRight,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -177,8 +181,32 @@ const AdminActivities = () => {
       return {
         id: "role",
         name: "Phân quyền",
-        icon: <Settings className="w-5 h-5 text-yellow-400" />,
+        icon: <Shield className="w-5 h-5 text-yellow-400" />,
         bg: "bg-yellow-500/10",
+      };
+    }
+    if (targetStr.startsWith("auth")) {
+      return {
+        id: "auth",
+        name: "Bảo mật",
+        icon: <LogIn className="w-5 h-5 text-emerald-400" />,
+        bg: "bg-emerald-500/10",
+      };
+    }
+    if (targetStr.startsWith("withdrawalrequest")) {
+      return {
+        id: "withdrawalrequest",
+        name: "Yêu cầu rút tiền",
+        icon: <CreditCard className="w-5 h-5 text-teal-400" />,
+        bg: "bg-teal-500/10",
+      };
+    }
+    if (targetStr.startsWith("payment")) {
+      return {
+        id: "payment",
+        name: "Thanh toán",
+        icon: <CheckCircle className="w-5 h-5 text-cyan-400" />,
+        bg: "bg-cyan-500/10",
       };
     }
     if (targetStr.startsWith("systemsettings")) {
@@ -201,8 +229,8 @@ const AdminActivities = () => {
     return {
       id: "other",
       name: "Khác",
-      icon: <LayoutGrid className="w-5 h-5 text-blue-400" />,
-      bg: "bg-blue-500/10",
+      icon: <LayoutGrid className="w-5 h-5 text-indigo-400" />,
+      bg: "bg-indigo-500/10",
     };
   };
 
@@ -214,6 +242,8 @@ const AdminActivities = () => {
     { id: "role", name: "Vai trò" },
     { id: "system", name: "Hệ thống" },
     { id: "report", name: "Báo cáo" },
+    { id: "auth", name: "Bảo mật" },
+    { id: "withdrawal", name: "Rút tiền & Thanh toán" },
   ];
 
   const filteredActivities = activities.filter((activity) => {

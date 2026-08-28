@@ -76,12 +76,50 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = v.Channel.User.Profile != null 
                         ? (v.Channel.User.Profile.AvatarUrl ?? "") 
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified
+                    ChannelIsVerified = v.Channel.IsVerified,
+                    IsLivestream = false,
+                    Status = "ended"
                 })
-                .OrderByDescending(v => v.ViewsCount)
                 .ToListAsync();
 
-            return Ok(videos);
+            var struckLivestreamIds = await _context.ChannelStrikes
+                .Where(s => s.TargetType == "Livestream" && s.TargetId.HasValue)
+                .Select(s => s.TargetId.Value)
+                .ToListAsync();
+
+            var livestreams = await _context.Livestreams
+                .Include(l => l.Channel)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Profile)
+                .Where(l => l.Status == "ended" && !l.Channel.IsSuspended && !struckLivestreamIds.Contains(l.Id))
+                .Select(l => new VideoResponseDTO
+                {
+                    Id = l.Id,
+                    Title = l.Title,
+                    Description = l.Description ?? "",
+                    ThumbnailUrl = l.ThumbnailUrl ?? "",
+                    Duration = l.EndTime.HasValue && l.ActualStartTime.HasValue 
+                        ? (int)(l.EndTime.Value - l.ActualStartTime.Value).TotalSeconds 
+                        : 0,
+                    ViewsCount = (int)(l.TotalViews ?? 0),
+                    CreatedAt = l.ActualStartTime ?? l.ScheduledStartTime ?? l.EndTime ?? DateTime.UtcNow,
+                    IsShort = false,
+                    CategoryId = l.CategoryId,
+                    ChannelId = l.ChannelId,
+                    ChannelName = l.Channel.ChannelName,
+                    ChannelHandle = l.Channel.Handle,
+                    ChannelAvatarUrl = l.Channel.User.Profile != null ? (l.Channel.User.Profile.AvatarUrl ?? "") : "",
+                    ChannelIsVerified = l.Channel.IsVerified,
+                    IsLivestream = true,
+                    Status = l.Status
+                })
+                .ToListAsync();
+
+            var combined = videos.Concat(livestreams)
+                .OrderByDescending(v => v.ViewsCount)
+                .ToList();
+
+            return Ok(combined);
         }
 
         // GET: api/videos/explore?category=&q=&sort=
@@ -155,6 +193,56 @@ namespace Video_Platform_Backend.Controllers
 
             if (video == null)
             {
+                var livestream = await _context.Livestreams
+                    .Include(l => l.Channel)
+                        .ThenInclude(c => c.User)
+                            .ThenInclude(u => u.Profile)
+                    .FirstOrDefaultAsync(l => l.Id == id && l.Status == "ended");
+                
+                if (livestream != null)
+                {
+                    if (livestream.Channel.IsSuspended)
+                        return StatusCode(403, new { message = "Kênh này đã bị đình chỉ hoạt động." });
+
+                    var currentUserIdStrLive = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                    Guid? currentUserIdLive = Guid.TryParse(currentUserIdStrLive, out var cidLive) ? cidLive : null;
+                    
+                    bool isLikedLive = false;
+                    bool isSubscribedLive = false;
+                    if (currentUserIdLive.HasValue)
+                    {
+                        isLikedLive = await _context.LivestreamLikes.AnyAsync(l => l.LivestreamId == id && l.UserId == currentUserIdLive.Value && l.IsLike);
+                        isSubscribedLive = await _context.Subscriptions.AnyAsync(s => s.SubscriberId == currentUserIdLive.Value && s.ChannelId == livestream.ChannelId && s.Status == "Active");
+                    }
+
+                    return Ok(new VideoDetailDTO
+                    {
+                        Id = livestream.Id,
+                        Title = livestream.Title,
+                        Description = livestream.Description ?? "",
+                        ThumbnailUrl = livestream.ThumbnailUrl ?? "",
+                        VideoUrl = string.IsNullOrWhiteSpace(livestream.VodUrl) ? "" : livestream.VodUrl,
+                        Duration = (livestream.EndTime.HasValue && livestream.ActualStartTime.HasValue) ? (int)(livestream.EndTime.Value - livestream.ActualStartTime.Value).TotalSeconds : 0,
+                        ViewsCount = livestream.TotalViews ?? 0,
+                        LikesCount = livestream.Likes ?? 0,
+                        DislikesCount = 0,
+                        CommentsCount = 0,
+                        CreatedAt = livestream.ActualStartTime ?? livestream.ScheduledStartTime ?? DateTime.UtcNow,
+                        ChannelId = livestream.ChannelId,
+                        ChannelName = livestream.Channel.ChannelName,
+                        ChannelHandle = livestream.Channel.Handle,
+                        ChannelAvatarUrl = livestream.Channel.User.Profile != null ? (livestream.Channel.User.Profile.AvatarUrl ?? "") : "",
+                        ChannelIsVerified = livestream.Channel.IsVerified,
+                        SubscriberCount = await _context.Followers.CountAsync(f => f.ChannelId == livestream.ChannelId),
+                        OwnerUserId = livestream.Channel.UserId,
+                        IsLiked = isLikedLive,
+                        IsDisliked = false,
+                        IsSubscribed = isSubscribedLive,
+                        IsSaved = false,
+                        IsMembersOnly = false,
+                        Resolutions = new List<VideoResolutionDTO>()
+                    });
+                }
                 return NotFound(new { message = "Không tìm thấy video" });
             }
 

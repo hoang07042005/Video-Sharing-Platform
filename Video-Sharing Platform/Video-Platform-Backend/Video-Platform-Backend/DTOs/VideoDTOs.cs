@@ -28,6 +28,8 @@ namespace Video_Platform_Backend.DTOs
         public string ChannelHandle { get; set; } = string.Empty;
         public string ChannelAvatarUrl { get; set; } = string.Empty;
         public bool ChannelIsVerified { get; set; }
+        public bool IsLivestream { get; set; } = false;
+        public string? Status { get; set; }
     }
 
     public class VideoDetailDTO

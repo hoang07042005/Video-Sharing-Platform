@@ -23,6 +23,7 @@ export default function AdminGlobalSearch({ className }) {
     { name: "Vai trò & Quyền", path: "/admin/roles" },
     { name: "Báo cáo & Khiếu nại", path: "/admin/complaints" },
     { name: "Vi phạm", path: "/admin/violations" },
+    { name: "Lịch sử đánh gậy", path: "/admin/strikes" },
     { name: "Phản hồi & Góp ý", path: "/admin/feedbacks" },
     { name: "Quản lý FAQs", path: "/admin/faqs" },
     { name: "Giao dịch", path: "/admin/transactions" },

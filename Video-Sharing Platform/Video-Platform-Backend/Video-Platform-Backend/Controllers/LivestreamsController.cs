@@ -368,6 +368,17 @@ public class LivestreamsController : ControllerBase
             {
                 livestream.Channel.Strikes += 1;
                 
+                // Add ChannelStrike record
+                _db.ChannelStrikes.Add(new ChannelStrike
+                {
+                    Id = Guid.NewGuid(),
+                    ChannelId = livestream.Channel.Id,
+                    Reason = "Vi phạm tiêu chuẩn cộng đồng (Tự động xử lý qua báo cáo)",
+                    TargetId = livestream.Id,
+                    TargetType = "Livestream",
+                    CreatedAt = DateTime.UtcNow
+                });
+
                 // Suspend channel if strikes >= 3
                 if (livestream.Channel.Strikes >= 3)
                 {

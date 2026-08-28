@@ -9,6 +9,7 @@ import {
   Eye,
 } from "lucide-react";
 import axios from "axios";
+import moment from "moment";
 
 export default function AdminComplaints() {
   const [reports, setReports] = useState([]);
@@ -18,6 +19,8 @@ export default function AdminComplaints() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [strikeHistory, setStrikeHistory] = useState(null);
+  const [strikeLoading, setStrikeLoading] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -108,14 +111,29 @@ export default function AdminComplaints() {
     return true;
   });
 
-  const openReportDetail = (report) => {
+  const openReportDetail = async (report) => {
     setSelectedReport(report);
     setIsDetailOpen(true);
+    setStrikeHistory(null);
+    setStrikeLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `/api/admin/reports/target/${report.targetId}/strikes?targetType=${report.targetType}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStrikeHistory(res.data);
+    } catch (error) {
+      console.error("Error fetching strike history:", error);
+    } finally {
+      setStrikeLoading(false);
+    }
   };
 
   const closeReportDetail = () => {
-    setSelectedReport(null);
     setIsDetailOpen(false);
+    setSelectedReport(null);
   };
 
   const handleQuickAction = async (report, newStatus) => {
@@ -312,6 +330,13 @@ export default function AdminComplaints() {
                       {report.status === "Chờ xử lý" ? (
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => openReportDetail(report)}
+                            className="p-1.5 text-gray-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                            title="Chi tiết & Lịch sử vi phạm"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() =>
                               handleUpdateStatus(report.originalId, "Resolved")
                             }
@@ -435,6 +460,42 @@ export default function AdminComplaints() {
                 </p>
               </div>
             )}
+
+            {/* Lịch sử đánh gậy */}
+            {strikeLoading ? (
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-red-500 mr-2" />
+                <span className="text-sm text-gray-400">Đang tải lịch sử vi phạm...</span>
+              </div>
+            ) : strikeHistory ? (
+              <div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                  <p className="text-red-400 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Lịch sử vi phạm (Gậy)
+                  </p>
+                  <span className="text-white text-sm font-semibold">
+                    Kênh: <span className="text-gray-300">{strikeHistory.channelName}</span> ({strikeHistory.totalStrikes}/3 gậy)
+                    {strikeHistory.isSuspended && <span className="ml-2 text-red-500 font-bold uppercase text-xs">(Đã bị khóa)</span>}
+                  </span>
+                </div>
+                {strikeHistory.history && strikeHistory.history.length > 0 ? (
+                  <div className="space-y-3">
+                    {strikeHistory.history.map((strike, idx) => (
+                      <div key={idx} className="flex gap-3 text-sm bg-black/20 p-3 rounded-lg border border-white/5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
+                        <div>
+                          <p className="text-white leading-relaxed">{strike.reason}</p>
+                          <p className="text-gray-500 text-xs mt-1 font-mono">{moment(strike.createdAt).format("DD/MM/YYYY HH:mm")}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm bg-black/20 p-3 rounded-lg border border-white/5 text-center">Kênh này chưa từng bị đánh gậy hệ thống.</p>
+                )}
+              </div>
+            ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               {selectedReport.status === "Chờ xử lý" && (

@@ -160,6 +160,8 @@ export default function CreateCommunityPost({
       console.error(err);
       if (err.response?.status === 403) {
         setError(err.response.data || "Bạn không có quyền đăng bài viết này.");
+      } else if (err.response?.status === 400) {
+        setError(err.response.data || "Dữ liệu không hợp lệ.");
       } else {
         setError("Có lỗi xảy ra khi đăng bài.");
       }

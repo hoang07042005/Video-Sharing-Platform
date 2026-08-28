@@ -369,6 +369,215 @@ namespace Video_Platform_Backend.Controllers
             return list;
         }
 
+        // GET: api/admin/reports/target/{targetId}/strikes
+        [HttpGet("target/{targetId}/strikes")]
+        public async Task<ActionResult> GetStrikeHistory(Guid targetId, [FromQuery] string targetType)
+        {
+            if (string.IsNullOrWhiteSpace(targetType)) return BadRequest("Missing targetType");
+            var normalizedTargetType = targetType.Trim();
+            Guid channelId = Guid.Empty;
+            string channelName = "";
+
+            if (normalizedTargetType == "Video")
+            {
+                var video = await _context.Videos.Include(v => v.Channel).FirstOrDefaultAsync(v => v.Id == targetId);
+                if (video != null && video.Channel != null) { channelId = video.ChannelId; channelName = video.Channel.ChannelName; }
+            }
+            else if (normalizedTargetType == "Livestream")
+            {
+                var live = await _context.Livestreams.Include(l => l.Channel).FirstOrDefaultAsync(l => l.Id == targetId);
+                if (live != null && live.Channel != null) { channelId = live.ChannelId; channelName = live.Channel.ChannelName; }
+            }
+            else if (normalizedTargetType == "Channel")
+            {
+                var ch = await _context.Channels.FirstOrDefaultAsync(c => c.Id == targetId);
+                if (ch != null) { channelId = ch.Id; channelName = ch.ChannelName; }
+            }
+
+            if (channelId == Guid.Empty)
+            {
+                return NotFound(new { message = "Không tìm thấy kênh sở hữu của đối tượng này." });
+            }
+
+            var channel = await _context.Channels.FirstOrDefaultAsync(c => c.Id == channelId);
+            var strikes = await _context.ChannelStrikes
+                .Where(s => s.ChannelId == channelId)
+                .OrderByDescending(s => s.CreatedAt)
+                .ToListAsync();
+
+            var historyWithReports = new List<object>();
+
+            foreach (var strike in strikes)
+            {
+                var relatedReports = new List<object>();
+                object targetInfo = null;
+
+                if (strike.TargetId.HasValue)
+                {
+                    if (strike.TargetType == "Livestream")
+                    {
+                        var live = await _context.Livestreams.FirstOrDefaultAsync(l => l.Id == strike.TargetId.Value);
+                        if (live != null)
+                        {
+                            targetInfo = new {
+                                Title = live.Title,
+                                ActualStartTime = live.ActualStartTime,
+                                EndTime = live.EndTime
+                            };
+                        }
+                    }
+
+                    var reports = await _context.Reports
+                        .Include(r => r.Reporter)
+                        .ThenInclude(u => u.Profile)
+                        .Where(r => r.TargetId == strike.TargetId.Value && r.Status == "Resolved")
+                        .OrderByDescending(r => r.CreatedAt)
+                        .Select(r => new
+                        {
+                            r.Id,
+                            ReporterName = r.Reporter.Profile != null ? r.Reporter.Profile.FullName : "Người dùng",
+                            ReporterEmail = r.Reporter.Email,
+                            ReporterAvatar = r.Reporter.Profile != null ? r.Reporter.Profile.AvatarUrl : "",
+                            r.Reason,
+                            r.Description,
+                            r.CreatedAt
+                        })
+                        .ToListAsync();
+                    
+                    relatedReports.AddRange(reports);
+                }
+
+                historyWithReports.Add(new {
+                    strike.Id,
+                    strike.Reason,
+                    strike.CreatedAt,
+                    strike.TargetType,
+                    TargetInfo = targetInfo,
+                    Reports = relatedReports
+                });
+            }
+
+            return Ok(new {
+                ChannelId = channelId,
+                ChannelName = channelName,
+                TotalStrikes = channel?.Strikes ?? 0,
+                IsSuspended = channel?.IsSuspended ?? false,
+                History = historyWithReports
+            });
+        }
+
+        // GET: api/admin/reports/channels/strikes/stats
+        [HttpGet("channels/strikes/stats")]
+        public async Task<ActionResult<object>> GetStrikeStats()
+        {
+            var totalStrikes = await _context.ChannelStrikes.CountAsync();
+            var uniqueAffectedChannels = await _context.ChannelStrikes.Select(s => s.ChannelId).Distinct().CountAsync();
+            var severeStrikesChannels = await _context.Channels.CountAsync(c => c.Strikes >= 3);
+            var activeWarningChannels = await _context.Channels.CountAsync(c => c.Strikes == 1 || c.Strikes == 2);
+            
+            // Channels that have history of strikes but currently have 0 strikes
+            var channelsWithHistory = await _context.ChannelStrikes.Select(s => s.ChannelId).Distinct().ToListAsync();
+            var expiredStrikesChannels = await _context.Channels.CountAsync(c => c.Strikes == 0 && channelsWithHistory.Contains(c.Id));
+
+            return Ok(new
+            {
+                TotalStrikes = totalStrikes,
+                AffectedChannels = uniqueAffectedChannels,
+                SevereStrikes = severeStrikesChannels,
+                ActiveWarnings = activeWarningChannels,
+                ExpiredStrikes = expiredStrikesChannels
+            });
+        }
+
+        // GET: api/admin/reports/channels/strikes
+        [HttpGet("channels/strikes")]
+        public async Task<ActionResult<object>> GetChannelsWithStrikes(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? strikes = null,
+            [FromQuery] string? search = null)
+        {
+            var query = _context.Channels
+                .Include(c => c.User)
+                .ThenInclude(u => u.Profile)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(c => c.ChannelName.Contains(search));
+            }
+
+            if (strikes.HasValue)
+            {
+                if (strikes.Value == 0) // Expired strikes
+                {
+                    // Channels with 0 strikes but have history in ChannelStrikes
+                    var channelsWithHistory = await _context.ChannelStrikes.Select(s => s.ChannelId).Distinct().ToListAsync();
+                    query = query.Where(c => c.Strikes == 0 && channelsWithHistory.Contains(c.Id));
+                }
+                else
+                {
+                    query = query.Where(c => c.Strikes == strikes.Value);
+                }
+            }
+            else
+            {
+                query = query.Where(c => c.Strikes > 0);
+            }
+
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            
+            var channels = await query
+                .OrderByDescending(c => c.Strikes)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(c => new AdminChannelStrikeDTO
+                {
+                    ChannelId = c.Id,
+                    ChannelName = c.ChannelName,
+                    Avatar = c.User.Profile != null ? c.User.Profile.AvatarUrl : "",
+                    TotalStrikes = c.Strikes,
+                    IsSuspended = c.IsSuspended
+                })
+                .ToListAsync();
+
+            // Lấy thông tin strike gần nhất cho từng kênh
+            foreach (var ch in channels)
+            {
+                var latestStrike = await _context.ChannelStrikes
+                    .Where(s => s.ChannelId == ch.ChannelId)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .FirstOrDefaultAsync();
+                
+                if (latestStrike != null)
+                {
+                    ch.LatestStrikeReason = latestStrike.Reason;
+                    ch.LatestStrikeDate = latestStrike.CreatedAt;
+                    ch.LatestTargetType = latestStrike.TargetType;
+
+                    if (latestStrike.TargetType == "Livestream" && latestStrike.TargetId.HasValue)
+                    {
+                        var live = await _context.Livestreams.FirstOrDefaultAsync(l => l.Id == latestStrike.TargetId.Value);
+                        if (live != null)
+                        {
+                            ch.LatestTargetTitle = live.Title;
+                            ch.LatestTargetStartTime = live.ActualStartTime;
+                            ch.LatestTargetEndTime = live.EndTime;
+                        }
+                    }
+                }
+            }
+
+            return Ok(new
+            {
+                Data = channels,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                TotalItems = totalItems
+            });
+        }
+
         private string GetPriority(string? reason)
         {
             if (string.IsNullOrEmpty(reason)) return "Kiểm tra lại";

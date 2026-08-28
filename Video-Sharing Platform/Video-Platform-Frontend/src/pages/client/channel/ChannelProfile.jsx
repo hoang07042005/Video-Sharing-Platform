@@ -913,7 +913,7 @@ function LivestreamsTab({ channelId }) {
       {livestreams.map((ls) => (
         <Link
           key={ls.id}
-          to={`/live/${ls.id}`}
+          to={ls.status === "ended" ? `/watch/${ls.id}` : `/live/${ls.id}`}
           className="group bg-[#141414] border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
         >
           {/* Thumbnail */}

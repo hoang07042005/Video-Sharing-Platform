@@ -50,6 +50,7 @@ import AdminRoles from './pages/admin/roles/AdminRoles';
 import AdminReports from './pages/admin/reports/AdminReports';
 import AdminComplaints from './pages/admin/reports/AdminComplaints';
 import AdminViolations from './pages/admin/reports/AdminViolations';
+import AdminStrikes from './pages/admin/reports/AdminStrikes';
 import AdminSettings from './pages/admin/settings/AdminSettings';
 import AdminTransactions from './pages/admin/transactions/AdminTransactions';
 import AdminFeedbacks from './pages/admin/feedback/AdminFeedbacks';
@@ -190,6 +191,7 @@ function App() {
             <Route path="complaints" element={<AdminComplaints />} />
             <Route path="activities" element={<AdminActivities />} />
             <Route path="violations" element={<AdminViolations />} />
+            <Route path="strikes" element={<AdminStrikes />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="transactions" element={<AdminTransactions />} />
             <Route path="feedbacks" element={<AdminFeedbacks />} />

@@ -10,6 +10,8 @@ using Video_Platform_Backend.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Authorization;
 
+using Video_Platform_Backend.Extensions;
+
 namespace Video_Platform_Backend.Controllers
 {
     [ApiController]
@@ -91,6 +93,7 @@ namespace Video_Platform_Backend.Controllers
             _context.Profiles.Add(profile);
             _context.Channels.Add(channel);
 
+            this.AddAuditLog(_context, "Đăng ký tài khoản", "register", "Auth", "Người dùng đã tạo tài khoản mới thành công", user.Id);
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Registration successful" });
@@ -117,6 +120,9 @@ namespace Video_Platform_Backend.Controllers
             }
 
             var token = GenerateJwtToken(user);
+
+            this.AddAuditLog(_context, "Đăng nhập hệ thống", "login", "Auth", "Người dùng đã đăng nhập vào hệ thống thành công", user.Id);
+            await _context.SaveChangesAsync();
 
             var userRoles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
             if (!userRoles.Any()) userRoles.Add("User");
@@ -330,6 +336,7 @@ namespace Video_Platform_Backend.Controllers
                     _context.Profiles.Add(profile);
                     _context.Channels.Add(channel);
 
+                    this.AddAuditLog(_context, "Đăng ký tài khoản (Google)", "register", "Auth", "Người dùng đã tạo tài khoản mới qua Google", user.Id);
                     await _context.SaveChangesAsync();
                 }
                 else
@@ -361,6 +368,10 @@ namespace Video_Platform_Backend.Controllers
                 }
 
                 var token = GenerateJwtToken(user);
+                
+                this.AddAuditLog(_context, "Đăng nhập hệ thống (Google)", "login", "Auth", "Người dùng đăng nhập thành công bằng Google", user.Id);
+                await _context.SaveChangesAsync();
+
                 var roles = user.UserRoles?.Select(ur => ur.Role.Name).ToList() ?? new List<string> { "User" };
 
                 return Ok(new AuthResponseDto

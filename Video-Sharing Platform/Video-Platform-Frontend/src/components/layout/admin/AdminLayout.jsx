@@ -21,6 +21,7 @@ import {
   HandCoins,
   Trophy,
   HelpCircle,
+  AlertOctagon,
 } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect } from "react";
@@ -126,6 +127,7 @@ export default function AdminLayout() {
             icon: AlertTriangle,
           },
           { name: "Vi phạm", path: "/admin/violations", icon: ShieldAlert },
+          { name: "Lịch sử đánh gậy", path: "/admin/strikes", icon: AlertOctagon },
           {
             name: "Phản hồi & Góp ý",
             path: "/admin/feedbacks",

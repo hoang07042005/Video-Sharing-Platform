@@ -116,4 +116,19 @@ namespace Video_Platform_Backend.DTOs
         public int Copyright { get; set; }
         public int Inappropriate { get; set; }
     }
+
+    public class AdminChannelStrikeDTO
+    {
+        public Guid ChannelId { get; set; }
+        public string ChannelName { get; set; } = null!;
+        public string Avatar { get; set; } = null!;
+        public int TotalStrikes { get; set; }
+        public bool IsSuspended { get; set; }
+        public string? LatestStrikeReason { get; set; }
+        public DateTime? LatestStrikeDate { get; set; }
+        public string? LatestTargetType { get; set; }
+        public string? LatestTargetTitle { get; set; }
+        public DateTime? LatestTargetStartTime { get; set; }
+        public DateTime? LatestTargetEndTime { get; set; }
+    }
 }

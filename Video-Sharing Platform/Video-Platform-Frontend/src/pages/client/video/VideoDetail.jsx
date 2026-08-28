@@ -1508,7 +1508,7 @@ export default function VideoDetail() {
                       {/* Thumbnail */}
                       <div className="relative w-[88px] h-[50px] shrink-0 rounded overflow-hidden bg-black">
                         <img
-                          src={pv.thumbnailUrl}
+                          src={pv.thumbnailUrl || "https://via.placeholder.com/320x180?text=Video"}
                           alt={pv.title}
                           className="w-full h-full object-cover"
                         />
@@ -1578,7 +1578,7 @@ export default function VideoDetail() {
                       >
                         <div className="w-40 md:w-44 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                           <img
-                            src={recVideo.thumbnailUrl}
+                            src={recVideo.thumbnailUrl || "https://via.placeholder.com/320x180?text=Video"}
                             alt={recVideo.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -1733,7 +1733,7 @@ export default function VideoDetail() {
                       >
                         <div className="relative w-full aspect-[4/6] rounded-xl overflow-hidden bg-[#1A1A1A]">
                           <img
-                            src={short.thumbnailUrl}
+                            src={short.thumbnailUrl || "https://via.placeholder.com/320x180?text=Video"}
                             alt={short.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -1783,7 +1783,7 @@ export default function VideoDetail() {
                     >
                       <div className="w-40 md:w-48 h-[90px] md:h-[100px] rounded-xl overflow-hidden shrink-0 relative bg-[#1A1A1A]">
                         <img
-                          src={recVideo.thumbnailUrl}
+                          src={recVideo.thumbnailUrl || "https://via.placeholder.com/320x180?text=Video"}
                           alt={recVideo.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />

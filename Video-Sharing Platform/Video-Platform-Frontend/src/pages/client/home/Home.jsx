@@ -54,6 +54,7 @@ function SmallVideoCard({ video }) {
     <div
       onClick={() =>
         navigate(
+
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }
@@ -139,6 +140,7 @@ function HorizontalVideoCard({ video }) {
     <div
       onClick={() =>
         navigate(
+
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }

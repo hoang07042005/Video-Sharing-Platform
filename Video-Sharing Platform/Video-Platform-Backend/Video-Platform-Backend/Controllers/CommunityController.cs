@@ -54,8 +54,7 @@ public class CommunityController : ControllerBase
 
         if (filter == "latest")
         {
-            var twoDaysAgo = DateTime.UtcNow.AddDays(-2);
-            query = query.Where(p => p.CreatedAt >= twoDaysAgo).OrderByDescending(p => p.CreatedAt);
+            query = query.OrderByDescending(p => p.CreatedAt);
         }
         else if (filter == "popular")
         {
@@ -120,6 +119,17 @@ public class CommunityController : ControllerBase
     [Authorize]
     public async Task<ActionResult<CommunityPostDto>> CreatePost([FromBody] CreateCommunityPostDto dto)
     {
+        if (!string.IsNullOrWhiteSpace(dto.Content))
+        {
+            var badWords = new[] { "đm", "địt", "lồn", "cặc", "vcl", "vl", "đĩ", "phò", "đụ", "cứt" };
+            var lowerContent = dto.Content.ToLower();
+            var words = lowerContent.Split(new[] { ' ', '.', ',', '!', '?', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Any(w => badWords.Contains(w)) || lowerContent.Contains("chó đẻ") || lowerContent.Contains("địt mẹ"))
+            {
+                return BadRequest("Nội dung bài viết chứa từ ngữ phản cảm, vi phạm tiêu chuẩn cộng đồng.");
+            }
+        }
+
         var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
         
         Guid targetChannelId;
@@ -236,13 +246,19 @@ public class CommunityController : ControllerBase
             // Don't notify the person who just posted
             notifyUserIds.Remove(userId);
 
+            // Filter out any ghost users (e.g. from deleted accounts without cascade delete)
+            var validUserIds = await _context.Users
+                .Where(u => notifyUserIds.Contains(u.Id))
+                .Select(u => u.Id)
+                .ToListAsync();
+
             var notifications = new List<Notification>();
             var channelTitle = targetChannel.User.Profile != null ? targetChannel.User.Profile.FullName : targetChannel.User.Email;
             var message = finalIsMembersOnly 
                 ? $"{channelTitle} vừa đăng một bài viết dành riêng cho hội viên."
                 : $"{channelTitle} vừa đăng một bài viết mới trong cộng đồng.";
 
-            foreach (var nUserId in notifyUserIds)
+            foreach (var nUserId in validUserIds)
             {
                 notifications.Add(new Notification
                 {
