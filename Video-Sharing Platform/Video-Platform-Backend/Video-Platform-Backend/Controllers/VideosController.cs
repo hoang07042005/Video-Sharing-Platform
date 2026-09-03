@@ -14,6 +14,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Video_Platform_Backend.Extensions;
 
+using Microsoft.AspNetCore.SignalR;
+using Video_Platform_Backend.Hubs;
+
 namespace Video_Platform_Backend.Controllers
 {
     [Route("api/[controller]")]
@@ -22,11 +25,13 @@ namespace Video_Platform_Backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHubContext<VideoHub> _hubContext;
 
-        public VideosController(ApplicationDbContext context, IServiceScopeFactory scopeFactory)
+        public VideosController(ApplicationDbContext context, IServiceScopeFactory scopeFactory, IHubContext<VideoHub> hubContext)
         {
             _context = context;
             _scopeFactory = scopeFactory;
+            _hubContext = hubContext;
         }
 
         // GET: api/videos/categories
@@ -45,6 +50,77 @@ namespace Video_Platform_Backend.Controllers
                 .ToListAsync();
 
             return Ok(categories);
+        }
+
+        // GET: api/videos/recommended
+        [HttpGet("recommended")]
+        public async Task<IActionResult> GetRecommendedVideos()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            var query = _context.Videos
+                .Include(v => v.Channel)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Profile)
+                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && !v.Channel.IsSuspended);
+
+            List<Guid> subscribedChannelIds = new List<Guid>();
+            if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out var userGuid))
+            {
+                var userChannel = await _context.Channels.FirstOrDefaultAsync(c => c.UserId == userGuid);
+                if (userChannel != null)
+                {
+                    subscribedChannelIds = await _context.Followers
+                        .Where(f => f.FollowerId == userChannel.Id)
+                        .Select(f => f.ChannelId)
+                        .ToListAsync();
+                }
+            }
+
+            var baseVideos = await query.Select(v => new VideoResponseDTO
+            {
+                Id = v.Id,
+                Title = v.Title,
+                Description = v.Description ?? "",
+                ThumbnailUrl = _context.VideoThumbnails
+                    .Where(t => t.VideoId == v.Id)
+                    .Select(t => t.ThumbnailUrl)
+                    .FirstOrDefault() ?? "",
+                Duration = v.Duration ?? 0,
+                ViewsCount = v.ViewsCount ?? 0,
+                CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
+                IsShort = v.IsShort ?? false,
+                CategoryId = v.CategoryId,
+                ChannelId = v.ChannelId,
+                ChannelName = v.Channel.ChannelName,
+                ChannelHandle = v.Channel.Handle,
+                ChannelAvatarUrl = v.Channel.User.Profile != null 
+                    ? (v.Channel.User.Profile.AvatarUrl ?? "") 
+                    : "",
+                ChannelIsVerified = v.Channel.IsVerified, IsMembersOnly = v.Visibility == "Private"
+            }).ToListAsync();
+
+            var random = new Random();
+            
+            var recommended = baseVideos.OrderByDescending(v => 
+            {
+                double score = 0;
+                
+                if (subscribedChannelIds.Contains(v.ChannelId)) 
+                    score += 10000;
+                    
+                score += v.ViewsCount * 0.1;
+                
+                var daysOld = (DateTime.UtcNow - v.CreatedAt).TotalDays;
+                if (daysOld < 7) score += 5000;
+                else if (daysOld < 30) score += 2000;
+                
+                score += random.Next(0, 3000);
+                
+                return score;
+            }).Take(50).ToList();
+
+            return Ok(recommended);
         }
 
         // GET: api/videos
@@ -76,7 +152,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = v.Channel.User.Profile != null 
                         ? (v.Channel.User.Profile.AvatarUrl ?? "") 
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified,
+                    ChannelIsVerified = v.Channel.IsVerified, IsMembersOnly = v.Visibility == "Private",
                     IsLivestream = false,
                     Status = "ended"
                 })
@@ -171,7 +247,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = v.Channel.User.Profile != null
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified
+                    ChannelIsVerified = v.Channel.IsVerified, IsMembersOnly = v.Visibility == "Private"
                 })
                 .ToListAsync();
 
@@ -352,7 +428,7 @@ namespace Video_Platform_Backend.Controllers
                 ChannelIsVerified = video.Channel.IsVerified,
                 SubscriberCount = subscriberCount,
                 OwnerUserId = video.Channel.UserId,
-                IsMembersOnly = !canWatch,
+                IsMembersOnly = video.Visibility == "Private",
                 Resolutions = canWatch ? video.VideoResolutions.Select(r => new VideoResolutionDTO
                 {
                     Id = r.Id,
@@ -648,6 +724,9 @@ namespace Video_Platform_Backend.Controllers
                 Replies = new List<CommentReplyDTO>()
             };
 
+            // Broadcast real-time comment
+            await _hubContext.Clients.Group(id.ToString()).SendAsync("ReceiveNewComment", commentDto);
+
             return Ok(commentDto);
         }
 
@@ -697,6 +776,9 @@ namespace Video_Platform_Backend.Controllers
                 FullName = user?.Profile?.FullName ?? "Anonymous",
                 AvatarUrl = user?.Profile?.AvatarUrl ?? ""
             };
+
+            // Broadcast real-time reply
+            await _hubContext.Clients.Group(comment.VideoId.ToString()).SendAsync("ReceiveNewReply", new { commentId = comment.Id, reply = replyDto });
 
             return Ok(replyDto);
         }
@@ -797,7 +879,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = h.Video.Channel.User.Profile != null 
                         ? (h.Video.Channel.User.Profile.AvatarUrl ?? "") 
                         : "",
-                    ChannelIsVerified = h.Video.Channel.IsVerified,
+                    ChannelIsVerified = h.Video.Channel.IsVerified, IsMembersOnly = h.Video.Visibility == "Private",
                     IsShort = h.Video.IsShort ?? false,
                     WatchedDuration = h.WatchedDuration ?? 0
                 })
@@ -920,7 +1002,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = v.Channel.User.Profile != null
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified
+                    ChannelIsVerified = v.Channel.IsVerified, IsMembersOnly = v.Visibility == "Private"
                 })
                 .ToListAsync();
 
@@ -987,7 +1069,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelName = video.Channel.ChannelName,
                     ChannelHandle = video.Channel.Handle,
                     ChannelAvatarUrl = video.Channel.User.Profile?.AvatarUrl ?? "",
-                    ChannelIsVerified = video.Channel.IsVerified,
+                    ChannelIsVerified = video.Channel.IsVerified, IsMembersOnly = video.Visibility == "Private",
                     SubscriberCount = subscriberCount,
                     OwnerUserId = video.Channel.UserId,
                     IsLiked = isLiked,
@@ -1046,7 +1128,7 @@ namespace Video_Platform_Backend.Controllers
                 ChannelName = v.Channel.ChannelName,
                 ChannelHandle = v.Channel.Handle,
                 ChannelAvatarUrl = v.Channel.User?.Profile?.AvatarUrl ?? "",
-                ChannelIsVerified = v.Channel.IsVerified
+                ChannelIsVerified = v.Channel.IsVerified, IsMembersOnly = v.Visibility == "Private"
             }).ToList();
 
             return Ok(result);

@@ -18,6 +18,7 @@ import {
   MoreVertical,
   LayoutGrid,
   List,
+  Crown,
   SlidersHorizontal,
   Loader2,
   Activity,
@@ -28,6 +29,7 @@ import {
   Zap,
   Play,
 } from "lucide-react";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 const formatViews = (v) => {
@@ -164,46 +166,57 @@ function VideoItem({ video, index, onNavigate, onRemove }) {
         {index + 1}
       </div>
       
-      <div className="relative w-56 aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] shrink-0 border border-white/10">
-        {!err && video.thumbnailUrl ? (
-          video.isShort ? (
-            <>
-              <img
-                src={video.thumbnailUrl}
-                alt={video.title}
-                className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
-              />
+      <div className="relative w-56 aspect-video rounded-xl bg-[#1A1A1A] shrink-0 border border-white/10">
+        <div className="absolute inset-0 overflow-hidden rounded-xl">
+          {!err && video.thumbnailUrl ? (
+            video.isShort ? (
+              <>
+                <img
+                  src={video.thumbnailUrl}
+                  alt={video.title}
+                  className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-60 transition-transform duration-300 group-hover:scale-110"
+                />
+                <img
+                  src={video.thumbnailUrl}
+                  alt={video.title}
+                  onError={() => setErr(true)}
+                  className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+                />
+              </>
+            ) : (
               <img
                 src={video.thumbnailUrl}
                 alt={video.title}
                 onError={() => setErr(true)}
-                className="relative w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 z-10"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-            </>
+            )
           ) : (
-            <img
-              src={video.thumbnailUrl}
-              alt={video.title}
-              onError={() => setErr(true)}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          )
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <PlayCircle className="w-6 h-6 text-gray-600" />
-          </div>
-        )}
+            <div className="w-full h-full flex items-center justify-center">
+              <PlayCircle className="w-6 h-6 text-gray-600" />
+            </div>
+          )}
+          
+          {/* Indicators */}
+          {video.isShort && (
+            <div className="absolute bottom-1.5 left-1.5 bg-black/90 text-white text-[11px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 z-20">
+              <Zap className="w-3 h-3 fill-white" /> SHORTS
+            </div>
+          )}
+          
+          {video.isMembersOnly && (
+            <span className="absolute top-1.5 left-1.5 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={12} /> Dành cho hội viên
+            </span>
+          )}
+          <span className="absolute bottom-1.5 right-1.5 bg-black/90 text-white text-[11px] font-medium px-1.5 py-0.5 rounded z-20">
+            {formatDuration(video.duration || 0)}
+          </span>
+        </div>
         
-        {/* Indicators */}
-        {video.isShort && (
-          <div className="absolute bottom-1.5 left-1.5 bg-black/90 text-white text-[11px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 z-20">
-            <Zap className="w-3 h-3 fill-white" /> SHORTS
-          </div>
-        )}
-        
-        <span className="absolute bottom-1.5 right-1.5 bg-black/90 text-white text-[11px] font-medium px-1.5 py-0.5 rounded z-20">
-          {formatDuration(video.duration || 0)}
-        </span>
+        <div className="absolute top-1 right-1 z-30">
+          <VideoDropdownMenu video={video} />
+        </div>
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col pt-1">
@@ -576,7 +589,7 @@ export default function Playlists() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans pb-20">
+    <div className="min-h-screen bg-[#0F0F0F] text-white font-sans pb-20">
       {/* ── Toast ── */}
       {toast && (
         <div className="fixed top-20 right-6 z-50 flex items-center gap-2 bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 shadow-2xl text-sm text-white">
@@ -1016,7 +1029,7 @@ export default function Playlists() {
             {/* ── CONTENT ── */}
             {loading ? (
               <div
-                className={`${viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5" : "space-y-4"}`}
+                className={`${viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5" : "space-y-4"}`}
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                   <div key={i} className="animate-pulse">
@@ -1043,7 +1056,7 @@ export default function Playlists() {
                 </div>
               </div>
             ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
                 {filtered.map((pl) => (
                   <PlaylistCard
                     key={pl.id}

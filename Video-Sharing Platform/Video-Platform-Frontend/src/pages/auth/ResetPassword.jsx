@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Lock,
@@ -23,6 +23,19 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
+
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+
+  useEffect(() => {
+    axios
+      .get("/api/admin/settings/public")
+      .then((res) => {
+        if (res.data && res.data.logoUrl) {
+          setLogoUrl(res.data.logoUrl);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -61,7 +74,7 @@ export default function ResetPassword() {
           <div className="flex items-center gap-6 mb-10">
             <Link to="/" className="block shrink-0">
               <img
-                src="/logotrang.png"
+                src={logoUrl}
                 alt="Video Sharing Platform"
                 className="h-22 object-contain object-left"
               />

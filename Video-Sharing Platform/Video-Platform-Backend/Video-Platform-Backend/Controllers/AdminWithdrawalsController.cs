@@ -148,9 +148,14 @@ namespace Video_Platform_Backend.Controllers
                             dto.ReceiptUrl
                         );
 
-                        string receiptHtml = string.IsNullOrEmpty(dto.ReceiptUrl) 
+                        var logoSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "logoUrl");
+                        string logoUrl = logoSetting?.Value ?? "https://dummyimage.com/200x50/3C1671/ffffff.png&text=VIDEO+PLATFORM";
+                        
+                        string receiptUrl = dto.ReceiptUrl;
+
+                        string receiptHtml = string.IsNullOrEmpty(receiptUrl) 
                             ? "<p style='color: #666666; font-size: 14px; font-style: italic;'>Không có biên lai đính kèm.</p>" 
-                            : $"<div style='margin-bottom: 15px; text-align: center;'><img src='{dto.ReceiptUrl}' alt='Biên lai giao dịch' style='max-width: 100%; border-radius: 8px; border: 1px solid #eeeeee;'/></div>";
+                            : $"<div style='margin-bottom: 15px; text-align: center;'><img src=\"cid:receipt_img\" alt='Biên lai giao dịch' style='max-width: 100%; border-radius: 8px; border: 1px solid #eeeeee;'/></div>";
 
                         string maskedAccount = new string('*', Math.Max(0, request.BankAccountNumber.Length - 4)) + request.BankAccountNumber.Substring(Math.Max(0, request.BankAccountNumber.Length - 4));
 
@@ -163,7 +168,7 @@ namespace Video_Platform_Backend.Controllers
                             
                             <div>
                                 <div style='margin-bottom: 20px; text-align: center;'>
-                                    <img src='https://dummyimage.com/200x50/3C1671/ffffff.png&text=VIDEO+PLATFORM' alt='Video Platform' style='height: 40px;' />
+                                    <img src=""cid:logo_img"" alt='Video Platform' style='height: 40px;' />
                                 </div>
                                 
                                 <h1 style='color: #3C1671; font-size: 24px; margin-bottom: 10px; text-align: center;'>Thanh toán thành công</h1>
@@ -241,7 +246,17 @@ namespace Video_Platform_Backend.Controllers
                             </div>
                         </div>";
 
-                        await _emailService.SendEmailAsync(request.User.Email, "Thanh toán rút tiền thành công", emailHtml);
+                        var inlineImages = new Dictionary<string, string>
+                        {
+                            { "logo_img", logoUrl }
+                        };
+                        
+                        if (!string.IsNullOrEmpty(receiptUrl))
+                        {
+                            inlineImages.Add("receipt_img", receiptUrl);
+                        }
+
+                        await _emailService.SendEmailAsync(request.User.Email, "Thanh toán rút tiền thành công", emailHtml, null, inlineImages);
                     }
                     else if (dto.Status == "Rejected")
                     {

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import * as signalR from "@microsoft/signalr";
+import { toast } from "react-toastify";
 import {
   Search,
   Video,
@@ -111,6 +113,36 @@ export default function Header({ toggleSidebar }) {
         .then((res) => setUnreadCount(res.data.unreadCount || 0))
         .catch((err) => console.error("Error fetching unread count", err));
     }
+  }, [token]);
+
+  // SignalR for real-time notifications
+  useEffect(() => {
+    if (!token) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("/hubs/notification", {
+        accessTokenFactory: () => token,
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection
+      .start()
+      .then(() => {
+        connection.on("ReceiveNotification", (notification) => {
+          setUnreadCount((prev) => prev + 1);
+          setNotifications((prev) => [notification, ...prev]);
+          toast.info(notification.message || "Bạn có thông báo mới!", {
+            position: "bottom-right",
+            autoClose: 5000,
+          });
+        });
+      })
+      .catch((err) => console.error("SignalR Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
   }, [token]);
 
   useEffect(() => {
@@ -356,16 +388,16 @@ export default function Header({ toggleSidebar }) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-[#0F0F0F]  border-white/5 flex items-center justify-between px-3 z-50">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-[#0F0F0F] border-white/5 flex items-center justify-between px-3 z-50 gap-2">
       {/* Left Area: Menu & Logo */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={toggleSidebar}
           className="p-2 text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <Link to="/" className="flex items-center h-18 w-28 ml-2">
+        <Link to="/" className="flex items-center h-18 w-24 ml-1 shrink-0">
           <img
             src={logoUrl}
             alt="Video Sharing Platform"
@@ -375,13 +407,13 @@ export default function Header({ toggleSidebar }) {
       </div>
 
       {/* Search Bar */}
-      <div className="flex-1 max-w-2xl mx-8" ref={searchRef}>
+      <div className="flex-1 min-w-0 mx-2 sm:mx-4 md:mx-6" ref={searchRef}>
         <form
           onSubmit={handleSearchSubmit}
           className="relative flex justify-end"
         >
-          <div className="relative w-[500px] h-8 flex justify-end">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none">
+          <div className="relative w-full max-w-[480px] h-8 flex justify-end">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none">
               <Search className="w-full h-full" />
             </div>
             <input
@@ -393,14 +425,14 @@ export default function Header({ toggleSidebar }) {
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
-              className="w-full bg-[#1A1A1A] border border-white/5 rounded-full py-2.5 pl-12 pr-16 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-white/20 focus:bg-[#202020] transition-colors text-sm"
+              className="w-full bg-[#1A1A1A] border border-white/5 rounded-full py-2.5 pl-10 pr-12 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-white/20 focus:bg-[#202020] transition-colors text-sm"
             />
             {/* Action button inside input (optional look like youtube) */}
             <button
               type="submit"
-              className="absolute right-0 top-0 bottom-0 px-5 bg-white/5 hover:bg-white/10 border-l border-white/5 rounded-r-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute right-0 top-0 bottom-0 px-4 bg-white/5 hover:bg-white/10 border-l border-white/5 rounded-r-full text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-4 h-4" />
             </button>
           </div>
 
@@ -426,7 +458,7 @@ export default function Header({ toggleSidebar }) {
       </div>
 
       {/* Right Icons */}
-      <div className="flex items-center gap-0.5 ml-4">
+      <div className="flex items-center gap-0.5 ml-1 shrink-0">
         {token ? (
           <>
             <div
@@ -560,10 +592,10 @@ export default function Header({ toggleSidebar }) {
                   ? `/buy-coins?returnTo=${location.pathname}`
                   : "/buy-coins"
               }
-              className="flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 transition-colors mx-1 cursor-pointer"
+              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 transition-colors mx-1 cursor-pointer"
             >
               <Coins className="w-[18px] h-[18px] text-yellow-500" />
-              <span className="text-[13px] font-bold text-yellow-500">
+              <span className="text-[13px] font-bold text-yellow-500 hidden md:inline">
                 {coins.toLocaleString()} Xu
               </span>
             </Link>
@@ -573,7 +605,7 @@ export default function Header({ toggleSidebar }) {
             {currentPlan && (
               <Link
                 to="/premium"
-                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-full border ${currentPlan === "Premium" ? "border-[#FF9800]/60 bg-[#1f130b] shadow-[0_0_15px_rgba(255,152,0,0.3)]" : currentPlan === "Plus" ? "border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]" : "border-white/10 bg-[#1A1A1A] hover:bg-[#222]"} transition-colors cursor-pointer mx-1`}
+                className={`hidden sm:flex items-center justify-between gap-2 px-2 py-1 rounded-full border ${currentPlan === "Premium" ? "border-[#FF9800]/60 bg-[#1f130b] shadow-[0_0_15px_rgba(255,152,0,0.3)]" : currentPlan === "Plus" ? "border-[#9C27B0]/60 bg-[#140b1c] shadow-[0_0_15px_rgba(156,39,176,0.3)]" : "border-white/10 bg-[#1A1A1A] hover:bg-[#222]"} transition-colors cursor-pointer mx-1`}
               >
                 <div className="flex items-center justify-center">
                   {currentPlan === "Premium" ? (
@@ -587,7 +619,7 @@ export default function Header({ toggleSidebar }) {
                     <User className="w-5 h-5 text-gray-400" />
                   )}
                 </div>
-                <div className="flex flex-col pt-0.5">
+                <div className="hidden md:flex flex-col pt-0.5">
                   <span className="text-[12px] font-bold text-white leading-none">
                     {currentPlan === "Premium"
                       ? "Premium"
@@ -633,15 +665,15 @@ export default function Header({ toggleSidebar }) {
               className="relative flex items-center"
               ref={activeDropdown === "user" ? headerRef : null}
             >
-              <button
+                <button
                 onClick={() =>
                   setActiveDropdown(activeDropdown === "user" ? null : "user")
                 }
-                className="flex items-center gap-3 cursor-pointer text-left group relative"
+                className="flex items-center gap-2 cursor-pointer text-left group relative"
               >
-                <div className="relative">
+                <div className="relative shrink-0">
                   <div
-                    className={`w-11 h-11 rounded-full overflow-hidden border-[2px] transition-colors ${tier === 2 ? "border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" : tier === 1 ? "border-purple-500" : "border-[#272727] group-hover:border-gray-500"}`}
+                    className={`w-9 h-9 rounded-full overflow-hidden border-[2px] transition-colors ${tier === 2 ? "border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" : tier === 1 ? "border-purple-500" : "border-[#272727] group-hover:border-gray-500"}`}
                   >
                     <img
                       src={avatar}
@@ -657,26 +689,27 @@ export default function Header({ toggleSidebar }) {
                       />
                     </div>
                   )}
-                </div>
-                <div className="hidden md:flex flex-col">
-                  <span
-                    className={`text-[15px] font-bold leading-tight ${tier === 2 ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500" : "text-white"}`}
-                  >
-                    {handle || "Người dùng"}
-                  </span>
-                  <span className="text-[12px] text-gray-400 mt-0.5 group-hover:text-gray-300 transition-colors">
-                    Xem kênh của bạn
-                  </span>
-                  {isChannelVerified && (
-                    <div className="absolute top-6 right-0 bg-[#1a1a1a] rounded-full p-0.5">
+                  {isChannelVerified && tier < 1 && (
+                    <div className="absolute -bottom-1 -right-1 bg-[#1a1a1a] rounded-full p-0.5">
                       <CheckCircle
-                        className="w-4 h-4 text-white fill-green-500 shrink-0"
+                        className="w-3.5 h-3.5 text-white fill-green-500 shrink-0"
                         fill="currentColor"
                       />
                     </div>
                   )}
                 </div>
+                <div className="hidden lg:flex flex-col min-w-0 max-w-[90px]">
+                  <span
+                    className={`text-[14px] font-bold leading-tight truncate ${tier === 2 ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500" : "text-white"}`}
+                  >
+                    {handle || "Người dùng"}
+                  </span>
+                  <span className="text-[11px] text-gray-400 mt-0.5 group-hover:text-gray-300 transition-colors truncate">
+                    Xem kênh của bạn
+                  </span>
+                </div>
               </button>
+
 
               {activeDropdown === "user" && (
                 <div className="absolute right-0 top-full mt-4 w-56 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl overflow-hidden py-2 z-50">

@@ -6,6 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import axios from "axios";
+import * as signalR from "@microsoft/signalr";
 import {
   Loader2,
   ThumbsUp,
@@ -102,6 +103,48 @@ export default function VideoDetail() {
     setIsUpNextCancelled(false);
     setUpNextCountdown(10);
     setIsVideoReady(false);
+  }, [id]);
+
+  // SignalR for real-time comments
+  useEffect(() => {
+    if (!id) return;
+    
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("/hubs/video")
+      .withAutomaticReconnect()
+      .build();
+
+    connection
+      .start()
+      .then(() => {
+        connection.invoke("JoinVideo", id).catch(err => console.error("Error joining video group:", err));
+
+        connection.on("ReceiveNewComment", (newComment) => {
+          setComments((prev) => [newComment, ...prev]);
+        });
+
+        connection.on("ReceiveNewReply", ({ commentId, reply }) => {
+          setComments((prev) =>
+            prev.map((c) => {
+              if (c.id === commentId) {
+                return {
+                  ...c,
+                  replies: c.replies ? [...c.replies, reply] : [reply],
+                };
+              }
+              return c;
+            })
+          );
+        });
+      })
+      .catch((err) => console.error("SignalR Video Connection Error: ", err));
+
+    return () => {
+      if (connection.state === signalR.HubConnectionState.Connected) {
+        connection.invoke("LeaveVideo", id).catch(console.error);
+      }
+      connection.stop();
+    };
   }, [id]);
 
   // Close video context menu when clicking outside
@@ -1512,6 +1555,11 @@ export default function VideoDetail() {
                           alt={pv.title}
                           className="w-full h-full object-cover"
                         />
+                        {pv.isMembersOnly && (
+                          <span className="absolute top-1 left-1 bg-green-500/90 text-white text-[8px] font-bold px-1 py-0.5 rounded-[2px] z-20 flex items-center gap-1 shadow-md">
+                            <Crown size={8} /> Dành cho hội viên
+                          </span>
+                        )}
                         {pv.id === id && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                             <div className="flex gap-0.5 items-end h-3">
@@ -1582,6 +1630,11 @@ export default function VideoDetail() {
                             alt={recVideo.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
+                          {recVideo.isMembersOnly && (
+                            <span className="absolute top-1 left-1 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                              <Crown size={10} /> Dành cho hội viên
+                            </span>
+                          )}
                           <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
                             {Math.floor(recVideo.duration / 60)}:
                             {(recVideo.duration % 60)
@@ -1743,6 +1796,11 @@ export default function VideoDetail() {
                             <Zap className="w-4 h-4 text-white fill-white" />
                           </div>
 
+                          {short.isMembersOnly && (
+                            <span className="absolute top-1 left-1 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                              <Crown size={10} /> Dành cho hội viên
+                            </span>
+                          )}
                           {/* Time badge */}
                           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
                             {Math.floor(short.duration / 60)}:
@@ -1787,6 +1845,11 @@ export default function VideoDetail() {
                           alt={recVideo.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {recVideo.isMembersOnly && (
+                          <span className="absolute top-1 left-1 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                            <Crown size={10} /> Dành cho hội viên
+                          </span>
+                        )}
                         <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
                           {Math.floor(recVideo.duration / 60)}:
                           {(recVideo.duration % 60).toString().padStart(2, "0")}

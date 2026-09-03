@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Mail,
@@ -26,7 +26,21 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
+
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+
+  useEffect(() => {
+    axios
+      .get("/api/admin/settings/public")
+      .then((res) => {
+        if (res.data && res.data.logoUrl) {
+          setLogoUrl(res.data.logoUrl);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,7 +71,7 @@ export default function Register() {
           <div className="flex items-center gap-6 mb-10">
             <Link to="/" className="block shrink-0">
               <img
-                src="/logotrang.png"
+                src={logoUrl}
                 alt="Video Sharing Platform"
                 className="h-22 object-contain object-left"
               />
@@ -191,9 +205,23 @@ export default function Register() {
               </div>
             </div>
 
+            {/* Checkbox */}
+            <div className="flex items-center gap-3 mt-4">
+              <input
+                type="checkbox"
+                id="agreeToTerms"
+                className="w-5 h-5 rounded border-gray-600 bg-[#202020] text-[#FF5722] focus:ring-[#FF5722] focus:ring-offset-0 cursor-pointer accent-[#FF5722]"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+              />
+              <label htmlFor="agreeToTerms" className="text-sm text-gray-400 cursor-pointer">
+                Tôi đồng ý với <Link to="/policies?tab=tos" className="text-[#FF8A65] hover:text-[#FFCC80] transition-colors">Điều khoản dịch vụ</Link> và <Link to="/policies?tab=security" className="text-[#FF8A65] hover:text-[#FFCC80] transition-colors">Chính sách bảo mật</Link>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               className="w-full bg-gradient-to-r from-[#FF5722] to-[#E64A19] hover:from-[#FF7043] hover:to-[#D84315] text-white font-bold text-base rounded-xl py-3.5 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FF5722]/20 disabled:opacity-70 disabled:cursor-not-allowed mt-4 cursor-pointer"
             >
               {loading ? (

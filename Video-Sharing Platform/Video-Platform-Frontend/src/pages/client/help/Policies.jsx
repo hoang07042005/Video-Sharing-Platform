@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Shield, FileText, Users, Copyright, DollarSign, ChevronRight, Menu, X, 
   AlertTriangle, CheckCircle, Info, Lock, Eye, Ban, Scale, UploadCloud, 
@@ -7,6 +8,7 @@ import {
   UserCheck, User, Download, Trash2, ThumbsUp, ThumbsDown,
   Monitor, Plane, Heart, ShieldAlert, Frown, Megaphone, Mail, ClipboardList, UserX, Flag, MessageSquare, Book, Smile, PlayCircle, RefreshCw, Film
 } from 'lucide-react';
+import axios from 'axios';
 
 const GlobeIcon = () => <Globe className="w-5 h-5" />;
 const CopyrightIcon = () => <Copyright className="w-5 h-5" />;
@@ -31,7 +33,29 @@ const PolicySection = ({ title, icon: Icon, index, children, highlightClass = "f
 
 export default function Policies() {
   const [activeTab, setActiveTab] = useState('tos');
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [supportEmail, setSupportEmail] = useState("security@videosharing.com");
+
+  useEffect(() => {
+    axios
+      .get("/api/admin/settings/public")
+      .then((res) => {
+        if (res.data && res.data.contactEmail) {
+          setSupportEmail(res.data.contactEmail);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
 
   const policies = [
     {
@@ -492,6 +516,316 @@ export default function Policies() {
             </div>
           </div>
 
+        </div>
+      )
+    },
+    {
+      id: 'security',
+      title: 'Chính sách bảo mật',
+      icon: Lock,
+      content: (
+        <div className="animate-in fade-in slide-in-from-right-8 duration-500 ease-out font-sans space-y-6">
+          {/* Header Banner */}
+          <div className="relative mb-8 min-h-[240px] flex flex-col justify-center">
+             <div className="absolute top-0 right-0 w-1/2 h-full z-0">
+                 <img src="./Policies.png" alt="" className="w-full h-full object-contain object-right" />
+             </div>
+             <div className="relative z-10 w-full max-w-[55%]">
+                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Chính sách Bảo mật</h2>
+                 <p className="text-gray-400 mb-6 text-sm md:text-base leading-relaxed">VideoSharing cam kết bảo vệ dữ liệu của bạn bằng các tiêu chuẩn bảo mật cao nhất.<br/>Chính sách này mô tả cách chúng tôi bảo vệ thông tin khỏi các rủi ro bảo mật.</p>
+             </div>
+          </div>
+
+          {/* Sections Container */}
+          <div className="bg-[#18181B] rounded-[5px] border border-white/5 shadow-lg flex flex-col divide-y divide-white/5">
+            
+            {/* Section 01 */}
+            <div className="p-6 md:p-8">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 border border-green-500/20 shadow-inner">
+                  <Lock className="w-6 h-6 text-green-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-green-500">01</span>
+                    <h3 className="text-xl font-bold text-white">Mã hóa dữ liệu</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Các biện pháp mã hóa được áp dụng để bảo vệ dữ liệu nhạy cảm.</p>
+                </div>
+              </div>
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Left col */}
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Mã hóa đường truyền</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">SSL/TLS:</span> Tất cả thông tin cá nhân và dữ liệu nhạy cảm truyền tải giữa trình duyệt của bạn và máy chủ đều được mã hóa an toàn.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">HSTS:</span> Chúng tôi ép buộc tất cả các kết nối sử dụng HTTPS, ngăn chặn nguy cơ bị tấn công đánh cắp dữ liệu.</p>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Right col */}
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-green-400 font-semibold mb-6">Mã hóa lưu trữ</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Hashing mật khẩu:</span> Mật khẩu của bạn được băm (hashed) với độ trễ an toàn, ngay cả nhân viên cũng không thể xem.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Mã hóa token:</span> Các session token và khóa truy cập được lưu trữ mã hóa dưới chuẩn AES-256 an toàn cao.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            {/* Section 02 */}
+            <div className="p-6 md:p-8 bg-black/20">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-inner">
+                  <ShieldAlert className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-blue-500">02</span>
+                    <h3 className="text-xl font-bold text-white">Bảo vệ tài khoản</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Các biện pháp chúng tôi sử dụng để tránh bị truy cập trái phép.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Xác thực 2 yếu tố</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">OTP qua Email:</span> Các thao tác quan trọng như đặt lại mật khẩu yêu cầu xác thực OTP để tránh rủi ro.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Cảnh báo hoạt động lạ:</span> Hệ thống sẽ gửi email báo động nếu phát hiện đăng nhập từ khu vực hoặc thiết bị mới.</p>
+                  </li>
+                </ul>
+              </div>
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-blue-400 font-semibold mb-6">Quản lý phiên đăng nhập</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Tự động đăng xuất:</span> Phiên truy cập tự động hết hạn, bảo vệ bạn khi vô tình quên đăng xuất ở máy công cộng.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Khóa thiết bị từ xa:</span> Bạn có toàn quyền xem các phiên đang hoạt động và đăng xuất từ xa nếu cần thiết.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            {/* Section 03 */}
+            <div className="p-6 md:p-8">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner">
+                  <Activity className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-purple-500">03</span>
+                    <h3 className="text-xl font-bold text-white">Giám sát hệ thống & Chống tấn công</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Cách chúng tôi theo dõi và chặn các mối đe dọa.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Tường lửa & Quét lỗ hổng</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Tường lửa (WAF):</span> Đánh chặn các hành vi tấn công DDoS, SQL Injection nhằm vào máy chủ liên tục 24/7.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Quét bảo mật:</span> Đội ngũ kỹ thuật chạy các công cụ rà soát lỗ hổng định kỳ sau mỗi bản cập nhật.</p>
+                  </li>
+                </ul>
+              </div>
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-purple-400 font-semibold mb-6">Khóa IP & Phòng chống Bot</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Khóa địa chỉ IP:</span> Hệ thống sẽ tự động chặn IP nếu phát hiện cố gắng đăng nhập sai quá nhiều lần (Rate Limiting).</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Lọc lưu lượng:</span> Ứng dụng CAPTCHA thông minh để phân biệt và loại trừ các bot tự động phá hoại.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            {/* Section 04 */}
+            <div className="p-6 md:p-8 bg-black/20">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20 shadow-inner">
+                  <UserCheck className="w-6 h-6 text-orange-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-orange-500">04</span>
+                    <h3 className="text-xl font-bold text-white">Quản lý quyền truy cập</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Nguyên tắc "Đặc quyền tối thiểu" cho nhân viên.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Phân quyền nghiêm ngặt</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Đặc quyền tối thiểu:</span> Nhân viên chỉ được cấp quyền ở mức tối thiểu để hoàn thành công việc hỗ trợ.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Cách ly dữ liệu:</span> Đội ngũ chăm sóc khách hàng không thể trực tiếp truy xuất các dữ liệu nhạy cảm của bạn.</p>
+                  </li>
+                </ul>
+              </div>
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-orange-400 font-semibold mb-6">Ghi Log & Kiểm toán</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Nhật ký hệ thống:</span> Tất cả hành động thay đổi thiết lập của Admin đều được ghi log để theo dõi.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Thanh tra định kỳ:</span> Tiến hành xem xét quyền lợi truy cập của toàn bộ nhân viên theo từng quý.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            {/* Section 05 */}
+            <div className="p-6 md:p-8">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20 shadow-inner">
+                  <Megaphone className="w-6 h-6 text-red-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-red-500">05</span>
+                    <h3 className="text-xl font-bold text-white">Báo cáo lỗ hổng (Bug Bounty)</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Quy trình báo cáo các rủi ro bảo mật về cho chúng tôi.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Cách thức báo cáo</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Kênh liên lạc:</span> Gửi chi tiết mô tả lỗi qua hòm thư điện tử <span className="text-[#FF5722]">{supportEmail}</span>.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Safe Harbor:</span> Chúng tôi cam kết bảo vệ danh tính và không truy cứu trách nhiệm với nghiên cứu thiện chí.</p>
+                  </li>
+                </ul>
+              </div>
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-red-400 font-semibold mb-6">Chính sách trả thưởng</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Bug Bounty:</span> Phần thưởng tiền mặt xứng đáng cho các lỗi bảo mật nguy hiểm hợp lệ.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Tri ân công khai:</span> Đưa tên chuyên gia/tổ chức vào Bảng vàng Vinh danh trên website của công ty.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            {/* Section 06 */}
+            <div className="p-6 md:p-8 bg-black/20">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0 border border-teal-500/20 shadow-inner">
+                  <Database className="w-6 h-6 text-teal-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-teal-500">06</span>
+                    <h3 className="text-xl font-bold text-white">Sao lưu & Phục hồi</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">Duy trì sự sẵn sàng và chống chịu lỗi của hệ thống.</p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-white font-semibold mb-6">Backup định kỳ</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Sao lưu dữ liệu:</span> Video, cài đặt và hồ sơ của người dùng được tự động backup an toàn hàng ngày.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Lưu trữ tách biệt:</span> Bản sao lưu được cất giữ ở các cụm server độc lập với hệ thống chính.</p>
+                  </li>
+                </ul>
+              </div>
+              <div className="border border-white/5 rounded-xl p-6 bg-[#1F1F23]">
+                <h4 className="text-teal-400 font-semibold mb-6">Cụm máy chủ phân tán</h4>
+                <ul className="space-y-4">
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Chống chịu lỗi:</span> Chạy trên các trung tâm dữ liệu Cloud, sẵn sàng kích hoạt server dự phòng ngay lập tức.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300 leading-relaxed"><span className="text-gray-100 font-medium">Đảm bảo Uptime:</span> Cam kết trải nghiệm xem video mượt mà và ít bị gián đoạn nhất có thể.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+          </div>
         </div>
       )
     },
@@ -1277,20 +1611,16 @@ export default function Policies() {
         {/* Header */}
         <div className="mb-8 md:mb-12 flex flex-col md:flex-row items-center justify-between gap-8 p-8 md:p-12 shadow-lg relative overflow-hidden">
 
-           <div className="md:w-3/5 relative z-10 text-center md:text-left">
+           <div className="relative z-10 text-center md:text-left">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 tracking-tight">
                 Trung tâm
               </h1>
               <h2 className="text-4xl md:text-5xl h-18 lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 mb-3 tracking-tight">
                 Chính sách & Quy định
               </h2>
-              <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
+              <p className="text-gray-400 text-sm md:text-base leading-relaxed">
                 Khám phá các nguyên tắc, chính sách và tiêu chuẩn cộng đồng giúp định hình nên một môi trường an toàn, công bằng và tôn trọng cho tất cả mọi người.
               </p>
-           </div>
-           
-           <div className="md:w-2/5 relative z-10 flex justify-center md:justify-end">
-              <img src="./Policies.png" alt="Policies & Regulations" className="w-full max-w-[320px] object-contain drop-shadow-2xl" />
            </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Loader2, ArrowRight } from "lucide-react";
 import axios from "axios";
@@ -9,6 +9,19 @@ export default function ForgotPassword() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
+
+  useEffect(() => {
+    axios
+      .get("/api/admin/settings/public")
+      .then((res) => {
+        if (res.data && res.data.logoUrl) {
+          setLogoUrl(res.data.logoUrl);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -41,7 +54,7 @@ export default function ForgotPassword() {
           <div className="flex items-center gap-6 mb-10">
             <Link to="/" className="block shrink-0">
               <img
-                src="/logotrang.png"
+                src={logoUrl}
                 alt="Video Sharing Platform"
                 className="h-22 object-contain object-left"
               />

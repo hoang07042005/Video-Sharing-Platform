@@ -429,7 +429,7 @@ function ShortItem({
     if (!replies || replies.length === 0) return null;
     const containerMargin = level === 1 ? "ml-[36px]" : "ml-[36px]";
     return (
-      <div className={`relative mt-3 ${containerMargin} z-0`}>
+      <div className={`relative ${containerMargin} z-0`}>
         <div className="flex flex-col gap-3">
           {replies.map((reply, index) => {
             const isLast = index === replies.length - 1;
@@ -636,7 +636,7 @@ function ShortItem({
 
         {/* ── CENTER: Video frame (clean — no info overlay) ── */}
         <div
-          className="relative rounded-xl overflow-hidden bg-[#111] shadow-[0_12px_60px_rgba(0,0,0,0.8)] flex-shrink-0 cursor-pointer transition-all duration-300"
+          className="relative rounded-[8px] overflow-hidden bg-[#111] shadow-[0_12px_60px_rgba(0,0,0,0.8)] flex-shrink-0 cursor-pointer transition-all duration-300"
           style={{
             height: "calc(100vh - 100px)",
             maxHeight: "900px",

@@ -261,11 +261,11 @@ function UploadVideoForm({
   };
 
   return (
-    <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 mb-8 flex flex-col xl:flex-row gap-8 relative">
+    <div className="bg-[#1A1A1A] border border-white/10 rounded-[8px] p-6 mb-8 flex flex-col xl:flex-row gap-8 relative">
       {/* Modal Cấm */}
       {bannedError && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1A1A1A] p-8 rounded-2xl border border-red-500/30 max-w-md w-full text-center shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#1A1A1A] p-8 rounded-[8px] border border-red-500/30 max-w-md w-full text-center shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
@@ -275,7 +275,7 @@ function UploadVideoForm({
             <p className="text-gray-400 mb-8">{bannedError}</p>
             <button
               onClick={() => setBannedError(null)}
-              className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+              className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-[8px] font-medium transition-colors"
             >
               Đã hiểu
             </button>
@@ -285,7 +285,7 @@ function UploadVideoForm({
 
       {/* Loading Overlay */}
       {isUploading && (
-        <div className="absolute inset-0 z-50 bg-black/60 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 bg-black/60 rounded-[8px] flex flex-col items-center justify-center backdrop-blur-sm">
           <Loader2 className="w-10 h-10 text-[#FF4E00] animate-spin mb-4" />
           <p className="text-white font-medium text-lg">
             Đang xử lý tải lên...
@@ -486,7 +486,7 @@ function UploadVideoForm({
 
           <div
             onClick={() => !videoFile && fileInputRef.current?.click()}
-            className={`border border-dashed ${videoFile ? "border-[#FF4E00] bg-[#FF4E00]/5" : "border-white/20 bg-[#121212] hover:bg-white/5"} rounded-xl flex flex-col items-center justify-center py-10 cursor-pointer transition-colors`}
+            className={`border border-dashed ${videoFile ? "border-[#FF4E00] bg-[#FF4E00]/5" : "border-white/20 bg-[#121212] hover:bg-white/5"} rounded-[8px] flex flex-col items-center justify-center py-10 cursor-pointer transition-colors`}
           >
             {videoFile ? (
               <>
@@ -642,7 +642,7 @@ function UploadVideoForm({
 
       {/* Right side: Preview */}
       <div className="w-full xl:w-[400px] shrink-0">
-        <div className="bg-[#121212] border border-white/10 rounded-xl p-5 sticky top-24">
+        <div className="bg-[#121212] border border-white/10 rounded-[8px] p-5 sticky top-24">
           <h3 className="text-white text-sm font-bold mb-4">Xem trước video</h3>
 
           <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4 group border border-white/5">
@@ -769,7 +769,7 @@ function DeleteVideoModal({ video, onClose, onSuccess, isLivestream }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#212121] rounded-2xl max-w-md w-full border border-white/10 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#212121] rounded-[8px] max-w-md w-full border border-white/10 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-start gap-4 mb-6">
           <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
             <Trash2 className="w-6 h-6 text-red-500" />
@@ -800,7 +800,7 @@ function DeleteVideoModal({ video, onClose, onSuccess, isLivestream }) {
         </div>
         <br />
 
-        <div className="bg-[#1A1A1A] p-4 rounded-xl border border-white/5 mb-6">
+        <div className="bg-[#1A1A1A] p-4 rounded-[8px] border border-white/5 mb-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
             <div className="text-sm text-gray-300">
@@ -841,14 +841,14 @@ function DeleteVideoModal({ video, onClose, onSuccess, isLivestream }) {
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 rounded-[8px] bg-white/5 hover:bg-white/10 text-white font-medium transition-colors cursor-pointer disabled:opacity-50"
           >
             Hủy
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting || !isConfirmed}
-            className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 rounded-[8px] bg-red-600 hover:bg-red-700 text-white font-medium transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Xóa vĩnh viễn
@@ -917,7 +917,7 @@ function LivestreamsTab({ channelId, isOwner }) {
           <Link
             key={ls.id}
             to={ls.status === "ended" ? `/watch/${ls.id}` : `/live/${ls.id}`}
-            className="group bg-[#141414] border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+            className="group bg-[#141414] border border-white/10 hover:border-white/20 rounded-[8px] overflow-hidden transition-all hover:scale-[1.02]"
           >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-black overflow-hidden">
@@ -1462,7 +1462,7 @@ export default function ChannelProfile() {
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-medium transition-colors text-sm"
+            className="px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-[8px] font-medium transition-colors text-sm"
           >
             ← Quay lại
           </button>
@@ -1602,7 +1602,7 @@ export default function ChannelProfile() {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowUnsubscribeDropdown(false)}
                               />
-                              <div className="absolute top-full mt-2 right-0 w-48 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                              <div className="absolute top-full mt-2 right-0 w-48 bg-[#1a1c23] border border-white/10 rounded-[8px] shadow-2xl py-2 z-50">
                                 <button
                                   onClick={async () => {
                                     const token = localStorage.getItem("token");
@@ -1678,7 +1678,7 @@ export default function ChannelProfile() {
             </div>
 
             {/* Right: Stats Card */}
-            <div className="bg-[#1a1a1a]/10 backdrop-blur-md border border-white/8 rounded-2xl p-5 lg:p-4 flex items-center justify-between gap-4 md:gap-8 shadow-2xl shrink-0 lg:ml-4 w-full lg:w-auto overflow-x-auto mt-4 lg:mt-0">
+            <div className="bg-[#1a1a1a]/10 backdrop-blur-md border border-white/8 rounded-[8px] p-5 lg:p-4 flex items-center justify-between gap-4 md:gap-8 shadow-2xl shrink-0 lg:ml-4 w-full lg:w-auto overflow-x-auto mt-4 lg:mt-0">
               <div className="flex flex-col items-center min-w-[60px] md:min-w-[75px]">
                 <span className="text-white font-bold text-xl md:text-2xl">
                   {videos.length}
@@ -1784,7 +1784,7 @@ export default function ChannelProfile() {
             return (
               <div className="space-y-12">
                 {/* 0. Giới thiệu về kênh (Compact & Premium) */}
-                <div className="bg-gradient-to-br mt-10 from-[#1A1A1A] to-[#121212] rounded-2xl border border-white/5 p-6 md:p-8 flex flex-col lg:flex-row gap-8 items-center shadow-2xl relative overflow-hidden group">
+                <div className="bg-gradient-to-br mt-10 from-[#1A1A1A] to-[#121212] rounded-[8px] border border-white/5 p-6 md:p-8 flex flex-col lg:flex-row gap-8 items-center shadow-2xl relative overflow-hidden group">
                   {/* Background glow effects */}
                   <div className="absolute -right-32 -top-32 w-96 h-96 bg-[#FF4E00]/10 rounded-full blur-3xl group-hover:bg-[#FF4E00]/15 transition-colors duration-500 pointer-events-none"></div>
                   <div className="absolute -left-32 -bottom-32 w-96 h-96 bg-[#4FC3F7]/5 rounded-full blur-3xl group-hover:bg-[#4FC3F7]/10 transition-colors duration-500 pointer-events-none"></div>
@@ -1807,7 +1807,7 @@ export default function ChannelProfile() {
 
                   {/* Right: Stats grid */}
                   <div className="w-full lg:w-[400px] grid grid-cols-2 gap-3 shrink-0 z-10">
-                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-[8px] p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
                         <Clock className="w-3.5 h-3.5 group-hover/card:text-[#4FC3F7] transition-colors" />{" "}
                         Đã tham gia
@@ -1819,7 +1819,7 @@ export default function ChannelProfile() {
                       </span>
                     </div>
 
-                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-[8px] p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
                         <Globe className="w-3.5 h-3.5 group-hover/card:text-green-400 transition-colors" />{" "}
                         Quốc gia
@@ -1829,7 +1829,7 @@ export default function ChannelProfile() {
                       </span>
                     </div>
 
-                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-[8px] p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
                         <TrendingUp className="w-3.5 h-3.5 group-hover/card:text-purple-400 transition-colors" />{" "}
                         Tổng lượt xem
@@ -1839,7 +1839,7 @@ export default function ChannelProfile() {
                       </span>
                     </div>
 
-                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-xl p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
+                    <div className="bg-[#222222]/50 backdrop-blur-sm rounded-[8px] p-4 border border-white/5 hover:border-white/10 hover:bg-[#2A2A2A]/50 transition-all group/card cursor-default">
                       <span className="text-gray-500 text-xs flex items-center gap-1.5 mb-1.5">
                         <Users className="w-3.5 h-3.5 group-hover/card:text-yellow-400 transition-colors" />{" "}
                         Người đăng ký
@@ -1861,10 +1861,10 @@ export default function ChannelProfile() {
                           ? `/shorts?id=${featuredVideo.id}`
                           : `/watch/${featuredVideo.id}`
                       }
-                      className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-4 group cursor-pointer flex flex-col md:flex-row gap-5 h-full"
+                      className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-4 group cursor-pointer flex flex-col md:flex-row gap-5 h-full"
                     >
                       {/* Thumbnail Container */}
-                      <div className="relative w-full md:w-[45%] lg:w-[50%] aspect-video bg-black rounded-xl overflow-hidden shrink-0">
+                      <div className="relative w-full md:w-[45%] lg:w-[50%] aspect-video bg-black rounded-[8px] overflow-hidden shrink-0">
                         <img
                           src={
                             featuredVideo.thumbnailUrl ||
@@ -1929,13 +1929,13 @@ export default function ChannelProfile() {
                       </div>
                     </Link>
                   ) : (
-                    <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl flex items-center justify-center p-12 text-gray-500 h-full">
+                    <div className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] flex items-center justify-center p-12 text-gray-500 h-full">
                       Chưa có video nổi bật
                     </div>
                   )}
 
                   {/* Right side: Featured List */}
-                  <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl p-5 h-full flex flex-col">
+                  <div className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-5 h-full flex flex-col">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-[16px]">
                       <span className="text-white font-black text-lg">
                         Nổi bật
@@ -2039,6 +2039,7 @@ export default function ChannelProfile() {
                             handle: video.channelHandle,
                             views: `${formatViews(video.viewsCount)} lượt xem`,
                             time: getTimeAgo(video.createdAt),
+                            isMembersOnly: video.isMembersOnly,
                           }}
                         />
                       ))}
@@ -2061,7 +2062,7 @@ export default function ChannelProfile() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                       {playlists.map((playlist) => (
                         <div key={playlist.id} className="group cursor-pointer">
-                          <div className="relative aspect-video rounded-xl overflow-hidden mb-3 shadow-lg">
+                          <div className="relative aspect-video rounded-[8px] overflow-hidden mb-3 shadow-lg">
                             <img
                               src={playlist.thumbnailUrl}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -2089,7 +2090,7 @@ export default function ChannelProfile() {
                 {/* 4. Shorts, Community, Channels */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Shorts */}
-                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg flex flex-col">
+                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-[8px] p-5 shadow-lg flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-2 text-white font-bold text-lg">
                         <span className="text-[#FF4E00]">⚡</span> Shorts mới
@@ -2104,7 +2105,7 @@ export default function ChannelProfile() {
                         <Link
                           to={`/shorts?id=${short.id}`}
                           key={short.id}
-                          className="relative aspect-[9/16] rounded-xl overflow-hidden group cursor-pointer shadow-md block bg-[#0a0a0a]"
+                          className="relative aspect-[9/16] rounded-[8px] overflow-hidden group cursor-pointer shadow-md block bg-[#0a0a0a]"
                         >
                           {/* Blurred background */}
                           <img
@@ -2149,7 +2150,7 @@ export default function ChannelProfile() {
                   </div>
 
                   {/* Community - Real posts */}
-                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg flex flex-col">
+                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-[8px] p-5 shadow-lg flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-2 text-white font-bold text-lg">
                         <span className="text-[#FF4E00]">{"<"}</span> Cộng đồng
@@ -2179,7 +2180,7 @@ export default function ChannelProfile() {
                         return (
                           <Link
                             to={`/c/${channel.handle}/community`}
-                            className="block bg-[#2A2A2A]/50 border border-white/5 rounded-xl p-4 hover:bg-[#2A2A2A]/80 hover:border-white/10 transition-all group"
+                            className="block bg-[#2A2A2A]/50 border border-white/5 rounded-[8px] p-4 hover:bg-[#2A2A2A]/80 hover:border-white/10 transition-all group"
                           >
                             <div className="flex gap-3 mb-3">
                               <img
@@ -2205,7 +2206,7 @@ export default function ChannelProfile() {
                               </div>
                               {post.isMembersOnly && (
                                 <span className="ml-auto text-[10px] text-purple-400 font-medium px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20 self-start">
-                                  Hội viên
+                                  Dành cho hội viên
                                 </span>
                               )}
                             </div>
@@ -2213,7 +2214,7 @@ export default function ChannelProfile() {
                               {post.content || "Bài viết cộng đồng"}
                             </p>
                             {post.images && post.images.length > 0 && (
-                              <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-black/30">
+                              <div className="rounded-[8px] overflow-hidden mb-3 aspect-video bg-black/30">
                                 <img
                                   src={post.images[0]}
                                   className="w-full h-full object-cover"
@@ -2242,7 +2243,7 @@ export default function ChannelProfile() {
                   </div>
 
                   {/* Recommended Channels */}
-                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-2xl p-5 shadow-lg">
+                  <div className="bg-[#1A1A1A]/40 border border-white/5 rounded-[8px] p-5 shadow-lg">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-lg">
                       <span className="text-[#FF4E00]">{"<"}</span> Kênh bạn nên
                       xem
@@ -2305,7 +2306,7 @@ export default function ChannelProfile() {
                 </div>
 
                 {/* 5. Footer Features */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-[#1A1A1A]/30 border border-white/5 rounded-2xl p-6 shadow-sm">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-[#1A1A1A]/30 border border-white/5 rounded-[8px] p-6 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#FF4E00]/10 flex items-center justify-center text-[#FF4E00] shrink-0 text-lg">
                       ⚡
@@ -2630,11 +2631,11 @@ export default function ChannelProfile() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-2xl font-bold">Tổng quan</h3>
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-[8px] text-sm text-gray-300">
                       12/08/2026 - 18/08/2026{" "}
                       <ChevronDown className="w-4 h-4" />
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-xl text-sm text-gray-300">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] border border-white/10 rounded-[8px] text-sm text-gray-300">
                       <MonitorPlay className="w-4 h-4" /> Bộ lọc
                     </button>
                   </div>
@@ -2742,7 +2743,7 @@ export default function ChannelProfile() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6">
                       {/* Left: Recent Activity */}
                       <div
-                        className={`bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col transition-all duration-300 ${showAllActivities ? "lg:col-span-12 order-3" : "lg:col-span-4 order-1"}`}
+                        className={`bg-[#111111] border border-white/5 rounded-[8px] p-6 shadow-xl flex flex-col transition-all duration-300 ${showAllActivities ? "lg:col-span-12 order-3" : "lg:col-span-4 order-1"}`}
                       >
                         <div className="flex items-center justify-between mb-6">
                           <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
@@ -2769,7 +2770,7 @@ export default function ChannelProfile() {
                             ).map((act, i) => (
                               <div
                                 key={i}
-                                className={`flex items-start gap-4 relative z-10 ${showAllActivities ? "bg-[#1A1A1A] border border-white/5 p-4 rounded-xl hover:bg-white/5 transition-colors" : ""}`}
+                                className={`flex items-start gap-4 relative z-10 ${showAllActivities ? "bg-[#1A1A1A] border border-white/5 p-4 rounded-[8px] hover:bg-white/5 transition-colors" : ""}`}
                               >
                                 <div
                                   className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] border-[#111111] ${act.iconBg || "bg-[#1A1A1A]"}`}
@@ -2811,7 +2812,7 @@ export default function ChannelProfile() {
                         {!showAllActivities ? (
                           <button
                             onClick={() => setShowAllActivities(true)}
-                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
+                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-[8px] text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
                           >
                             Xem tất cả hoạt động{" "}
                             <ChevronDown className="w-4 h-4" />
@@ -2819,7 +2820,7 @@ export default function ChannelProfile() {
                         ) : (
                           <button
                             onClick={() => setShowAllActivities(false)}
-                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-xl text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
+                            className="w-full mt-4 py-3 bg-[#1A1A1A] hover:bg-white/5 rounded-[8px] text-xs font-semibold text-gray-400 transition-colors flex items-center justify-center gap-2"
                           >
                             Ẩn bớt{" "}
                             <ChevronDown className="w-4 h-4 rotate-180" />
@@ -2832,7 +2833,7 @@ export default function ChannelProfile() {
                         className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? "lg:col-span-8 order-1" : "lg:col-span-5 order-2"}`}
                       >
                         {/* Line Chart */}
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
+                        <div className="bg-[#111111] border border-white/5 rounded-[8px] p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
                               <Wallet className="w-4 h-4 text-blue-400" /> DOANH
@@ -2951,7 +2952,7 @@ export default function ChannelProfile() {
                         </div>
 
                         {/* Bar Chart */}
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
+                        <div className="bg-[#111111] border border-white/5 rounded-[8px] p-6 shadow-xl flex-1 min-h-[300px] flex flex-col">
                           <div className="flex items-center justify-between mb-6">
                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
                               <Star className="w-4 h-4 text-yellow-400" /> XU
@@ -3015,7 +3016,7 @@ export default function ChannelProfile() {
                         className={`flex flex-col gap-4 transition-all duration-300 ${showAllActivities ? "lg:col-span-4 order-2" : "lg:col-span-3 order-3"}`}
                       >
                         {/* Top Donate */}
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl flex-1 max-h-[400px] flex flex-col">
+                        <div className="bg-[#111111] border border-white/5 rounded-[8px] p-6 shadow-xl flex-1 max-h-[400px] flex flex-col">
                           <div className="flex items-center justify-between mb-6">
                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
                               <Crown className="w-4 h-4 text-yellow-500" /> TOP
@@ -3060,7 +3061,7 @@ export default function ChannelProfile() {
                         </div>
 
                         {/* Popular Gifts */}
-                        <div className="bg-[#111111] border border-white/5 rounded-2xl p-2 shadow-xl flex-1">
+                        <div className="bg-[#111111] border border-white/5 rounded-[8px] p-2 shadow-xl flex-1">
                           <div className="flex items-center justify-between mb-6 p-2">
                             <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider">
                               <Gift className="w-4 h-4 text-pink-500" /> QUÀ
@@ -3082,9 +3083,9 @@ export default function ChannelProfile() {
                     </div>
 
                     {/* Members List */}
-                    <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 shadow-xl mt-6">
+                    <div className="bg-[#111111] border border-white/5 rounded-[8px] p-6 shadow-xl mt-6">
                       <h4 className="text-sm font-bold text-gray-300 flex items-center gap-2 uppercase tracking-wider mb-6">
-                        <Users className="w-4 h-4 text-teal-400" /> 5 HỘI VIÊN
+                        <Users className="w-4 h-4 text-teal-400" /> 5 hội viên
                         MỚI NHẤT
                       </h4>
                       {revenueStats.members &&
@@ -3221,7 +3222,7 @@ export default function ChannelProfile() {
                   </div>
                 </div>
                 {filteredVideos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
+                  <div className="flex flex-col items-center justify-center py-20 bg-[#1A1A1A]/50 rounded-[8px] border border-white/5">
                     <p className="text-gray-400 mb-4">
                       {searchQuery
                         ? "Không tìm thấy video nào phù hợp với tìm kiếm."
@@ -3262,6 +3263,7 @@ export default function ChannelProfile() {
                           handle: video.channelHandle,
                           views: `${formatViews(video.viewsCount)} lượt xem`,
                           time: getTimeAgo(video.createdAt),
+                          isMembersOnly: video.isMembersOnly,
                         }}
                       />
                     ))}
@@ -3313,7 +3315,7 @@ export default function ChannelProfile() {
                   </div>
                 </div>
                 {filteredShorts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
+                  <div className="flex flex-col items-center justify-center py-20 bg-[#1A1A1A]/50 rounded-[8px] border border-white/5">
                     <p className="text-gray-400 mb-4">
                       {searchQuery
                         ? "Không tìm thấy video ngắn nào phù hợp với tìm kiếm."
@@ -3338,7 +3340,7 @@ export default function ChannelProfile() {
                       >
                         <Link
                           to={`/shorts?id=${short.id}`}
-                          className="relative aspect-[9/16] rounded-xl overflow-hidden shadow-md block bg-[#0a0a0a]"
+                          className="relative aspect-[9/16] rounded-[8px] overflow-hidden shadow-md block bg-[#0a0a0a]"
                         >
                           <img
                             src={
@@ -3409,7 +3411,7 @@ export default function ChannelProfile() {
                         key={playlist.id}
                         className="group block"
                       >
-                        <div className="relative aspect-video rounded-xl overflow-hidden mb-3 shadow-lg">
+                        <div className="relative aspect-video rounded-[8px] overflow-hidden mb-3 shadow-lg">
                           <img
                             src={
                               playlist.thumbnailUrl ||
@@ -3437,7 +3439,7 @@ export default function ChannelProfile() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
+                  <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-[8px] border border-white/5">
                     Kênh này chưa có danh sách phát nào.
                   </div>
                 )}
@@ -3447,7 +3449,7 @@ export default function ChannelProfile() {
 
           if (activeTab === "liked") {
             return (
-              <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-2xl border border-white/5">
+              <div className="text-center py-20 text-gray-400 bg-[#1A1A1A]/50 rounded-[8px] border border-white/5">
                 Bạn chưa thích video nào trên kênh này.
               </div>
             );
@@ -3477,7 +3479,7 @@ export default function ChannelProfile() {
       {/* About Channel Modal */}
       {isAboutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#212121] w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="bg-[#212121] w-full max-w-2xl rounded-[8px] shadow-2xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               {isEditingName ? (
                 <div className="flex-1 mr-4 flex items-center gap-2">
@@ -3562,7 +3564,7 @@ export default function ChannelProfile() {
                       value={editDescContent}
                       onChange={(e) => setEditDescContent(e.target.value)}
                       rows="4"
-                      className="w-full bg-[#2A2A2A] text-white p-3 rounded-xl border border-transparent focus:border-[#FF5722] focus:outline-none resize-none text-sm"
+                      className="w-full bg-[#2A2A2A] text-white p-3 rounded-[8px] border border-transparent focus:border-[#FF5722] focus:outline-none resize-none text-sm"
                       placeholder="Thêm mô tả về kênh của bạn..."
                     />
                     <div className="flex justify-end gap-2">
@@ -3714,7 +3716,7 @@ export default function ChannelProfile() {
                           }
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-start gap-4 text-gray-300 hover:bg-white/5 p-3 rounded-xl transition-colors"
+                          className="flex items-start gap-4 text-gray-300 hover:bg-white/5 p-3 rounded-[8px] transition-colors"
                         >
                           <LinkIcon className="w-6 h-6 text-gray-400 shrink-0" />
                           <div>
@@ -3970,7 +3972,7 @@ function DashboardCard({
 }) {
   return (
     <div
-      className={`bg-gradient-to-br ${gradient} border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group`}
+      className={`bg-gradient-to-br ${gradient} border border-white/5 rounded-[8px] p-5 shadow-lg relative overflow-hidden group`}
     >
       <div className="flex justify-between items-start mb-4">
         <div
@@ -4011,7 +4013,7 @@ function DashboardCard({
 
 function GiftCard({ icon, name, count }) {
   return (
-    <div className="rounded-xl p-0 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer">
+    <div className="rounded-[8px] p-0 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer">
       <span className="text-2xl mb-2">{icon}</span>
       <p className="text-[10px] font-medium text-gray-400 truncate w-full">
         {name}

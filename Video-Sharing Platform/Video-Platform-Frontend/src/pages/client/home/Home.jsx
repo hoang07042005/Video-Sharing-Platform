@@ -63,7 +63,7 @@ function SmallVideoCard({ video }) {
       <div className="absolute top-2 right-2 z-30">
         <VideoDropdownMenu video={video} />
       </div>
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
+      <div className="relative w-full aspect-video rounded-[8px]  overflow-hidden bg-[#1A1A1A]">
         {video.isShort ? (
           <>
             <img
@@ -93,7 +93,12 @@ function SmallVideoCard({ video }) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
-        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium z-20">
+        {video.isMembersOnly && (
+          <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+            <Crown size={12} /> Dành cho hội viên
+          </span>
+        )}
+        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded-[8px] font-medium z-20">
           {formatDuration(video.duration)}
         </span>
       </div>
@@ -101,7 +106,7 @@ function SmallVideoCard({ video }) {
         <Link
           to={`/c/${video.channelHandle}`}
           onClick={(e) => e.stopPropagation()}
-          className="w-7 h-7 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0 mt-0.5"
+          className="w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0 mt-0.5"
         >
           <img
             src={video.channelAvatarUrl || "https://via.placeholder.com/40"}
@@ -144,12 +149,12 @@ function HorizontalVideoCard({ video }) {
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }
-      className="group cursor-pointer flex gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors relative"
+      className="group cursor-pointer flex gap-3 p-2 rounded-[8px] hover:bg-white/5 transition-colors relative"
     >
       <div className="absolute top-2 right-2 z-30">
         <VideoDropdownMenu video={video} />
       </div>
-      <div className="relative w-50 h-30 aspect-video rounded-lg overflow-hidden bg-[#1A1A1A] shrink-0">
+      <div className="relative w-50 h-30 aspect-video rounded-[8px] overflow-hidden bg-[#1A1A1A] shrink-0">
         {video.isShort ? (
           <>
             <img
@@ -179,7 +184,12 @@ function HorizontalVideoCard({ video }) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
-        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium z-20">
+        {video.isMembersOnly && (
+          <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+            <Crown size={12} /> Dành cho hội viên
+          </span>
+        )}
+        <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded-[8px] font-medium z-20">
           {formatDuration(video.duration)}
         </span>
       </div>
@@ -198,7 +208,7 @@ function HorizontalVideoCard({ video }) {
           onClick={(e) => e.stopPropagation()}
           className="text-gray-500 text-xs mt-2 flex items-center gap-2 hover:text-white transition-colors"
         >
-          <div className="w-5 h-5 rounded-full overflow-hidden bg-[#2A2A2A] shrink-0">
+          <div className="w-5 h-5 rounded-[8px] overflow-hidden bg-[#2A2A2A] shrink-0">
             <img
               src={video.channelAvatarUrl || "https://via.placeholder.com/40"}
               alt={video.channelName}
@@ -231,7 +241,7 @@ function ShortVideoCard({ short }) {
       <div className="absolute top-2 right-2 z-30">
         <VideoDropdownMenu video={short} />
       </div>
-      <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-[#1A1A1A]">
+      <div className="relative w-full aspect-[9/16] rounded-[8px] overflow-hidden bg-[#1A1A1A]">
         <img
           src={
             short.thumbnailUrl ||
@@ -272,7 +282,7 @@ function LiveStreamCard({ stream, channel }) {
       onClick={() => navigate(`/live/${stream.id}`)}
       className="group cursor-pointer flex flex-col gap-2"
     >
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] border border-red-500/30">
+      <div className="relative w-full aspect-video rounded-[8px] overflow-hidden bg-[#1A1A1A] border border-red-500/30">
         <img
           src={
             stream.thumbnailUrl ||
@@ -281,10 +291,10 @@ function LiveStreamCard({ stream, channel }) {
           alt={stream.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <span className="absolute left-2 top-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">
+        <span className="absolute left-2 top-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-[8px] uppercase tracking-wide">
           LIVE
         </span>
-        <span className="absolute right-2 bottom-2 bg-black/75 text-white text-[11px] px-1.5 py-0.5 rounded">
+        <span className="absolute right-2 bottom-2 bg-black/75 text-white text-[11px] px-1.5 py-0.5 rounded-[8px]">
           {formatViews(viewers)} đang xem
         </span>
       </div>
@@ -321,7 +331,7 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
   const [subbed, setSubbed] = useState(initialSubbed ?? false);
 
   return (
-    <div className="flex flex-col gap-2  p-2 rounded-2xl transition-all group">
+    <div className="flex flex-col gap-2  p-2 rounded-[8px] transition-all group">
       {/* Top: Avatar + Info */}
 
       {/* Avatar */}
@@ -357,7 +367,7 @@ function FeaturedChannelCard({ channel, initialSubbed }) {
       {/* Subscribe button */}
       <button
         onClick={() => setSubbed(!subbed)}
-        className={`w-full text-xs font-bold py-2 rounded-xl transition-all cursor-pointer mt-1 ${
+        className={`w-full text-xs font-bold py-2 rounded-[8px] transition-all cursor-pointer mt-1 ${
           subbed
             ? "bg-[#2A2A2A] text-gray-300 hover:bg-[#333]"
             : "bg-gradient-to-r from-[#F05123] to-[#FF7043] text-white hover:brightness-110 shadow-lg shadow-[#FF5722]/10"
@@ -415,7 +425,7 @@ function RightSidebar() {
 
   return (
     <aside className="w-72 shrink-0 flex flex-col gap-4">
-      <div className="relative min-h-[160px] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#E26627] via-[#912A57] to-[#250F49] p-5">
+      <div className="relative min-h-[160px] w-full overflow-hidden rounded-[8px] bg-gradient-to-br from-[#E26627] via-[#912A57] to-[#250F49] p-5">
         <div className="pointer-events-none absolute -right-1 bottom-0 z-10 h-[145px] w-[150px] scale-[0.8] origin-bottom-right">
           <div className="absolute left-1/2 top-[42px] h-[75px] w-[95px] -translate-x-1/2 rounded-full bg-orange-400/30 blur-[35px]" />
           <div
@@ -513,12 +523,12 @@ function RightSidebar() {
             </Link>
           </div>
         </div>
-        <div className="pointer-events-none absolute -right-20 -top-24 h-[100px] w-[100px] rounded-full bg-white/[0.04] blur-[45px]" />
+        <div className="pointer-events-none absolute -right-20 -top-24 h-[100px] w-[100px] rounded-[8px] bg-white/[0.04] blur-[45px]" />
         <div className=" pointer-events-none absolute bottom-0 left-0 h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Xu hướng */}
-      <div className="bg-[#161616] border border-white/8 rounded-2xl p-5">
+      <div className="bg-[#161616] border border-white/8 rounded-[8px] p-5">
         <div className="flex items-center gap-2 mb-2">
           <Star className="w-5 h-5 text-[#FF5722]" />
           <span className="text-white font-bold text-sm">Xu hướng</span>
@@ -535,7 +545,7 @@ function RightSidebar() {
       </div>
 
       {/* Khám phá nhanh */}
-      <div className="bg-[#161616] border border-white/8 rounded-2xl p-5">
+      <div className="bg-[#161616] border border-white/8 rounded-[8px] p-5">
         <h3 className="text-white font-bold text-sm mb-3">Khám phá nhanh</h3>
         <div className="grid grid-cols-2 gap-2">
           {quickCategories.map(({ label, iconName, color, bg }) => {
@@ -571,8 +581,13 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
+        
+        const videoReq = token 
+          ? axios.get("/api/videos/recommended", { headers: { Authorization: `Bearer ${token}` } })
+          : axios.get("/api/videos/recommended");
+
         const promises = [
-          axios.get("/api/videos"),
+          videoReq,
           axios.get("/api/channels"),
           axios.get("/api/videos/shorts"),
           axios.get("/api/livestreams/active"),
@@ -685,7 +700,7 @@ export default function Home() {
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F] min-h-screen">
       <div className="max-w-[1600px] mx-auto px-2 md:px-2 py-2">
         {/* ── 2-column layout ── */}
-        <div className="flex gap-6 items-start">
+        <div className="flex gap-4 items-start">
           {/* ── Left: Main Content ── */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             {/* Featured Hero */}
@@ -730,7 +745,7 @@ export default function Home() {
                 title="Đang phát trực tiếp"
                 linkTo="/"
               />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {liveNow.slice(0, 4).map((stream) => {
                   const channel =
                     channels.find(
@@ -759,7 +774,7 @@ export default function Home() {
             {suggested.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
-              <div className="grid grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {suggested.map((v) => (
                   <SmallVideoCard key={`sug-${v.id}`} video={v} />
                 ))}
@@ -773,7 +788,7 @@ export default function Home() {
             {trending.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {trending.slice(0, 18).map((v) => (
                   <SmallVideoCard key={v.id} video={v} />
                 ))}
@@ -791,7 +806,7 @@ export default function Home() {
             {shortsSection1.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
             ) : (
-              <div className="grid grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {shortsSection1.map((s) => (
                   <ShortVideoCard key={`short-1-${s.id}`} short={s} />
                 ))}
@@ -809,7 +824,7 @@ export default function Home() {
             {shortsSection2.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video ngắn nào.</p>
             ) : (
-              <div className="grid grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {shortsSection2.map((s) => (
                   <ShortVideoCard key={`short-2-${s.id}`} short={s} />
                 ))}
@@ -827,7 +842,7 @@ export default function Home() {
             {latest.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có video nào.</p>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {latest.map((v) => (
                   <HorizontalVideoCard key={`new-${v.id}`} video={v} />
                 ))}

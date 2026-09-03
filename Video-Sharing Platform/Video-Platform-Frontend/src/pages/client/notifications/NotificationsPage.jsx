@@ -23,6 +23,8 @@ import {
   Send,
   Pin,
   Quote,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -34,6 +36,8 @@ export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState("all"); // all, unread, read
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNotif, setSelectedNotif] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 13;
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -321,6 +325,16 @@ export default function NotificationsPage() {
     return true;
   });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+  const paginatedNotifications = filteredNotifications.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="pt-20 px-4 md:px-8 max-w-[1400px] mx-auto min-h-screen flex flex-col pb-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 shrink-0 mt-6">
@@ -403,9 +417,10 @@ export default function NotificationsPage() {
                 <div className="w-8 h-8 border-2 border-white/10 border-t-[#FF8A65] rounded-full animate-spin"></div>
                 <p>Đang tải thông báo...</p>
               </div>
-            ) : filteredNotifications.length > 0 ? (
-              filteredNotifications.map((notif) => {
-                const theme = getNotificationTheme(notif.type, notif.title);
+            ) : paginatedNotifications.length > 0 ? (
+              <>
+                {paginatedNotifications.map((notif) => {
+                  const theme = getNotificationTheme(notif.type, notif.title);
                 return (
                   <div
                     key={notif.id}
@@ -461,8 +476,30 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                 );
-              })
-            ) : (
+              })}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t border-white/5 bg-white/[0.02]">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:hover:text-gray-400 transition-colors text-sm font-medium"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> Trước
+                  </button>
+                  <span className="text-sm text-gray-400">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:hover:text-gray-400 transition-colors text-sm font-medium"
+                  >
+                    Sau <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
               <div className="p-16 flex flex-col items-center justify-center text-center">
                 <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
                   <Bell className="w-8 h-8 text-gray-500" />

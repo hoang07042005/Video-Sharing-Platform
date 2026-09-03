@@ -15,6 +15,7 @@ export default function Login() {
   // Social login availability from admin settings
   const [googleEnabled, setGoogleEnabled] = useState(true);
   const [facebookEnabled, setFacebookEnabled] = useState(true);
+  const [logoUrl, setLogoUrl] = useState("/logotrang.png");
 
   useEffect(() => {
     axios
@@ -27,6 +28,9 @@ export default function Login() {
             setGoogleEnabled(parseBool(res.data.googleLoginEnabled));
           if (res.data.facebookLoginEnabled !== undefined)
             setFacebookEnabled(parseBool(res.data.facebookLoginEnabled));
+          if (res.data.logoUrl) {
+            setLogoUrl(res.data.logoUrl);
+          }
         }
       })
       .catch(() => {
@@ -111,7 +115,7 @@ export default function Login() {
           <div className="flex items-center gap-6 mb-10">
             <Link to="/" className="block shrink-0">
               <img
-                src="/logotrang.png"
+                src={logoUrl}
                 alt="Video Sharing Platform"
                 className="h-22 object-contain object-left"
               />

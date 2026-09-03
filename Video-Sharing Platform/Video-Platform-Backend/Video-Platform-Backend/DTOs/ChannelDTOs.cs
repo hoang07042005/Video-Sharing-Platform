@@ -40,6 +40,7 @@ namespace Video_Platform_Backend.DTOs
         public string ChannelName { get; set; } = string.Empty;
         public string Handle { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public int SubscriberCount { get; set; }
         public int VideoCount { get; set; }
         public bool IsVerified { get; set; }

@@ -18,8 +18,10 @@ import {
   ExternalLink,
   Filter,
   MoreVertical,
+  Crown,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 const timeAgo = (d) => {
@@ -78,7 +80,7 @@ function HistoryVideoRow({ video, onRemove }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="group flex gap-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 rounded-xl px-2 -mx-2 transition-colors">
+    <div className="group flex gap-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 rounded-[8px] px-2 -mx-2 transition-colors">
       {/* Thumbnail */}
       <div
         onClick={() =>
@@ -88,39 +90,50 @@ function HistoryVideoRow({ video, onRemove }) {
               : `/watch/${video.id}${video.watchedDuration ? `?t=${video.watchedDuration}` : ""}`,
           )
         }
-        className="relative shrink-0 w-[200px] aspect-video rounded-xl overflow-hidden bg-[#1A1A1A] cursor-pointer"
+        className="relative shrink-0 w-[200px] aspect-video rounded-[8px] bg-[#1A1A1A] cursor-pointer"
       >
-        {!imgErr && video.thumbnailUrl ? (
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title}
-            onError={() => setImgErr(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <PlayCircle className="w-8 h-8 text-gray-600" />
-          </div>
-        )}
-        <div className="absolute bottom-1 right-1 bg-black/85 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
-          {formatDuration(video.duration)}
-        </div>
-        {video.isShort && (
-          <div className="absolute top-1 left-1 bg-[#FF5722]/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-            <Zap className="w-2.5 h-2.5" /> Shorts
-          </div>
-        )}
-        {/* Progress bar */}
-        {video.watchedDuration > 0 && video.duration > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10">
-            <div
-              className="h-full bg-[#FF5722]"
-              style={{
-                width: `${Math.min(100, (video.watchedDuration / video.duration) * 100)}%`,
-              }}
+        <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+          {!imgErr && video.thumbnailUrl ? (
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              onError={() => setImgErr(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <PlayCircle className="w-8 h-8 text-gray-600" />
+            </div>
+          )}
+          <div className="absolute bottom-1 right-1 bg-black/85 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+            {formatDuration(video.duration)}
           </div>
-        )}
+          {video.isMembersOnly && (
+            <span className="absolute top-1 left-1 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={10} /> Dành cho hội viên
+            </span>
+          )}
+          {video.isShort && (
+            <div className="absolute top-1 left-1 bg-[#FF5722]/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <Zap className="w-2.5 h-2.5" /> Shorts
+            </div>
+          )}
+          {/* Progress bar */}
+          {video.watchedDuration > 0 && video.duration > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10">
+              <div
+                className="h-full bg-[#FF5722]"
+                style={{
+                  width: `${Math.min(100, (video.watchedDuration / video.duration) * 100)}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
+        
+        <div className="absolute top-1 right-1 z-30" onClick={(e) => e.stopPropagation()}>
+          <VideoDropdownMenu video={video} />
+        </div>
       </div>
 
       {/* Info */}
@@ -211,38 +224,49 @@ function ShortThumb({ video }) {
       }
       className="shrink-0 w-[140px] md:w-[160px] cursor-pointer group"
     >
-      <div className="relative w-full aspect-[4/6] rounded-xl overflow-hidden bg-[#1A1A1A]">
-        {!imgErr && video.thumbnailUrl ? (
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title}
-            onError={() => setImgErr(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Zap className="w-6 h-6 text-gray-600" />
+      <div className="relative w-full aspect-[4/6] rounded-[8px] bg-[#1A1A1A]">
+        <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+          {!imgErr && video.thumbnailUrl ? (
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              onError={() => setImgErr(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Zap className="w-6 h-6 text-gray-600" />
+            </div>
+          )}
+
+          {/* Top left Zap icon */}
+          <div className="absolute top-2 left-2 drop-shadow-md">
+            <Zap className="w-4 h-4 text-white fill-white" />
           </div>
-        )}
 
-        {/* Top left Zap icon */}
-        <div className="absolute top-2 left-2 drop-shadow-md">
-          <Zap className="w-4 h-4 text-white fill-white" />
+          {/* Time badge */}
+          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
+            {formatDuration(video.duration)}
+          </div>
+          {video.isMembersOnly && (
+            <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={10} /> Dành cho hội viên
+            </span>
+          )}
+
+          {/* Bottom gradient progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-[4px] bg-white/10">
+            <div
+              className="h-full w-[65%]"
+              style={{
+                background: "linear-gradient(to right, #FF5722, #9C27B0)",
+              }}
+            />
+          </div>
         </div>
-
-        {/* Time badge */}
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
-          {formatDuration(video.duration)}
-        </div>
-
-        {/* Bottom gradient progress bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-[4px] bg-white/10">
-          <div
-            className="h-full w-[65%]"
-            style={{
-              background: "linear-gradient(to right, #FF5722, #9C27B0)",
-            }}
-          />
+        
+        <div className="absolute top-1 right-1 z-30" onClick={(e) => e.stopPropagation()}>
+          <VideoDropdownMenu video={video} />
         </div>
       </div>
     </div>
@@ -392,7 +416,7 @@ export default function WatchHistory() {
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 mb-6 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"
+            className="w-12 h-12 rounded-[8px] flex items-center justify-center shrink-0 shadow-lg"
             style={{ background: "linear-gradient(135deg,#9C27B0,#FF5722)" }}
           >
             <History className="w-6 h-6 text-white" />
@@ -427,9 +451,6 @@ export default function WatchHistory() {
               </button>
             )}
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 bg-[#161616] border border-white/8 rounded-full text-gray-400 hover:text-white text-sm transition-colors cursor-pointer">
-            <Filter className="w-4 h-4" /> Bộ lọc
-          </button>
         </div>
       </div>
 

@@ -7,8 +7,8 @@ import {
   CheckCircle,
   Filter,
   ListVideo,
-  User,
   PlayCircle,
+  Crown,
 } from "lucide-react";
 
 const formatDuration = (s) => {
@@ -303,6 +303,11 @@ export default function SearchResults() {
                           alt={video.title}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
+                        {video.isMembersOnly && (
+                          <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                            <Crown size={12} /> Dành cho hội viên
+                          </span>
+                        )}
                         <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded z-20">
                           {formatDuration(video.duration)}
                         </span>

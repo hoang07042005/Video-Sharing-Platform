@@ -64,6 +64,20 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -97,5 +111,7 @@ app.MapControllers();
 
 // Map SignalR Hubs
 app.MapHub<Video_Platform_Backend.Hubs.LivestreamHub>("/hubs/livestream");
+app.MapHub<Video_Platform_Backend.Hubs.NotificationHub>("/hubs/notification");
+app.MapHub<Video_Platform_Backend.Hubs.VideoHub>("/hubs/video");
 
 app.Run();

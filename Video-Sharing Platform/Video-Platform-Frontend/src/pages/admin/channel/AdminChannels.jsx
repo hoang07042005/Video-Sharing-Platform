@@ -594,7 +594,7 @@ export default function AdminChannels() {
                               ref={menuRef}
                               className="absolute right-6 top-12 w-56 bg-[#1A1A24] border border-white/10 rounded-xl shadow-2xl py-2 z-50 overflow-hidden transform opacity-100 scale-100 origin-top-right transition-all"
                             >
-                              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              <div className="px-3 py-2 text-xs font-semibold text-gray-500">
                                 Quản trị viên
                               </div>
                               <button
@@ -604,7 +604,7 @@ export default function AdminChannels() {
                                     channel.isVerified,
                                   )
                                 }
-                                className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-2 text-gray-300 hover:text-white"
+                                className="w-full text-left px-4 py-2 text-xs hover:bg-white/5 transition-colors flex items-center gap-2 text-gray-300 hover:text-white"
                               >
                                 <CheckCircle
                                   className={`w-4 h-4 ${channel.isVerified ? "text-gray-400" : "text-blue-400"}`}
@@ -615,7 +615,7 @@ export default function AdminChannels() {
                               </button>
 
                               <div className="my-1 border-t border-white/5"></div>
-                              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              <div className="px-3 py-2 text-xs font-semibold text-gray-500">
                                 Quyền hệ thống
                               </div>
 
@@ -632,7 +632,7 @@ export default function AdminChannels() {
                                     "upload",
                                   );
                                 }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${channel.isSuspended ? "opacity-50 cursor-not-allowed text-gray-500" : "hover:bg-white/5 text-gray-300 hover:text-white"}`}
+                                className={`w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 ${channel.isSuspended ? "opacity-50 cursor-not-allowed text-gray-500" : "hover:bg-white/5 text-gray-300 hover:text-white"}`}
                               >
                                 <VideoIcon
                                   className={`w-4 h-4 ${channel.isSuspended ? "text-gray-500" : channel.canUploadVideo ? "text-orange-400" : "text-green-400"}`}
@@ -655,7 +655,7 @@ export default function AdminChannels() {
                                     "livestream",
                                   );
                                 }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${channel.isSuspended ? "opacity-50 cursor-not-allowed text-gray-500" : "hover:bg-white/5 text-gray-300 hover:text-white"}`}
+                                className={`w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 ${channel.isSuspended ? "opacity-50 cursor-not-allowed text-gray-500" : "hover:bg-white/5 text-gray-300 hover:text-white"}`}
                               >
                                 <Radio
                                   className={`w-4 h-4 ${channel.isSuspended ? "text-gray-500" : channel.canLivestream ? "text-orange-400" : "text-green-400"}`}
@@ -674,7 +674,7 @@ export default function AdminChannels() {
                                     channel.isSuspended,
                                   )
                                 }
-                                className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-500/10 transition-colors flex items-center gap-2 text-red-400 hover:text-red-300"
+                                className="w-full text-left px-4 py-2 text-xs hover:bg-red-500/10 transition-colors flex items-center gap-2 text-red-400 hover:text-red-300"
                               >
                                 <ShieldOff className="w-4 h-4" />
                                 {channel.isSuspended

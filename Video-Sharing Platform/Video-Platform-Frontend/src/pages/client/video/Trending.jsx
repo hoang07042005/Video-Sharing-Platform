@@ -13,10 +13,12 @@ import {
   TrendingUp,
   ChevronRight,
   ArrowRight,
+  Crown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { getIconColor } from "../../../utils/iconHelpers";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 // ─── UTILS ─────────────────────────────────────────────────────────
 const formatDuration = (seconds) => {
@@ -392,50 +394,64 @@ export default function Trending() {
                             : `/watch/${video.id}`,
                         )
                       }
-                      className="group cursor-pointer rounded-2xl overflow-hidden bg-[#121212] flex flex-col shadow-lg border border-transparent hover:border-white/10 transition-all duration-300"
+                      className="group cursor-pointer rounded-[8px] bg-[#121212] flex flex-col shadow-lg border border-transparent hover:border-white/10 transition-all duration-300"
                     >
-                      <div className="relative aspect-[16/10] overflow-hidden bg-[#222]">
-                        {video.isShort ? (
-                          <>
+                      <div className="relative aspect-[16/10]">
+                        <div className="relative w-full h-full rounded-t-[8px] overflow-hidden bg-[#222]">
+                          {video.isShort ? (
+                            <>
+                              <img
+                                src={
+                                  video.thumbnailUrl ||
+                                  "https://via.placeholder.com/640x360"
+                                }
+                                alt={video.title}
+                                className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-50 transition-transform duration-500 group-hover:scale-125"
+                              />
+                              <img
+                                src={
+                                  video.thumbnailUrl ||
+                                  "https://via.placeholder.com/640x360"
+                                }
+                                alt={video.title}
+                                className="relative w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </>
+                          ) : (
                             <img
                               src={
                                 video.thumbnailUrl ||
                                 "https://via.placeholder.com/640x360"
                               }
                               alt={video.title}
-                              className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-50 transition-transform duration-500 group-hover:scale-125"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
-                            <img
-                              src={
-                                video.thumbnailUrl ||
-                                "https://via.placeholder.com/640x360"
-                              }
-                              alt={video.title}
-                              className="relative w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </>
-                        ) : (
-                          <img
-                            src={
-                              video.thumbnailUrl ||
-                              "https://via.placeholder.com/640x360"
-                            }
-                            alt={video.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                          
+                          {/* Members Badge */}
+                          {video.isMembersOnly && (
+                            <span className="absolute top-3 left-3 bg-green-500/90 text-white text-[12px] font-bold px-2 py-1 rounded-[6px] z-20 flex items-center gap-1.5 shadow-lg">
+                              <Crown size={14} /> Dành cho hội viên
+                            </span>
+                          )}
 
-                        {/* Rank Badge */}
-                        <div
-                          className={`absolute top-3 left-3 px-3 py-1 rounded-full ${badgeColor} font-black text-[13px] shadow-lg`}
-                        >
-                          #{idx + 1}
+                          {/* Rank Badge */}
+                          <div
+                            className={`absolute top-3 left-3 px-3 py-1 rounded-full ${badgeColor} font-black text-[13px] shadow-lg`}
+                          >
+                            #{idx + 1}
+                          </div>
+
+                          {/* Duration */}
+                          <div className="absolute bottom-3 right-3 bg-black/80 text-white text-[11px] font-bold px-1.5 py-0.5 rounded backdrop-blur-md">
+                            {formatDuration(video.duration)}
+                          </div>
                         </div>
-
-                        {/* Duration */}
-                        <div className="absolute bottom-3 right-3 bg-black/80 text-white text-[11px] font-bold px-1.5 py-0.5 rounded backdrop-blur-md">
-                          {formatDuration(video.duration)}
+                        
+                        {/* Video Dropdown */}
+                        <div className="absolute top-1 right-1 z-30">
+                          <VideoDropdownMenu video={video} />
                         </div>
                       </div>
 
@@ -549,7 +565,7 @@ export default function Trending() {
                               : `/watch/${video.id}`,
                           )
                         }
-                        className="group flex items-center gap-4 p-2 rounded-2xl hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                        className="group flex items-center gap-4 p-2 rounded-[8px] hover:bg-[#1A1A1A] transition-colors cursor-pointer"
                       >
                         {/* Rank */}
                         <div className="w-8 text-center text-[18px] font-black text-gray-300 group-hover:text-white shrink-0 font-mono">
@@ -557,38 +573,49 @@ export default function Trending() {
                         </div>
 
                         {/* Thumbnail */}
-                        <div className="relative w-[160px] aspect-video rounded-xl overflow-hidden shrink-0 bg-[#222]">
-                          {video.isShort ? (
-                            <>
+                        <div className="relative shrink-0 w-[160px] aspect-video">
+                          <div className="relative w-full h-full rounded-[8px] overflow-hidden bg-[#222]">
+                            {video.isShort ? (
+                              <>
+                                <img
+                                  src={
+                                    video.thumbnailUrl ||
+                                    "https://via.placeholder.com/320x180"
+                                  }
+                                  alt=""
+                                  className="absolute inset-0 w-full h-full object-cover blur-sm scale-110 opacity-50"
+                                />
+                                <img
+                                  src={
+                                    video.thumbnailUrl ||
+                                    "https://via.placeholder.com/320x180"
+                                  }
+                                  alt=""
+                                  className="relative w-full h-full object-contain group-hover:scale-105 transition-transform"
+                                />
+                              </>
+                            ) : (
                               <img
                                 src={
                                   video.thumbnailUrl ||
                                   "https://via.placeholder.com/320x180"
                                 }
                                 alt=""
-                                className="absolute inset-0 w-full h-full object-cover blur-sm scale-110 opacity-50"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               />
-                              <img
-                                src={
-                                  video.thumbnailUrl ||
-                                  "https://via.placeholder.com/320x180"
-                                }
-                                alt=""
-                                className="relative w-full h-full object-contain group-hover:scale-105 transition-transform"
-                              />
-                            </>
-                          ) : (
-                            <img
-                              src={
-                                video.thumbnailUrl ||
-                                "https://via.placeholder.com/320x180"
-                              }
-                              alt=""
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          )}
-                          <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                            {formatDuration(video.duration)}
+                            )}
+                            {video.isMembersOnly && (
+                              <span className="absolute top-1.5 left-1.5 bg-green-500/90 text-white text-[9px] font-bold px-1 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                                <Crown size={10} /> Dành cho hội viên
+                              </span>
+                            )}
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              {formatDuration(video.duration)}
+                            </div>
+                          </div>
+                          {/* Menu 3 chấm nằm ngoài overflow-hidden */}
+                          <div className="absolute top-1 right-1 z-30">
+                            <VideoDropdownMenu video={video} />
                           </div>
                         </div>
 
@@ -649,7 +676,7 @@ export default function Trending() {
                           </div>
                         </div>
 
-                        {/* More action */}
+                        {/* More action
                         <button
                           className="shrink-0 p-2 rounded-full text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
                           onClick={(e) => {
@@ -657,7 +684,7 @@ export default function Trending() {
                           }}
                         >
                           <MoreVertical className="w-5 h-5" />
-                        </button>
+                        </button> */}
                       </div>
                     );
                   })}

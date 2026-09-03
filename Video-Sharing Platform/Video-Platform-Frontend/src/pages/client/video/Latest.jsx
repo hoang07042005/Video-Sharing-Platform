@@ -9,9 +9,11 @@ import {
   Loader2,
   MoreVertical,
   Smartphone,
+  Crown,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { getIconColor } from "../../../utils/iconHelpers";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 const formatDuration = (s) => {
   const h = Math.floor(s / 3600);
@@ -69,7 +71,7 @@ function ShortVideoCard({ short }) {
       onClick={() => navigate(`/shorts?id=${short.id}`)}
       className="group cursor-pointer flex flex-col gap-2"
     >
-      <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-[#1A1A1A]">
+      <div className="relative w-full aspect-[9/16] rounded-[8px] overflow-hidden bg-[#1A1A1A]">
         <img
           src={
             short.thumbnailUrl ||
@@ -111,27 +113,39 @@ function FeaturedVideoCard({ video, categories }) {
 
   return (
     <div
-      className="cursor-pointer group flex flex-col gap-3"
+      className="cursor-pointer group flex flex-col gap-3 relative"
       onClick={() => navigate(`/watch/${video.id}`)}
     >
-      <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#1A1A1A]">
-        <img
-          src={video.thumbnailUrl || "https://via.placeholder.com/640x360"}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+      <div className="relative aspect-video rounded-[8px] bg-[#1A1A1A]">
+        <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+          <img
+            src={video.thumbnailUrl || "https://via.placeholder.com/640x360"}
+            alt={video.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
-        {category && (
-          <div
-            className={`absolute bottom-3 left-3 bg-gradient-to-r ${getGradient(category.name)} text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-lg`}
-          >
-            {category.name}
-          </div>
-        )}
-        <span className="absolute bottom-3 right-3 bg-black/80 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-sm">
-          {formatDuration(video.duration)}
-        </span>
+          {video.isMembersOnly && (
+            <span className="absolute top-3 left-3 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={12} /> Dành cho hội viên
+            </span>
+          )}
+
+          {category && (
+            <div
+              className={`absolute bottom-3 left-3 bg-gradient-to-r ${getGradient(category.name)} text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-lg`}
+            >
+              {category.name}
+            </div>
+          )}
+          <span className="absolute bottom-3 right-3 bg-black/80 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-sm">
+            {formatDuration(video.duration)}
+          </span>
+        </div>
+        
+        <div className="absolute top-1 right-1 z-30">
+          <VideoDropdownMenu video={video} />
+        </div>
       </div>
 
       <div className="px-1">
@@ -169,18 +183,29 @@ function NormalVideoCard({ video }) {
   const navigate = useNavigate();
   return (
     <div
-      className="cursor-pointer group flex flex-col gap-2.5"
+      className="cursor-pointer group flex flex-col gap-2.5 relative"
       onClick={() => navigate(`/watch/${video.id}`)}
     >
-      <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
-        <img
-          src={video.thumbnailUrl || "https://via.placeholder.com/320x180"}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-sm">
-          {formatDuration(video.duration)}
-        </span>
+      <div className="relative aspect-video rounded-[8px] bg-[#1A1A1A]">
+        <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+          <img
+            src={video.thumbnailUrl || "https://via.placeholder.com/320x180"}
+            alt={video.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          {video.isMembersOnly && (
+            <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={12} /> Dành cho hội viên
+            </span>
+          )}
+          <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-sm">
+            {formatDuration(video.duration)}
+          </span>
+        </div>
+        
+        <div className="absolute top-1 right-1 z-30">
+          <VideoDropdownMenu video={video} />
+        </div>
       </div>
       <div className="px-1">
         <h3 className="text-white text-[14px] font-bold leading-snug line-clamp-2 mb-1 group-hover:text-[#E91E63] transition-colors">
@@ -427,7 +452,7 @@ export default function Latest() {
               Video mới nhất
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-5 gap-y-10">
             {rest.map((v) => (
               <NormalVideoCard key={v.id} video={v} />
             ))}
@@ -453,7 +478,7 @@ export default function Latest() {
                 Video ngắn
               </h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8">
               {shorts.slice(0, visibleShorts).map((short) => (
                 <ShortVideoCard key={short.id} short={short} />
               ))}
@@ -483,7 +508,7 @@ export default function Latest() {
                 Xem tất cả
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 relative z-10">
               {newChannels.map((channel) => (
                 <NewChannelCard
                   key={channel.id}
@@ -506,7 +531,7 @@ export default function Latest() {
                 Xem tất cả
               </button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {trendingCategories.map((cat) => (
                 <div
                   key={cat.id}

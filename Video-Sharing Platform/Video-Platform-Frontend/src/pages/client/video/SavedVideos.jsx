@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   Loader2,
@@ -18,8 +18,10 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
+  Crown,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 const SavedVideos = () => {
   const [videos, setVideos] = useState([]);
@@ -27,6 +29,12 @@ const SavedVideos = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
   const [removingId, setRemovingId] = useState(null);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [timeFilter, setTimeFilter] = useState("all"); // 'all', 'today', 'week', 'month'
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest"); // 'newest', 'oldest', 'popular'
+  const [layoutMode, setLayoutMode] = useState("list"); // 'list', 'grid'
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +56,16 @@ const SavedVideos = () => {
       }
     };
     fetchVideos();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleRemove = async (e, videoId) => {
@@ -93,14 +111,55 @@ const SavedVideos = () => {
     return `${m}:${String(sec).padStart(2, "0")}`;
   };
 
+  const extractTags = (description) => {
+    if (!description) return [];
+    const tags = description.match(/#[a-zA-Z0-9_]+/g);
+    return tags ? tags.slice(0, 3) : [];
+  };
+
   const normalCount = videos.filter((v) => !v.isShort).length;
   const shortsCount = videos.filter((v) => v.isShort).length;
-  const filteredVideos =
-    activeTab === "videos"
-      ? videos.filter((v) => !v.isShort)
-      : activeTab === "shorts"
-        ? videos.filter((v) => v.isShort)
-        : videos;
+  
+  // Sort and filter logic
+  let finalVideos = [...videos];
+
+  if (activeTab === "videos") {
+    finalVideos = finalVideos.filter((v) => !v.isShort);
+  } else if (activeTab === "shorts") {
+    finalVideos = finalVideos.filter((v) => v.isShort);
+  } else if (activeTab === "unwatched") {
+    finalVideos = finalVideos.filter((v) => !v.watchedDuration || v.watchedDuration === 0);
+  } else if (activeTab === "watched") {
+    finalVideos = finalVideos.filter((v) => v.watchedDuration > 0);
+  }
+
+  if (timeFilter !== "all") {
+    const now = new Date();
+    finalVideos = finalVideos.filter((v) => {
+      const vidDate = new Date(v.createdAt);
+      if (timeFilter === "today") return (now - vidDate) < 86400000;
+      if (timeFilter === "week") return (now - vidDate) < 7 * 86400000;
+      if (timeFilter === "month") return (now - vidDate) < 30 * 86400000;
+      return true;
+    });
+  }
+
+  if (categoryFilter !== "all") {
+    finalVideos = finalVideos.filter((v) => {
+      const tags = extractTags(v.description);
+      const displayTags = tags.length > 0 ? tags : ["#nhactre", "#top50", "#haynhat"];
+      return displayTags.includes(categoryFilter);
+    });
+  }
+
+  finalVideos.sort((a, b) => {
+    if (sortBy === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
+    if (sortBy === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+    if (sortBy === "popular") return b.viewsCount - a.viewsCount;
+    return 0;
+  });
+
+  const filteredVideos = finalVideos;
 
   const tabs = [
     { id: "all", label: "Tất cả" },
@@ -109,12 +168,6 @@ const SavedVideos = () => {
     { id: "unwatched", label: "Chưa xem" },
     { id: "watched", label: "Đã xem" },
   ];
-
-  const extractTags = (description) => {
-    if (!description) return [];
-    const tags = description.match(/#[a-zA-Z0-9_]+/g);
-    return tags ? tags.slice(0, 3) : [];
-  };
 
   if (loading)
     return (
@@ -167,25 +220,107 @@ const SavedVideos = () => {
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2.5">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors">
-            <Calendar className="w-4 h-4 text-gray-400" /> Tất cả thời gian{" "}
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors">
-            <Folder className="w-4 h-4 text-gray-400" /> Tất cả thể loại{" "}
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors">
-            <SlidersHorizontal className="w-4 h-4 text-gray-400" /> Sắp xếp: Mới
-            nhất <ChevronDown className="w-4 h-4 text-gray-500" />
-          </button>
+        <div ref={dropdownRef} className="flex items-center gap-2.5">
+          {/* Time Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === "time" ? null : "time")}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors"
+            >
+              <Calendar className="w-4 h-4 text-gray-400" /> 
+              {timeFilter === "today" ? "Hôm nay" : timeFilter === "week" ? "Tuần này" : timeFilter === "month" ? "Tháng này" : "Tất cả thời gian"}
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${activeDropdown === "time" ? "rotate-180" : ""}`} />
+            </button>
+            {activeDropdown === "time" && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#1E1E1E] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                {[
+                  { id: "all", label: "Tất cả thời gian" },
+                  { id: "today", label: "Hôm nay" },
+                  { id: "week", label: "Tuần này" },
+                  { id: "month", label: "Tháng này" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setTimeFilter(item.id); setActiveDropdown(null); }}
+                    className={`w-full text-left px-4 py-3 text-[13px] hover:bg-white/5 transition-colors ${timeFilter === item.id ? "text-[#FF4E00] font-semibold" : "text-gray-300"}`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Category Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === "category" ? null : "category")}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors"
+            >
+              <Folder className="w-4 h-4 text-gray-400" /> 
+              {categoryFilter === "all" ? "Tất cả thể loại" : categoryFilter === "#nhactre" ? "Nhạc trẻ" : categoryFilter === "#top50" ? "Top 50" : "Hay nhất"}
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${activeDropdown === "category" ? "rotate-180" : ""}`} />
+            </button>
+            {activeDropdown === "category" && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#1E1E1E] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                {[
+                  { id: "all", label: "Tất cả thể loại" },
+                  { id: "#nhactre", label: "Nhạc trẻ" },
+                  { id: "#top50", label: "Top 50" },
+                  { id: "#haynhat", label: "Hay nhất" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setCategoryFilter(item.id); setActiveDropdown(null); }}
+                    className={`w-full text-left px-4 py-3 text-[13px] hover:bg-white/5 transition-colors ${categoryFilter === item.id ? "text-[#FF4E00] font-semibold" : "text-gray-300"}`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === "sort" ? null : "sort")}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-gray-300 hover:bg-[#252525] cursor-pointer transition-colors"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-gray-400" /> 
+              {sortBy === "newest" ? "Sắp xếp: Mới nhất" : sortBy === "oldest" ? "Sắp xếp: Cũ nhất" : "Sắp xếp: Phổ biến"}
+              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${activeDropdown === "sort" ? "rotate-180" : ""}`} />
+            </button>
+            {activeDropdown === "sort" && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#1E1E1E] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                {[
+                  { id: "newest", label: "Mới nhất" },
+                  { id: "oldest", label: "Cũ nhất" },
+                  { id: "popular", label: "Phổ biến nhất" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setSortBy(item.id); setActiveDropdown(null); }}
+                    className={`w-full text-left px-4 py-3 text-[13px] hover:bg-white/5 transition-colors ${sortBy === item.id ? "text-[#FF4E00] font-semibold" : "text-gray-300"}`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-1 ml-2 border border-[#333] rounded-full p-1 bg-[#121212]">
-            <button className="p-1.5 rounded-full bg-gradient-to-r from-[#FF4E00] to-[#FF2A2A] text-white cursor-pointer shadow-sm">
+            <button 
+              onClick={() => setLayoutMode("list")}
+              className={`p-1.5 rounded-full cursor-pointer transition-colors ${layoutMode === "list" ? "bg-gradient-to-r from-[#FF4E00] to-[#FF2A2A] text-white shadow-sm" : "text-gray-500 hover:text-gray-300"}`}
+            >
               <LayoutList className="w-4 h-4" />
             </button>
-            <button className="p-1.5 rounded-full text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">
+            <button 
+              onClick={() => setLayoutMode("grid")}
+              className={`p-1.5 rounded-full cursor-pointer transition-colors ${layoutMode === "grid" ? "bg-gradient-to-r from-[#FF4E00] to-[#FF2A2A] text-white shadow-sm" : "text-gray-500 hover:text-gray-300"}`}
+            >
               <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
@@ -296,7 +431,7 @@ const SavedVideos = () => {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className={layoutMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"}>
               {filteredVideos.map((video, index) => {
                 const isShort = video.isShort;
                 const isRemoving = removingId === video.id;
@@ -309,67 +444,84 @@ const SavedVideos = () => {
                 return (
                   <div
                     key={video.id}
-                    className={`flex items-center gap-4 p-3 group hover:bg-[#121212] transition-colors ${isRemoving ? "opacity-30 pointer-events-none" : ""}`}
+                    className={
+                      layoutMode === "list"
+                        ? `flex items-center gap-4 p-3 group hover:bg-[#121212] transition-colors rounded-xl ${isRemoving ? "opacity-30 pointer-events-none" : ""}`
+                        : `flex flex-col gap-3 p-3 group hover:bg-[#121212] transition-colors rounded-xl border border-transparent hover:border-white/10 ${isRemoving ? "opacity-30 pointer-events-none" : ""}`
+                    }
                   >
                     {/* Index Number */}
-                    <div className="w-8 text-center text-gray-400 font-semibold shrink-0 text-[13px]">
-                      {index + 1}
-                    </div>
+                    {layoutMode === "list" && (
+                      <div className="w-8 text-center text-gray-400 font-semibold shrink-0 text-[13px]">
+                        {index + 1}
+                      </div>
+                    )}
 
                     {/* Thumbnail */}
                     <Link
                       to={isShort ? "/shorts" : `/watch/${video.id}`}
-                      className="relative shrink-0 w-[200px] aspect-video rounded-xl overflow-hidden bg-[#0a0a0a] block"
+                      className={`relative shrink-0 ${layoutMode === "list" ? "w-[200px]" : "w-full"} aspect-video rounded-[8px] bg-[#0a0a0a] block`}
                     >
-                      {isShort ? (
-                        <>
+                      <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+                        {isShort ? (
+                          <>
+                            <img
+                              src={
+                                video.thumbnailUrl ||
+                                "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop"
+                              }
+                              alt=""
+                              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <img
+                              src={
+                                video.thumbnailUrl ||
+                                "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop"
+                              }
+                              alt={video.title}
+                              className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </>
+                        ) : (
                           <img
                             src={
                               video.thumbnailUrl ||
-                              "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop"
-                            }
-                            alt=""
-                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 group-hover:scale-105 transition-transform duration-500"
-                          />
-                          <img
-                            src={
-                              video.thumbnailUrl ||
-                              "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=700&fit=crop"
+                              "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&auto=format&fit=crop&q=60"
                             }
                             alt={video.title}
-                            className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                        </>
-                      ) : (
-                        <img
-                          src={
-                            video.thumbnailUrl ||
-                            "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&auto=format&fit=crop&q=60"
-                          }
-                          alt={video.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      )}
+                        )}
 
-                      {isShort && (
-                        <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                          <Zap className="w-3 h-3 fill-white" /> SHORTS
+                        {isShort && (
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                            <Zap className="w-3 h-3 fill-white" /> SHORTS
+                          </div>
+                        )}
+                        {video.isMembersOnly && (
+                          <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                            <Crown size={12} /> Dành cho hội viên
+                          </span>
+                        )}
+                        <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white font-medium px-1.5 py-0.5 rounded text-[11px]">
+                          {formatDuration(video.duration || 0)}
                         </div>
-                      )}
-                      <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white font-medium px-1.5 py-0.5 rounded text-[11px]">
-                        {formatDuration(video.duration || 0)}
+                      </div>
+                      
+                      <div className="absolute top-1 right-1 z-30" onClick={(e) => e.preventDefault()}>
+                        <VideoDropdownMenu video={video} />
                       </div>
                     </Link>
 
                     {/* Info */}
-                    <div className="flex-1 min-w-0 py-1 self-start mt-1">
+                    <div className={`flex-1 min-w-0 ${layoutMode === "list" ? "py-1 self-start mt-1" : "self-stretch"}`}>
                       <Link to={isShort ? "/shorts" : `/watch/${video.id}`}>
-                        <h3 className="text-white font-bold text-[12px] line-clamp-1 mb-1.5 group-hover:text-[#FF4E00] transition-colors">
+                        <h3 className="text-white font-bold text-[13px] line-clamp-2 mb-1.5 group-hover:text-[#FF4E00] transition-colors leading-relaxed">
                           {video.title}
                         </h3>
                       </Link>
 
-                      <div className="flex items-center text-gray-400 text-[13px] gap-2 mb-2">
+                      <div className={`flex items-center text-gray-400 text-[12px] gap-2 ${layoutMode === "list" ? "mb-2" : "mb-0"} flex-wrap`}>
                         <Link
                           to={`/c/${video.channelHandle}`}
                           className="hover:text-white transition-colors flex items-center gap-1.5"
@@ -381,7 +533,7 @@ const SavedVideos = () => {
                               alt=""
                             />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#2A2A2A] flex items-center justify-center text-[10px] text-white font-bold">
+                            <div className="w-5 h-5 rounded-full bg-[#2A2A2A] flex items-center justify-center text-[10px] text-white font-bold shrink-0">
                               {video.channelName?.charAt(0)?.toUpperCase() ||
                                 "@"}
                             </div>
@@ -394,32 +546,34 @@ const SavedVideos = () => {
                           </span>
                         </Link>
                         <span>•</span>
-                        <span>{formatViews(video.viewsCount)} lượt xem</span>
+                        <span>{formatViews(video.viewsCount)} xem</span>
                         <span>•</span>
                         <span>{formatTimeAgo(video.createdAt)}</span>
                       </div>
 
-                      {video.description && (
-                        <p className="text-gray-500 text-[10px] line-clamp-2 mb-2 pr-4 leading-relaxed">
+                      {layoutMode === "list" && video.description && (
+                        <p className="text-gray-500 text-[11px] line-clamp-2 mb-2 pr-4 leading-relaxed mt-2">
                           {video.description}
                         </p>
                       )}
 
                       {/* Tags */}
-                      <div className="flex gap-2.5">
-                        {displayTags.map((tag, i) => (
-                          <span
-                            key={i}
-                            className="text-gray-500 text-[12px] hover:text-gray-300 cursor-pointer transition-colors"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
+                      {layoutMode === "list" && (
+                        <div className="flex gap-2.5 mt-2">
+                          {displayTags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="text-gray-500 text-[12px] hover:text-gray-300 cursor-pointer transition-colors"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right side Actions & Badge */}
-                    <div className="flex flex-row items-center gap-2 shrink-0 pl-4 pr-2">
+                    <div className={`flex ${layoutMode === "list" ? "flex-row items-center gap-2 shrink-0 pl-4 pr-2" : "flex-row items-center justify-between w-full mt-1"}`}>
                       {/* Badge (VIDEO/SHORTS) */}
                       <div
                         className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -432,27 +586,26 @@ const SavedVideos = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <button
-                        onClick={() =>
-                          navigate(isShort ? "/shorts" : `/watch/${video.id}`)
-                        }
-                        className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
-                      >
-                        <Play className="w-3 h-3 fill-current ml-0.5" />
-                      </button>
-                      <button
-                        onClick={(e) => handleRemove(e, video.id)}
-                        className="w-8 h-8 rounded-full  flex items-center justify-center text-gray-300 hover:text-[#FF4E00] hover:bg-[#FF4E00]/10 hover:border-[#FF4E00]/30 cursor-pointer transition-all"
-                      >
-                        {isRemoving ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button className="w-8 h-8 rounded-full  flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() =>
+                            navigate(isShort ? "/shorts" : `/watch/${video.id}`)
+                          }
+                          className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
+                        >
+                          <Play className="w-3 h-3 fill-current ml-0.5" />
+                        </button>
+                        <button
+                          onClick={(e) => handleRemove(e, video.id)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-[#FF4E00] hover:bg-[#FF4E00]/10 hover:border-[#FF4E00]/30 cursor-pointer transition-all"
+                        >
+                          {isRemoving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

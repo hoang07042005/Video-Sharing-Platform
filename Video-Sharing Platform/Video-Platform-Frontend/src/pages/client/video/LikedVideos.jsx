@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Loader2, ThumbsUp, CheckCircle } from "lucide-react";
+import { Loader2, ThumbsUp, CheckCircle, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 
 const LikedVideos = () => {
   const [videos, setVideos] = useState([]);
@@ -79,7 +80,7 @@ const LikedVideos = () => {
     <div className="flex-1 overflow-y-auto bg-[#0F0F0F]">
       <div className="max-w-[1500px] mx-auto p-6">
         {/* Header / Hero */}
-        <div className="relative w-full h-[400px] rounded-2xl overflow-hidden mb-8 p-6 md:p-8 flex items-center">
+        <div className="relative w-full h-[400px] rounded-[8px] overflow-hidden mb-8 p-6 md:p-8 flex items-center">
           <img
             src="banner-trending.png"
             alt="Banner trending"
@@ -171,16 +172,27 @@ const LikedVideos = () => {
                       <Link
                         key={video.id}
                         to={`/watch/${video.id}`}
-                        className="group block rounded-xl overflow-hidden"
+                        className="group block rounded-[8px] bg-[#1A1A1A]"
                       >
-                        <div className="relative aspect-video">
-                          <img
-                            src={video.thumbnailUrl}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">
-                            {formatDuration(video.duration)}
+                        <div className="relative aspect-video rounded-t-[8px]">
+                          <div className="absolute inset-0 overflow-hidden rounded-t-[8px]">
+                            <img
+                              src={video.thumbnailUrl}
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {video.isMembersOnly && (
+                              <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                                <Crown size={12} /> Dành cho hội viên
+                              </span>
+                            )}
+                            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">
+                              {formatDuration(video.duration)}
+                            </div>
+                          </div>
+                          
+                          <div className="absolute top-1 right-1 z-30" onClick={(e) => e.preventDefault()}>
+                            <VideoDropdownMenu video={video} />
                           </div>
                         </div>
                         <div className="p-3">
@@ -231,16 +243,21 @@ const LikedVideos = () => {
                       <Link
                         key={v.id}
                         to={`/shorts?id=${v.id}`}
-                        className="block w-full"
+                        className="block w-full group relative"
                       >
-                        <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-[#0b0b0b]">
-                          <img
-                            src={v.thumbnailUrl}
-                            alt={v.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">
-                            {formatDuration(v.duration)}
+                        <div className="relative w-full aspect-[9/16] rounded-[8px] bg-[#0b0b0b]">
+                          <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+                            <img
+                              src={v.thumbnailUrl}
+                              alt={v.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[11px] px-2 py-0.5 rounded">
+                              {formatDuration(v.duration)}
+                            </div>
+                          </div>
+                          <div className="absolute top-1 right-1 z-30" onClick={(e) => e.preventDefault()}>
+                            <VideoDropdownMenu video={v} />
                           </div>
                         </div>
                         <div className="text-xs text-gray-300 mt-2 line-clamp-2">

@@ -6,6 +6,8 @@ using Video_Platform_Backend.Models;
 using Video_Platform_Backend.DTOs;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Globalization;
 
 namespace Video_Platform_Backend.Controllers
 {
@@ -28,6 +30,24 @@ namespace Video_Platform_Backend.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Chuẩn hóa chuỗi: bỏ dấu + lowercase
+        /// Ví dụ: "Phim Hành Động" → "phim hanh dong"
+        /// </summary>
+        private static string Normalize(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder();
+            foreach (var ch in normalized)
+            {
+                var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (cat != UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GlobalSearch([FromQuery] string q = "", [FromQuery] int limit = 50)
         {
@@ -36,57 +56,84 @@ namespace Video_Platform_Backend.Controllers
                 return Ok(new SearchResultDTO());
             }
 
-            var query = q.ToLower();
+            // Chuẩn hóa keyword: bỏ dấu + lowercase để so sánh
+            var queryNorm = Normalize(q);
 
-            // 1. Search Channels (Match ChannelName or Handle)
-            var channels = await _context.Channels
+            // 1. Tải tất cả channels về rồi filter in-memory để hỗ trợ bỏ dấu
+            var allChannels = await _context.Channels
                 .Include(c => c.User)
                     .ThenInclude(u => u.Profile)
-                .Where(c => (c.ChannelName.ToLower().Contains(query) || c.Handle.ToLower().Contains(query)) && !c.IsSuspended)
+                .Where(c => !c.IsSuspended)
                 .Select(c => new ChannelCardDTO
                 {
                     Id = c.Id,
                     ChannelName = c.ChannelName,
                     Handle = c.Handle,
                     AvatarUrl = c.User.Profile != null ? (c.User.Profile.AvatarUrl ?? "") : "",
-                    SubscriberCount = _context.Followers.Count(f => f.ChannelId == c.Id)
+                    Description = c.Description ?? "",
+                    SubscriberCount = _context.Followers.Count(f => f.ChannelId == c.Id),
+                    IsVerified = c.IsVerified
                 })
-                .Take(5)
                 .ToListAsync();
 
-            // 2. Search Playlists (Match Title, or Video Titles/Descriptions, Public only)
-            var playlists = await _context.Playlists
+            var channels = allChannels
+                .Where(c => Normalize(c.ChannelName).Contains(queryNorm)
+                         || Normalize(c.Handle).Contains(queryNorm))
+                .Take(5)
+                .ToList();
+
+            // 2. Tải tất cả playlists về rồi filter in-memory để hỗ trợ bỏ dấu
+            var allPlaylists = await _context.Playlists
                 .Include(p => p.PlaylistVideos)
                     .ThenInclude(pv => pv.Video)
-                .Where(p => p.Visibility == "Public" && 
-                            (p.Title.ToLower().Contains(query) || 
-                             p.PlaylistVideos.Any(pv => pv.Video.Title.ToLower().Contains(query) || 
-                                                        (pv.Video.Description != null && pv.Video.Description.ToLower().Contains(query)))))
+                .Where(p => p.Visibility == "Public")
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Title,
+                    Description = p.Description ?? "",
+                    VideoCount = p.PlaylistVideos.Count,
+                    ThumbnailUrl = p.PlaylistVideos
+                        .OrderBy(pv => pv.AddedAt)
+                        .Select(pv => _context.VideoThumbnails
+                            .Where(t => t.VideoId == pv.VideoId)
+                            .Select(t => t.ThumbnailUrl)
+                            .FirstOrDefault())
+                        .FirstOrDefault() ?? "https://via.placeholder.com/320x180",
+                    CreatedAt = p.CreatedAt ?? DateTime.UtcNow,
+                    p.Visibility,
+                    VideoTitles = p.PlaylistVideos.Select(pv => pv.Video.Title).ToList(),
+                    VideoDescriptions = p.PlaylistVideos.Select(pv => pv.Video.Description ?? "").ToList()
+                })
+                .ToListAsync();
+
+            var playlists = allPlaylists
+                .Where(p => Normalize(p.Title).Contains(queryNorm)
+                         || p.VideoTitles.Any(t => Normalize(t).Contains(queryNorm))
+                         || p.VideoDescriptions.Any(d => Normalize(d).Contains(queryNorm)))
                 .Select(p => new PlaylistResponseDTO
                 {
                     Id = p.Id,
                     Title = p.Title,
-                    Description = p.Description ?? "",
-                    VideoCount = p.PlaylistVideos.Count,
-                    ThumbnailUrl = p.PlaylistVideos.OrderBy(pv => pv.AddedAt).Select(pv => _context.VideoThumbnails.Where(t => t.VideoId == pv.VideoId).Select(t => t.ThumbnailUrl).FirstOrDefault()).FirstOrDefault() ?? "https://via.placeholder.com/320x180",
-                    CreatedAt = p.CreatedAt ?? DateTime.UtcNow,
+                    Description = p.Description,
+                    VideoCount = p.VideoCount,
+                    ThumbnailUrl = p.ThumbnailUrl,
+                    CreatedAt = p.CreatedAt,
                     Visibility = p.Visibility
                 })
                 .Take(15)
-                .ToListAsync();
+                .ToList();
 
-            // 3. Search Videos & Shorts (Match Title or Description, Public only)
-            var videoEntities = await _context.Videos
+            // 3. Tải tất cả videos về rồi filter in-memory để hỗ trợ bỏ dấu
+            var allVideoEntities = await _context.Videos
                 .Include(v => v.Channel)
                     .ThenInclude(c => c.User)
                         .ThenInclude(u => u.Profile)
-                .Where(v => v.Visibility == "Public" && !v.Channel.IsSuspended &&
-                            (v.Title.ToLower().Contains(query) || 
-                            (v.Description != null && v.Description.ToLower().Contains(query))))
-                .Select(v => new VideoResponseDTO
+                .Where(v => (v.Visibility == "Public" || v.Visibility == "Private") && !v.Channel.IsSuspended)
+                .Select(v => new
                 {
-                    Id = v.Id,
-                    Title = v.Title,
+                    v.Id,
+                    v.Title,
                     Description = v.Description ?? "",
                     ThumbnailUrl = _context.VideoThumbnails
                         .Where(t => t.VideoId == v.Id)
@@ -96,18 +143,42 @@ namespace Video_Platform_Backend.Controllers
                     ViewsCount = v.ViewsCount ?? 0,
                     CreatedAt = v.CreatedAt ?? DateTime.UtcNow,
                     IsShort = v.IsShort ?? false,
-                    CategoryId = v.CategoryId,
-                    ChannelId = v.ChannelId,
-                    ChannelName = v.Channel.ChannelName,
+                    v.CategoryId,
+                    v.ChannelId,
+                    v.Channel.ChannelName,
                     ChannelHandle = v.Channel.Handle,
-                    ChannelAvatarUrl = v.Channel.User.Profile != null 
+                    ChannelAvatarUrl = v.Channel.User.Profile != null
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified
+                    ChannelIsVerified = v.Channel.IsVerified,
+                    v.Visibility
                 })
+                .ToListAsync();
+
+            var videoEntities = allVideoEntities
+                .Where(v => Normalize(v.Title).Contains(queryNorm)
+                         || Normalize(v.Description).Contains(queryNorm))
                 .OrderByDescending(v => v.ViewsCount)
                 .Take(limit)
-                .ToListAsync();
+                .Select(v => new VideoResponseDTO
+                {
+                    Id = v.Id,
+                    Title = v.Title,
+                    Description = v.Description,
+                    ThumbnailUrl = v.ThumbnailUrl,
+                    Duration = v.Duration,
+                    ViewsCount = v.ViewsCount,
+                    CreatedAt = v.CreatedAt,
+                    IsShort = v.IsShort,
+                    CategoryId = v.CategoryId,
+                    ChannelId = v.ChannelId,
+                    ChannelName = v.ChannelName,
+                    ChannelHandle = v.ChannelHandle,
+                    ChannelAvatarUrl = v.ChannelAvatarUrl,
+                    ChannelIsVerified = v.ChannelIsVerified,
+                    IsMembersOnly = v.Visibility == "Private"
+                })
+                .ToList();
 
             var videos = videoEntities.Where(v => !v.IsShort).ToList();
             var shorts = videoEntities.Where(v => v.IsShort).ToList();

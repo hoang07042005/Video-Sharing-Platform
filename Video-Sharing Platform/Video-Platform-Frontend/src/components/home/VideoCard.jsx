@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, CheckCircle, Crown } from "lucide-react";
 
 export default function VideoCard({ video, isOwner, onEdit, onDelete }) {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function VideoCard({ video, isOwner, onEdit, onDelete }) {
       className="group cursor-pointer flex flex-col gap-3"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A1A1A]">
+      <div className="relative aspect-video rounded-[8px] overflow-hidden bg-[#1A1A1A]">
         <img
           src={video.thumbnail}
           alt={video.title}
@@ -23,6 +23,11 @@ export default function VideoCard({ video, isOwner, onEdit, onDelete }) {
         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-medium">
           {video.duration}
         </div>
+        {video.isMembersOnly && (
+          <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+            <Crown size={12} /> Dành cho hội viên
+          </span>
+        )}
 
         {/* Owner Actions */}
         {isOwner && (
@@ -67,9 +72,10 @@ export default function VideoCard({ video, isOwner, onEdit, onDelete }) {
           </h3>
           <Link
             to={`/c/${video.handle}`}
-            className="text-gray-400 text-xs mt-1 block hover:text-white transition-colors"
+            className="text-gray-400 text-xs mt-1 flex items-center gap-1 hover:text-white transition-colors"
           >
-            {video.channelName}
+            <span className="truncate">{video.channelName}</span>
+            {video.isVerified && <CheckCircle className="w-3 h-3 text-white fill-green-500 shrink-0" />}
           </Link>
           <div className="flex items-center gap-1 text-gray-400 text-xs">
             <span>{video.views}</span>

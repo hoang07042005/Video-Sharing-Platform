@@ -37,6 +37,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelName = c.ChannelName,
                     Handle = c.Handle,
                     AvatarUrl = c.User.Profile != null ? (c.User.Profile.AvatarUrl ?? "") : "",
+                    Description = c.Description ?? "",
                     SubscriberCount = _context.Followers.Count(f => f.ChannelId == c.Id),
                     IsVerified = c.IsVerified
                 })
@@ -392,7 +393,8 @@ namespace Video_Platform_Backend.Controllers
                     ChannelAvatarUrl = v.Channel.User.Profile != null 
                         ? (v.Channel.User.Profile.AvatarUrl ?? "")
                         : "",
-                    ChannelIsVerified = v.Channel.IsVerified
+                    ChannelIsVerified = v.Channel.IsVerified,
+                    IsMembersOnly = v.Visibility == "Private"
                 })
                 .OrderByDescending(v => v.CreatedAt)
                 .ToListAsync();
@@ -513,6 +515,7 @@ namespace Video_Platform_Backend.Controllers
                     ChannelName = f.Channel.ChannelName,
                     Handle = f.Channel.Handle,
                     AvatarUrl = f.Channel.User.Profile != null ? (f.Channel.User.Profile.AvatarUrl ?? "") : "",
+                    Description = f.Channel.Description ?? "",
                     SubscriberCount = _context.Followers.Count(x => x.ChannelId == f.ChannelId),
                     VideoCount = _context.Videos.Count(v => v.ChannelId == f.ChannelId && v.Visibility == "Public"),
                     IsVerified = f.Channel.IsVerified

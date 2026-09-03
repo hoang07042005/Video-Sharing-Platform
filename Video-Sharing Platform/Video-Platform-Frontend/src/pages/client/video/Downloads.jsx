@@ -7,6 +7,7 @@ import {
   HardDrive,
   CheckCircle2,
   FolderOpen,
+  Crown,
 } from "lucide-react";
 
 const formatDuration = (seconds) => {
@@ -190,6 +191,11 @@ export default function Downloads() {
                     alt={video.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  {video.isMembersOnly && (
+                    <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+                      <Crown size={12} /> Dành cho hội viên
+                    </span>
+                  )}
                   <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-xs text-white font-medium">
                     {formatDuration(video.duration || 0)}
                   </div>

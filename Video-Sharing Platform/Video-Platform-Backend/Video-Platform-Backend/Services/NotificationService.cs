@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
 using Video_Platform_Backend.Models;
+using Video_Platform_Backend.Hubs;
 
 namespace Video_Platform_Backend.Services;
 
@@ -17,11 +19,13 @@ public class NotificationService : INotificationService
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<NotificationService> _logger;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
-    public NotificationService(ApplicationDbContext db, ILogger<NotificationService> logger)
+    public NotificationService(ApplicationDbContext db, ILogger<NotificationService> logger, IHubContext<NotificationHub> hubContext)
     {
         _db = db;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     public async Task<bool> SendNotificationAsync(Guid userId, string title, string message, string type, string? actionUrl = null, Guid? relatedId = null, string? imageUrl = null)
@@ -68,6 +72,9 @@ public class NotificationService : INotificationService
 
             _db.Notifications.Add(notification);
             await _db.SaveChangesAsync();
+
+            // Push notification via SignalR
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", notification);
 
             _logger.LogInformation($"Notification sent to user {userId}: {type} - {message}");
             return true;

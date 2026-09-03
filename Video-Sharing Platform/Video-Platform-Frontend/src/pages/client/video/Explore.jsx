@@ -4,6 +4,7 @@ import * as LucideIcons from "lucide-react";
 import { DEFAULT_CATEGORY_ICON } from "../../../components/home/CategoryFilter";
 import { getIconColor } from "../../../utils/iconHelpers";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import VideoDropdownMenu from "../../../components/video/VideoDropdownMenu";
 import {
   Search,
   Compass,
@@ -18,6 +19,7 @@ import {
   Laugh,
   Palette,
   Code,
+  Crown,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -148,35 +150,47 @@ function VideoCard({ video }) {
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         )
       }
-      className="group cursor-pointer flex flex-col gap-3"
+      className="group cursor-pointer flex flex-col gap-3 relative"
     >
       <div
-        className={`relative ${video.isShort ? "aspect-[9/16] w-[160px]" : "aspect-video w-full"} rounded-xl overflow-hidden bg-[#1A1A1A] shadow-md`}
+        className={`relative ${video.isShort ? "aspect-[9/16] w-[160px]" : "aspect-video w-full"} rounded-[8px] bg-[#1A1A1A] shadow-md`}
       >
-        <img
-          src={
-            video.thumbnailUrl ||
-            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500"
-          }
-          alt={video.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+          <img
+            src={
+              video.thumbnailUrl ||
+              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500"
+            }
+            alt={video.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {video.isMembersOnly && (
+            <span className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] z-20 flex items-center gap-1 shadow-md">
+              <Crown size={12} /> Dành cho hội viên
+            </span>
+          )}
 
-        {/* Play Icon Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-            <PlayCircle className="w-7 h-7 text-white" />
+          {/* Play Icon Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+              <PlayCircle className="w-7 h-7 text-white" />
+            </div>
+          </div>
+
+          {/* Duration / Shorts Badge */}
+          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow z-10">
+            {video.isShort ? (
+              <span className="text-[#FF5722] uppercase">Shorts</span>
+            ) : (
+              formatDuration(video.duration)
+            )}
           </div>
         </div>
 
-        {/* Duration / Shorts Badge */}
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow z-10">
-          {video.isShort ? (
-            <span className="text-[#FF5722] uppercase">Shorts</span>
-          ) : (
-            formatDuration(video.duration)
-          )}
+        <div className="absolute top-1 right-1 z-30">
+          <VideoDropdownMenu video={video} />
         </div>
       </div>
 

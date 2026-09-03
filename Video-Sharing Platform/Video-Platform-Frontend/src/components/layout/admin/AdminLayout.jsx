@@ -170,7 +170,7 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white flex font-sans">
       {/* Admin Sidebar */}
-      <aside className="w-[190px] h-screen bg-[#0F0F0F] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
+      <aside className="w-[190px] h-screen bg-[#141418] border-r border-white/5 flex flex-col shrink-0 sticky top-0">
         {/* Logo */}
         <div className="py-1 px-4 flex items-center justify-center w-full shrink-0">
           <Link to="/admin" className="flex items-center justify-center">

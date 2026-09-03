@@ -119,7 +119,7 @@ namespace Video_Platform_Backend.Controllers
                 return Unauthorized(new { Message = "Account is inactive or banned." });
             }
 
-            var token = GenerateJwtToken(user);
+            var token = await GenerateJwtTokenAsync(user);
 
             this.AddAuditLog(_context, "Đăng nhập hệ thống", "login", "Auth", "Người dùng đã đăng nhập vào hệ thống thành công", user.Id);
             await _context.SaveChangesAsync();
@@ -367,7 +367,7 @@ namespace Video_Platform_Backend.Controllers
                     return Unauthorized(new { Message = "Account is inactive or banned." });
                 }
 
-                var token = GenerateJwtToken(user);
+                var token = await GenerateJwtTokenAsync(user);
                 
                 this.AddAuditLog(_context, "Đăng nhập hệ thống (Google)", "login", "Auth", "Người dùng đăng nhập thành công bằng Google", user.Id);
                 await _context.SaveChangesAsync();
@@ -484,7 +484,7 @@ namespace Video_Platform_Backend.Controllers
             return Ok(new { Message = "Profile updated successfully." });
         }
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtTokenAsync(User user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourFallbackSecretKeyHere1234567890";
@@ -498,23 +498,50 @@ namespace Video_Platform_Backend.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
+            var roles = new List<string>();
             if (user.UserRoles != null && user.UserRoles.Any())
             {
                 foreach (var userRole in user.UserRoles)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                    roles.Add(userRole.Role.Name);
                 }
             }
             else
             {
                 claims.Add(new Claim(ClaimTypes.Role, "User"));
+                roles.Add("User");
+            }
+
+            // Fetch timeout settings
+            var timeoutSettings = await _context.SystemSettings
+                .Where(s => s.Key == "adminSessionTimeout" || s.Key == "moderatorSessionTimeout" || s.Key == "supportSessionTimeout" || s.Key == "userSessionTimeout")
+                .ToDictionaryAsync(s => s.Key, s => s.Value);
+
+            double adminTimeout = timeoutSettings.ContainsKey("adminSessionTimeout") && double.TryParse(timeoutSettings["adminSessionTimeout"], out var a) ? a : 60;
+            double moderatorTimeout = timeoutSettings.ContainsKey("moderatorSessionTimeout") && double.TryParse(timeoutSettings["moderatorSessionTimeout"], out var m) ? m : 60;
+            double supportTimeout = timeoutSettings.ContainsKey("supportSessionTimeout") && double.TryParse(timeoutSettings["supportSessionTimeout"], out var sp) ? sp : 60;
+            double userTimeout = timeoutSettings.ContainsKey("userSessionTimeout") && double.TryParse(timeoutSettings["userSessionTimeout"], out var u) ? u : 15;
+
+            double expirationMinutes = userTimeout;
+            if (roles.Contains("Admin") || roles.Contains("Quản trị viên"))
+            {
+                expirationMinutes = adminTimeout;
+            }
+            else if (roles.Contains("Moderator") || roles.Contains("Kiểm duyệt viên"))
+            {
+                expirationMinutes = moderatorTimeout;
+            }
+            else if (roles.Contains("Support") || roles.Contains("Nhân viên Hỗ trợ"))
+            {
+                expirationMinutes = supportTimeout;
             }
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
+                expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
                 signingCredentials: creds
             );
 

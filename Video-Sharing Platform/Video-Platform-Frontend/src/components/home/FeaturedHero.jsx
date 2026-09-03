@@ -1,4 +1,4 @@
-import { Play, Plus, CheckCircle, Flame } from "lucide-react";
+import { Play, Plus, CheckCircle, Flame, Crown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import SaveToPlaylistDropdown from "../video/SaveToPlaylistDropdown";
@@ -50,10 +50,10 @@ export default function FeaturedHero({
           video.isShort ? `/shorts?id=${video.id}` : `/watch/${video.id}`,
         );
       }}
-      className="relative w-full h-[480px] md:h-[565px] rounded-3xl group cursor-pointer select-none"
+      className="relative w-full h-[480px] md:h-[565px] rounded-[8px] group cursor-pointer select-none"
     >
       {/* Background container with overflow-hidden */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+      <div className="absolute inset-0 rounded-[8px] overflow-hidden">
         {/* Thumbnail */}
         <img
           src={
@@ -91,13 +91,21 @@ export default function FeaturedHero({
       {/* Content — left side, vertically centered */}
       <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-8 md:p-12 max-w-[80%] z-10">
         {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 bg-[#FF5722] text-white text-[11px] font-bold px-3 py-1.5 rounded-full mb-5 uppercase tracking-wider w-fit shadow-lg shadow-[#FF5722]/30">
-          <Flame className="w-3.5 h-3.5" />
-          Đề xuất
+        <div className="flex items-center gap-2 mb-5">
+          <div className="inline-flex items-center gap-1.5 bg-[#FF5722] text-white text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-fit shadow-lg shadow-[#FF5722]/30">
+            <Flame className="w-3.5 h-3.5" />
+            Đề xuất
+          </div>
+          {video.isMembersOnly && (
+            <div className="inline-flex items-center gap-1.5 bg-green-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-fit shadow-lg shadow-green-500/30">
+              <Crown className="w-3.5 h-3.5" />
+              Dành cho hội viên
+            </div>
+          )}
         </div>
 
         {/* Title — large with gradient highlight on middle part */}
-        <h2 className="text-2xl md:text-5xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
+        <h2 className="text-2xl md:text-4xl font-extrabold text-white leading-[1.2] mb-5 drop-shadow-lg">
           {part1 && <span>{part1} </span>}
           {part2 && (
             <span className="bg-gradient-to-r from-pink-400 via-[#FF5722] to-orange-400 bg-clip-text text-transparent">
@@ -108,7 +116,7 @@ export default function FeaturedHero({
         </h2>
 
         {/* Description */}
-        <p className="text-gray-300 text-[18px] leading-relaxed mb-6 line-clamp-2 max-w-lg">
+        <p className="text-gray-300 text-[16px] leading-relaxed mb-6 line-clamp-2 max-w-lg">
           {video.description ||
             "Tuyển chọn những ca khúc nổi bật nhất đang làm mưa làm gió trên mọi bảng xếp hạng."}
         </p>
@@ -131,7 +139,7 @@ export default function FeaturedHero({
                 {(video.channelName || "A")[0].toUpperCase()}
               </div>
             )}
-            <span className="text-white font-semibold text-[18px] ml-1">
+            <span className="text-white font-semibold text-[16px] ml-1">
               {video.channelName}
             </span>
             {video.channelIsVerified && (
