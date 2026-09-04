@@ -14,3 +14,14 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
+
+
+# Kiểm tra kết nối máy thật bằng Terminal
+adb devices
+adb pair 192.168.24.16:
+adb connect 192.168.24.16:
+
+# Chạy debug
+flutter run

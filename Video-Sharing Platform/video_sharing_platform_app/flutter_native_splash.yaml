@@ -1,0 +1,9 @@
+flutter_native_splash:
+  color: "#0F0F0F"
+  image: "assets/logotrang_padded.png"
+  android: true
+  ios: true
+
+  android_12:
+    color: "#0F0F0F"
+    image: "assets/logotrang_padded.png"
