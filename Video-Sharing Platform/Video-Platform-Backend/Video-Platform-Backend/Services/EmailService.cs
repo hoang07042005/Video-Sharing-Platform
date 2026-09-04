@@ -114,7 +114,7 @@ namespace Video_Platform_Backend.Services
                                 contentType = "image/jpeg";
                             }
                                 
-                            var generatedCid = MimeUtils.GenerateMessageId();
+                            var generatedCid = MimeKit.Utils.MimeUtils.GenerateMessageId();
                             var imageAttachment = builder.LinkedResources.Add(cid, ms, MimeKit.ContentType.Parse(contentType));
                             imageAttachment.ContentId = generatedCid;
                             
