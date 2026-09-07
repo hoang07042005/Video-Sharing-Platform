@@ -33,6 +33,8 @@ class AuthService {
         await prefs.setString('token', data['token']);
         if (data['userId'] != null) await prefs.setString('userId', data['userId'].toString());
         if (data['handle'] != null) await prefs.setString('handle', data['handle']);
+        if (data['fullName'] != null) await prefs.setString('fullName', data['fullName']);
+        if (data['avatarUrl'] != null) await prefs.setString('avatarUrl', data['avatarUrl']);
         return {'success': true, 'data': data};
       } else {
         final data = jsonDecode(response.body);
@@ -72,5 +74,38 @@ class AuthService {
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey('token');
+  }
+
+  static Future<Map<String, dynamic>?> getCurrentUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return null;
+
+      // Try fetching from a standard endpoint if it exists
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/auth/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        // Fallback to local data
+        return {
+          'id': prefs.getString('userId'),
+          'handle': prefs.getString('handle'),
+          'fullName': prefs.getString('fullName') ?? prefs.getString('handle') ?? 'Người dùng',
+          'avatarUrl': prefs.getString('avatarUrl'),
+        };
+      }
+    } catch (e) {
+      final prefs = await SharedPreferences.getInstance();
+      return {
+        'id': prefs.getString('userId'),
+        'handle': prefs.getString('handle'),
+        'fullName': prefs.getString('handle') ?? 'Người dùng', // Fallback
+      };
+    }
   }
 }

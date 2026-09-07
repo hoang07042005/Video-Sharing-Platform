@@ -1,25 +1,30 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
+import 'dart:ui';
 import '../../../../constants.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final bool autoPlay;
   final List<dynamic>? resolutions;
+  final Map<String, dynamic>? nextVideo;
+  final VoidCallback? onPlayNext;
 
   const VideoPlayerWidget({
     super.key,
     required this.videoUrl,
     this.autoPlay = true,
     this.resolutions,
+    this.nextVideo,
+    this.onPlayNext,
   });
 
   @override
-  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
+  State<VideoPlayerWidget> createState() => VideoPlayerWidgetState();
 }
 
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
+class VideoPlayerWidgetState extends State<VideoPlayerWidget>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
@@ -29,6 +34,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
 
   bool _showSkipLeft = false;
   bool _showSkipRight = false;
+  bool _isUpNextCancelled = false;
   
   late String _currentUrl;
   String _currentResolutionName = 'Tự động';
@@ -92,6 +98,21 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
     }
   }
 
+  void pauseVideo() {
+    if (_controller?.value.isPlaying ?? false) {
+      _controller?.pause();
+      setState(() => _showControls = true);
+      _hideTimer?.cancel();
+    }
+  }
+
+  void playVideo() {
+    if (!(_controller?.value.isPlaying ?? true)) {
+      _controller?.play();
+      _resetHideTimer();
+    }
+  }
+
   void _togglePlayPause() {
     if (_controller?.value.isPlaying ?? false) {
       _controller?.pause();
@@ -125,6 +146,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
       if (mounted) setState(() => _showSkipLeft = false);
     });
     _resetHideTimer();
+  }
+
+  String _formatVideoDuration(dynamic duration) {
+    if (duration == null) return '0:00';
+    if (duration is num) {
+      final totalSeconds = duration.toInt();
+      final minutes = totalSeconds ~/ 60;
+      final seconds = totalSeconds % 60;
+      return '$minutes:${seconds.toString().padLeft(2, '0')}';
+    }
+    return duration.toString();
   }
 
   String _formatDuration(Duration d) {
@@ -234,13 +266,142 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
+                      color: Colors.black.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      _getMockCaption(c.value.position),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      _getMockCaption(position),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            // UP NEXT OVERLAY
+            if (widget.nextVideo != null && !_isUpNextCancelled && duration.inSeconds > 0 && (duration.inSeconds - position.inSeconds <= 15))
+              Positioned(
+                bottom: 60,
+                right: 16,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(50 * (1 - value), 0),
+                      child: Opacity(
+                        opacity: value,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: GestureDetector(
+                    onTap: widget.onPlayNext,
+                    child: Container(
+                      width: 144, // Reduced from 260
+                      height: 81, // Reduced from 146
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        image: DecorationImage(
+                          image: NetworkImage(
+                            widget.nextVideo!['thumbnailUrl'] != null && widget.nextVideo!['thumbnailUrl'].toString().isNotEmpty
+                              ? (widget.nextVideo!['thumbnailUrl'].toString().startsWith('http') 
+                                  ? widget.nextVideo!['thumbnailUrl'] 
+                                  : '${AppConstants.apiUrl.replaceAll('/api', '')}${widget.nextVideo!['thumbnailUrl']}')
+                              : 'https://via.placeholder.com/144x81',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Top gradient for text readability
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 50, // Reduced from 90
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.9),
+                                    Colors.black.withOpacity(0.5),
+                                    Colors.black.withOpacity(0.0),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Close button
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _isUpNextCancelled = true),
+                              child: Container(
+                                padding: const EdgeInsets.all(2), // Reduced from 4
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.4),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 12), // Reduced from 16
+                              ),
+                            ),
+                          ),
+                          // Title text
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            right: 20, // Leave space for close button
+                            child: Text(
+                              widget.nextVideo!['title'] ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10, // Reduced from 13
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0, 1),
+                                    blurRadius: 2.0,
+                                    color: Colors.black,
+                                  ),
+                                ],
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // Duration badge
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Reduced
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.85),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                _formatVideoDuration(widget.nextVideo!['duration']),
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold), // Reduced from 11
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

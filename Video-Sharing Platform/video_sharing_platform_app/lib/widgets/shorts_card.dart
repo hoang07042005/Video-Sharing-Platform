@@ -4,11 +4,13 @@ import '../constants.dart';
 class ShortsCard extends StatelessWidget {
   final dynamic video;
   final VoidCallback onTap;
+  final double width;
 
   const ShortsCard({
     super.key,
     required this.video,
     required this.onTap,
+    this.width = 180,
   });
 
   String _getImageUrl(String? url) {
@@ -32,7 +34,7 @@ class ShortsCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: 180,
+        width: width,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

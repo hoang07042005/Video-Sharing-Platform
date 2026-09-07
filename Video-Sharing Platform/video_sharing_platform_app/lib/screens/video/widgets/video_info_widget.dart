@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../constants.dart';
 import 'video_report_dialog.dart';
 import 'save_to_playlist_sheet.dart';
+import 'video_description_sheet.dart';
 
 class VideoInfoWidget extends StatefulWidget {
   final dynamic video;
@@ -36,7 +37,6 @@ class VideoInfoWidget extends StatefulWidget {
 }
 
 class _VideoInfoWidgetState extends State<VideoInfoWidget> {
-  bool _showFullInfo = false;
 
   String _formatViews(dynamic v) {
     if (v == null) return "0";
@@ -81,7 +81,18 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
       children: [
         // Title & Brief Info
         GestureDetector(
-          onTap: () => setState(() => _showFullInfo = !_showFullInfo),
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => VideoDescriptionSheet(
+                video: widget.video,
+                likesCount: widget.likesCount,
+                subscriberCount: widget.subscriberCount,
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Column(
@@ -94,51 +105,26 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
-                  maxLines: _showFullInfo ? null : 1,
-                  overflow: _showFullInfo ? TextOverflow.visible : TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                if (!_showFullInfo)
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$handle • ${_formatViews(widget.likesCount)} lượt thích • ${_formatViews(widget.video['viewCount'] ?? widget.video['viewsCount'] ?? widget.video['views'])} lượt xem • ${_timeAgo(widget.video['createdAt'] ?? widget.video['time'])} ',
-                          style: const TextStyle(color: Colors.grey, fontSize: 13),
-                        ),
-                        const TextSpan(
-                          text: '...xem thêm',
-                          style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                if (_showFullInfo) ...[
-                  Text(
-                    '$handle',
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
+                Text.rich(
+                  TextSpan(
                     children: [
-                      _buildInfoChip('${_formatViews(widget.likesCount)} lượt thích'),
-                      const SizedBox(width: 8),
-                      _buildInfoChip('${_formatViews(widget.video['viewCount'] ?? widget.video['viewsCount'] ?? widget.video['views'])} lượt xem'),
-                      const SizedBox(width: 8),
-                      _buildInfoChip(_timeAgo(widget.video['createdAt'] ?? widget.video['time'])),
+                      TextSpan(
+                        text: '$handle • ${_formatViews(widget.likesCount)} lượt thích • ${_formatViews(widget.video['viewCount'] ?? widget.video['viewsCount'] ?? widget.video['views'])} lượt xem • ${_timeAgo(widget.video['createdAt'] ?? widget.video['time'])} ',
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      const TextSpan(
+                        text: '...xem thêm',
+                        style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  if ((widget.video['description'] ?? '').isNotEmpty)
-                    Text(
-                      widget.video['description'],
-                      style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
-                    ),
-                  const SizedBox(height: 4),
-                  const Text('Ẩn bớt', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),

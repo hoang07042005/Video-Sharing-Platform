@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../constants.dart';
 
 class VideoDescriptionSheet extends StatelessWidget {
@@ -25,7 +27,7 @@ class VideoDescriptionSheet extends StatelessWidget {
     if (dateStr == null) return "Không rõ";
     final date = DateTime.tryParse(dateStr);
     if (date == null) return "Không rõ";
-    return '${date.day} thg ${date.month} ${date.year}';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   String _getImageUrl(String? url) {
@@ -46,9 +48,9 @@ class VideoDescriptionSheet extends StatelessWidget {
     final views = video['viewCount'] ?? video['viewsCount'] ?? video['views'] ?? 0;
     
     return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.7,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -117,9 +119,23 @@ class VideoDescriptionSheet extends StatelessWidget {
                         color: Colors.white12,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        description,
+                      child: Linkify(
+                        onOpen: (link) async {
+                          final Uri uri = Uri.parse(link.url);
+                          try {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Không thể mở link. Vui lòng thử khởi động lại app! Lỗi: $e')),
+                              );
+                            }
+                          }
+                        },
+                        text: description,
                         style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+                        linkStyle: const TextStyle(color: Colors.blue, fontSize: 14, height: 1.4, decoration: TextDecoration.underline),
+                        options: const LinkifyOptions(humanize: false),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -219,8 +235,8 @@ class VideoDescriptionSheet extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }

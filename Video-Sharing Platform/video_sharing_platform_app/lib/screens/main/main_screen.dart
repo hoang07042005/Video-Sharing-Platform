@@ -3,6 +3,7 @@ import '../../widgets/custom_bottom_nav.dart';
 import '../../constants.dart';
 import '../home/home_screen.dart';
 import '../video/short/shorts_feed_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,7 +27,7 @@ class _MainScreenState extends State<MainScreen> {
     ),
     const Scaffold(backgroundColor: AppConstants.primaryColor, body: Center(child: Text('Tải lên', style: TextStyle(color: Colors.white)))),
     const Scaffold(backgroundColor: AppConstants.primaryColor, body: Center(child: Text('Kênh đăng ký', style: TextStyle(color: Colors.white)))),
-    const Scaffold(backgroundColor: AppConstants.primaryColor, body: Center(child: Text('Hồ sơ', style: TextStyle(color: Colors.white)))),
+    const ProfileScreen(),
   ];
 
   @override

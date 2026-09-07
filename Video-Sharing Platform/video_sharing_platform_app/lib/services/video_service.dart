@@ -172,6 +172,22 @@ class VideoService {
     return [];
   }
 
+  static Future<dynamic> getPlaylistVideos(String playlistId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/playlists/$playlistId/videos'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  }
+
   static Future<bool> toggleVideoInPlaylist(String playlistId, String videoId) async {
     try {
       final headers = await _getHeaders();
@@ -201,6 +217,54 @@ class VideoService {
       // ignore
     }
     return null;
+  }
+
+  static Future<List<dynamic>> getWatchHistory() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/videos/history'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getLikedVideos() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/videos/liked'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getSavedPlaylists() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/playlists/saved'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
   }
 
   static Future<List<dynamic>> getComments(String videoId) async {

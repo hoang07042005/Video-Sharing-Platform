@@ -122,38 +122,61 @@ class VideoCommentsSheetState extends State<VideoCommentsSheet> {
     return tree;
   }
 
-  Widget _renderReplyTree(List<Map<String, dynamic>> nodes, String commentId, {int level = 1}) {
-    if (nodes.isEmpty) return const SizedBox.shrink();
+  Widget _buildCommentNode(Map<String, dynamic> c, {required bool isRoot, required String rootId, int level = 0, bool isLastChild = true}) {
+    List<dynamic> childrenNodes = [];
+    if (isRoot) {
+      if (c['replies'] != null && (c['replies'] as List).isNotEmpty) {
+        childrenNodes = _buildReplyTree(c['replies']);
+      }
+    } else {
+      if (c['children'] != null && (c['children'] as List).isNotEmpty) {
+        childrenNodes = c['children'];
+      }
+    }
+    
+    bool hasChildren = childrenNodes.isNotEmpty;
+    bool isExpanded = isRoot ? _expandedComments.contains(c['id']) : true;
+    double avatarRadius = isRoot ? 16 : 12;
+    double hookWidth = (level == 1 ? 16 : 12) + 12.0 + 0.75; // 0.75 added to perfectly merge with parent's vertical line
+
     return Padding(
-      padding: EdgeInsets.only(left: level == 1 ? 0 : 36.0, top: level == 1 ? 8 : 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: nodes.asMap().entries.map((entry) {
-          int index = entry.key;
-          var reply = entry.value;
-          bool isLast = index == nodes.length - 1;
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: EdgeInsets.only(bottom: isRoot ? 16 : 0, top: isRoot ? 0 : 12),
+      child: Stack(
+        children: [
+            // Vertical line dropping from this node's avatar to cover all its children
+            if (hasChildren && isExpanded)
+              Positioned(
+                left: avatarRadius - 0.75, // perfectly centered under the avatar
+                top: avatarRadius * 2 + 8,
+                bottom: 8,
+                width: 1.5,
+                child: Container(color: const Color.fromARGB(255, 240, 110, 20)),
+              ),
+              
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 24,
-                  child: Stack(
-                    children: [
-                      if (index == 0 && level > 1)
-                        Positioned(
-                          left: 0, top: -16, height: 16,
-                          child: Container(width: 1.5, color: const Color.fromARGB(255, 240, 110, 20)),
-                        ),
-                      if (!isLast)
-                        Positioned(
-                          left: 0, top: 0, bottom: -12,
-                          child: Container(width: 1.5, color: const Color.fromARGB(255, 240, 110, 20)),
-                        ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    // MASK: Erase the leftover parent vertical line below the last child's hook
+                    if (!isRoot && isLastChild)
                       Positioned(
-                        left: 0, top: 0,
+                        left: -hookWidth - 1, // slightly wider to cover the line
+                        top: 2, // start exactly where the 10px curve begins (12 - 10 = 2)
+                        bottom: -2000, // extend downward to hide the rest of the parent's line
+                        width: 4,
+                        child: Container(color: AppConstants.primaryColor),
+                      ),
+                    // The L-shape hook
+                    if (!isRoot)
+                      Positioned(
+                        left: -hookWidth,
+                        top: -12,
                         child: Container(
-                          width: 16, height: 16,
+                          width: hookWidth,
+                          height: 24,
                           decoration: const BoxDecoration(
                             border: Border(
                               left: BorderSide(color: Color.fromARGB(255, 240, 110, 20), width: 1.5),
@@ -163,110 +186,125 @@ class VideoCommentsSheetState extends State<VideoCommentsSheet> {
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 14, top: 13.5,
-                        child: Container(
-                          width: 5, height: 5,
-                          decoration: const BoxDecoration(
-                            color: Color.fromARGB(255, 240, 110, 20),
-                            shape: BoxShape.circle,
+                    CircleAvatar(
+                      radius: avatarRadius,
+                      backgroundImage: NetworkImage(
+                        c['avatarUrl'] != null && c['avatarUrl'].toString().isNotEmpty
+                            ? _formatUrl(c['avatarUrl'])
+                            : 'https://ui-avatars.com/api/?name=${c['fullName'] ?? 'User'}',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            c['fullName'] ?? 'User',
+                            style: TextStyle(color: Colors.white70, fontSize: isRoot ? 12 : 11, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _timeAgo(c['createdAt']),
+                            style: TextStyle(color: Colors.white38, fontSize: isRoot ? 11 : 10),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        c['content'] ?? '',
+                        style: TextStyle(color: Colors.white, fontSize: isRoot ? 14 : 13),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.thumb_up_alt_outlined, color: Colors.white54, size: 14),
+                          if (c['likesCount'] != null && c['likesCount'] > 0) ...[
+                            const SizedBox(width: 4),
+                            Text(c['likesCount'].toString(), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                          ],
+                          const SizedBox(width: 16),
+                          const Icon(Icons.thumb_down_alt_outlined, color: Colors.white54, size: 14),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () => _startReply(rootId, c['fullName'] ?? 'User', isReplyToReply: !isRoot),
+                            child: Text('Phản hồi', style: TextStyle(color: Colors.white54, fontSize: isRoot ? 12 : 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                      if (isRoot && hasChildren)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (_expandedComments.contains(c['id'])) {
+                                _expandedComments.remove(c['id']);
+                              } else {
+                                _expandedComments.add(c['id']);
+                              }
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _expandedComments.contains(c['id']) ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _expandedComments.contains(c['id'])
+                                      ? 'Ẩn phản hồi'
+                                      : '${(c['replies'] as List).length} phản hồi',
+                                  style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8, top: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundImage: NetworkImage(
-                                reply['avatarUrl'] != null && reply['avatarUrl'].toString().isNotEmpty
-                                    ? _formatUrl(reply['avatarUrl'])
-                                    : 'https://ui-avatars.com/api/?name=${reply['fullName'] ?? 'User'}',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        reply['fullName'] ?? 'User',
-                                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _timeAgo(reply['createdAt']),
-                                        style: const TextStyle(color: Colors.white38, fontSize: 10),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    reply['content'] ?? '',
-                                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.thumb_up_alt_outlined, color: Colors.white54, size: 14),
-                                      if (reply['likesCount'] != null && reply['likesCount'] > 0) ...[
-                                        const SizedBox(width: 4),
-                                        Text(reply['likesCount'].toString(), style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                      ],
-                                      const SizedBox(width: 16),
-                                      const Icon(Icons.thumb_down_alt_outlined, color: Colors.white54, size: 14),
-                                      const SizedBox(width: 16),
-                                      GestureDetector(
-                                        onTap: () => _startReply(commentId, reply['fullName'] ?? 'User', isReplyToReply: true),
-                                        child: const Text('Phản hồi', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      if (hasChildren && isExpanded)
+                        Column(
+                          children: childrenNodes.asMap().entries.map((entry) {
+                            return _buildCommentNode(entry.value, isRoot: false, rootId: rootId, level: level + 1, isLastChild: entry.key == childrenNodes.length - 1);
+                          }).toList(),
                         ),
-                        if (reply['children'] != null && (reply['children'] as List).isNotEmpty)
-                          _renderReplyTree(List<Map<String, dynamic>>.from(reply['children']), commentId, level: level + 1),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-          );
-        }).toList(),
-      ),
+          ],
+        ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    int totalComments = _comments.length;
+    for (var c in _comments) {
+      if (c['replies'] != null) {
+        totalComments += (c['replies'] as List).length;
+      }
+    }
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.65,
+      height: MediaQuery.of(context).size.height,
       decoration: const BoxDecoration(
         color: AppConstants.primaryColor,
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(top: 30.0, left: 16.0, right: 16.0, bottom: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${_comments.length} Bình luận', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('$totalComments Bình luận', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 IconButton(
                   icon: const Icon(Icons.close, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
@@ -285,99 +323,7 @@ class VideoCommentsSheetState extends State<VideoCommentsSheet> {
                         itemCount: _comments.length,
                         itemBuilder: (context, index) {
                           final c = _comments[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundImage: NetworkImage(
-                                    c['avatarUrl'] != null && c['avatarUrl'].toString().isNotEmpty
-                                        ? _formatUrl(c['avatarUrl'])
-                                        : 'https://ui-avatars.com/api/?name=${c['fullName'] ?? 'User'}',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            c['fullName'] ?? 'User',
-                                            style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _timeAgo(c['createdAt']),
-                                            style: const TextStyle(color: Colors.white38, fontSize: 11),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        c['content'] ?? '',
-                                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.thumb_up_alt_outlined, color: Colors.white54, size: 14),
-                                          if (c['likesCount'] != null && c['likesCount'] > 0) ...[
-                                            const SizedBox(width: 4),
-                                            Text(c['likesCount'].toString(), style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                          ],
-                                          const SizedBox(width: 16),
-                                          const Icon(Icons.thumb_down_alt_outlined, color: Colors.white54, size: 14),
-                                          const SizedBox(width: 16),
-                                          GestureDetector(
-                                            onTap: () => _startReply(c['id'], c['fullName'] ?? 'User'),
-                                            child: const Text('Phản hồi', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                      if (c['replies'] != null && (c['replies'] as List).isNotEmpty) ...[
-                                        GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              if (_expandedComments.contains(c['id'])) {
-                                                _expandedComments.remove(c['id']);
-                                              } else {
-                                                _expandedComments.add(c['id']);
-                                              }
-                                            });
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _expandedComments.contains(c['id']) ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                                  color: Colors.blue,
-                                                  size: 18,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  _expandedComments.contains(c['id'])
-                                                      ? 'Ẩn phản hồi'
-                                                      : '${(c['replies'] as List).length} phản hồi',
-                                                  style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        if (_expandedComments.contains(c['id']))
-                                          _renderReplyTree(_buildReplyTree(c['replies']), c['id']),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                          return _buildCommentNode(c, isRoot: true, rootId: c['id']);
                         },
                       ),
           ),
