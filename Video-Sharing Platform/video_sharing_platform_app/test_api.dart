@@ -1,8 +1,8 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 void main() async {
-  final url = Uri.parse('http://192.168.24.11:5139/api/videos/recommended');
+  final url = Uri.parse('http://192.168.24.20:5139/api/videos/recommended');
   try {
     final response = await HttpClient().getUrl(url)
       .then((req) => req.close());

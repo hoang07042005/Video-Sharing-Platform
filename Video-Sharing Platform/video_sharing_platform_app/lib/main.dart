@@ -4,8 +4,11 @@ import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/main_screen.dart';
 
+import 'api_config.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.initialize();
   
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.black,

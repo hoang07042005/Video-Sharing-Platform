@@ -44,7 +44,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           if (settings['logoUrl'] != null) {
             String url = settings['logoUrl'];
             if (url.contains('localhost')) {
-              url = url.replaceAll('localhost', '192.168.24.11');
+              url = url.replaceAll('localhost', AppConstants.serverIp);
             } else if (!url.startsWith('http')) {
               url = '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
             }

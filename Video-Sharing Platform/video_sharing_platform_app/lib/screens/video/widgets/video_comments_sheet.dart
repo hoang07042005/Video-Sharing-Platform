@@ -39,7 +39,7 @@ class VideoCommentsSheetState extends State<VideoCommentsSheet> {
       url = url.replaceAll('/svg', '/png');
     }
     if (url.contains('localhost')) {
-      return url.replaceAll('localhost', '192.168.24.11');
+      return url.replaceAll('localhost', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';

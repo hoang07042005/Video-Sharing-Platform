@@ -14,7 +14,7 @@ class ShortsCard extends StatelessWidget {
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/360x640.png';
     if (url.contains('localhost')) {
-      return url.replaceAll('localhost', '192.168.24.11');
+      return url.replaceAll('localhost', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';

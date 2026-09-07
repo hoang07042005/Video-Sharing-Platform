@@ -235,7 +235,10 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
               aspectRatio: 16 / 9,
               child: Stack(
                 children: [
-                  VideoPlayerWidget(videoUrl: _video['videoUrl']),
+                  VideoPlayerWidget(
+                    videoUrl: _video['videoUrl'],
+                    resolutions: _video['resolutions'],
+                  ),
                   Positioned(
                     top: 8,
                     left: 8,

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'api_config.dart';
+
 class AppConstants {
-  // Lấy IP từ biến môi trường (khi chạy lệnh) hoặc dùng IP mặc định bên dưới
-  static const String _envApiUrl = String.fromEnvironment('API_URL');
-  static const String apiUrl = _envApiUrl == '' ? 'http://192.168.24.11:5139/api' : _envApiUrl;
+  // Trỏ về ApiConfig
+  static String get apiUrl => ApiConfig.apiBaseUrl;
 
   static const Color primaryColor = Color(0xFF0F0F0F);
   static const Color accentColor = Color(0xFFFF5722);
   static const Color textColor = Colors.white;
+
+  // Lấy IP từ ApiConfig để dùng chung cho việc replace localhost
+  static String get serverIp => ApiConfig.serverIp;
 }
