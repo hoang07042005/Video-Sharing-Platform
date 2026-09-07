@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
 import '../../../../constants.dart';
@@ -429,6 +429,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
                   _showPlaybackSpeedSheet();
                 },
               ),
+
+              // mới chỉ làm phụ để mẫu để test xem có hiển thị thôi chứ chưa có phụ đè chuẩn mực theo lời từ video
               ListTile(
                 leading: const Icon(Icons.closed_caption_outlined, color: Colors.white),
                 title: const Text('Phụ đề', style: TextStyle(color: Colors.white)),
