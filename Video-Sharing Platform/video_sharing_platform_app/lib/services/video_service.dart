@@ -13,6 +13,40 @@ class VideoService {
     };
   }
 
+  static Future<List<dynamic>> getCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/admincategories'),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getVideosByCategory(String categoryName) async {
+    try {
+      final headers = await _getHeaders();
+      final uri = Uri.parse('${AppConstants.apiUrl}/videos/explore').replace(queryParameters: {
+        if (categoryName != 'Tất cả' && categoryName != 'All') 'category': categoryName,
+      });
+      final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data is Map && data['items'] != null) return data['items'];
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
   static Future<dynamic> getVideoDetails(String videoId) async {
     try {
       final headers = await _getHeaders();
@@ -43,6 +77,23 @@ class VideoService {
       }
     } catch (e) {
       // print('Error fetching recommended videos: $e');
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getSubscriptionVideos() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/videos/subscriptions'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
     }
     return [];
   }

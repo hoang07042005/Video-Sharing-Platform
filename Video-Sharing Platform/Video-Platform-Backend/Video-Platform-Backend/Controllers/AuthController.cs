@@ -109,8 +109,37 @@ namespace Video_Platform_Backend.Controllers
                     .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email == dto.EmailOrPhone || u.PhoneNumber == dto.EmailOrPhone);
 
+            var userAgent = Request.Headers["User-Agent"].ToString();
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            var deviceType = userAgent.Contains("Mobi", StringComparison.OrdinalIgnoreCase) ? "Mobile" : "Desktop";
+            var deviceName = "Unknown Device";
+            if (userAgent.Contains("Windows")) deviceName = "Windows PC";
+            else if (userAgent.Contains("Mac OS")) deviceName = "MacBook";
+            else if (userAgent.Contains("iPhone")) deviceName = "iPhone";
+            else if (userAgent.Contains("Android")) deviceName = "Android Device";
+            else if (userAgent.Contains("iPad")) deviceName = "iPad";
+            else if (!string.IsNullOrEmpty(userAgent)) deviceName = userAgent.Length > 30 ? userAgent.Substring(0, 30) + "..." : userAgent;
+
             if (user == null || user.PasswordHash == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
+                if (user != null)
+                {
+                    _context.LoginHistories.Add(new LoginHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        DeviceName = deviceName,
+                        DeviceType = deviceType,
+                        IpAddress = ipAddress,
+                        Location = "Unknown",
+                        LoginTime = DateTime.UtcNow,
+                        IsSuccess = false,
+                        TokenIdentifier = "",
+                        IsActive = false
+                    });
+                    await _context.SaveChangesAsync();
+                }
+
                 return Unauthorized(new { Message = "Invalid credentials." });
             }
 
@@ -120,6 +149,21 @@ namespace Video_Platform_Backend.Controllers
             }
 
             var token = await GenerateJwtTokenAsync(user);
+
+            var loginHistory = new LoginHistory
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                DeviceName = deviceName,
+                DeviceType = deviceType,
+                IpAddress = ipAddress,
+                Location = "Vietnam", // Mock location, could be retrieved via IP Geolocation service
+                LoginTime = DateTime.UtcNow,
+                IsSuccess = true,
+                TokenIdentifier = Guid.NewGuid().ToString(),
+                IsActive = true
+            };
+            _context.LoginHistories.Add(loginHistory);
 
             this.AddAuditLog(_context, "Đăng nhập hệ thống", "login", "Auth", "Người dùng đã đăng nhập vào hệ thống thành công", user.Id);
             await _context.SaveChangesAsync();
@@ -138,6 +182,80 @@ namespace Video_Platform_Backend.Controllers
                 AvatarUrl = user.Channel?.AvatarUrl ?? user.Profile?.AvatarUrl,
                 Coins = user.Coins
             });
+        }
+
+        [Authorize]
+        [HttpGet("login-history")]
+        public async Task<IActionResult> GetLoginHistory()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var history = await _context.LoginHistories
+                .Where(h => h.UserId == userId)
+                .OrderByDescending(h => h.LoginTime)
+                .Take(20)
+                .Select(h => new
+                {
+                    h.Id,
+                    h.DeviceName,
+                    h.DeviceType,
+                    h.IpAddress,
+                    h.Location,
+                    h.LoginTime,
+                    h.IsSuccess,
+                    h.IsActive
+                })
+                .ToListAsync();
+
+            return Ok(history);
+        }
+
+        [Authorize]
+        [HttpGet("devices")]
+        public async Task<IActionResult> GetLoggedInDevices()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var devices = await _context.LoginHistories
+                .Where(h => h.UserId == userId && h.IsActive && h.IsSuccess)
+                .OrderByDescending(h => h.LoginTime)
+                .Select(h => new
+                {
+                    h.Id,
+                    h.DeviceName,
+                    h.DeviceType,
+                    h.IpAddress,
+                    h.Location,
+                    h.LoginTime
+                })
+                .ToListAsync();
+
+            // Distinct devices by name/type/ip
+            var distinctDevices = devices
+                .GroupBy(d => new { d.DeviceName, d.DeviceType })
+                .Select(g => g.First())
+                .ToList();
+
+            return Ok(distinctDevices);
+        }
+
+        [Authorize]
+        [HttpPost("logout-device/{id}")]
+        public async Task<IActionResult> LogoutDevice(Guid id)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var history = await _context.LoginHistories.FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
+            if (history == null) return NotFound();
+
+            history.IsActive = false;
+            _context.LoginHistories.Update(history);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Device logged out successfully." });
         }
 
         [HttpPost("forgot-password")]

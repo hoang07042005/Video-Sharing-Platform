@@ -6,7 +6,9 @@ import '../../widgets/custom_app_bar.dart';
 import '../../widgets/category_filter.dart';
 import '../../widgets/video_card.dart';
 import '../../widgets/shorts_card.dart';
+import '../../widgets/video_list_tile.dart';
 import '../video/short/short_detail_screen.dart';
+import '../category/categories_screen.dart';
 
 import '../video/videos/video_detail_screen.dart';
 
@@ -23,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _randomVideos = [];
   List<dynamic> _shorts = [];
   List<dynamic> _livestreams = [];
+  List<dynamic> _categories = [];
   int _currentHeroIndex = 0;
   final PageController _heroPageController = PageController();
 
@@ -40,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         VideoService.getRecommendedVideos(),
         VideoService.getShorts(),
         VideoService.getActiveLivestreams(),
+        VideoService.getCategories(),
       ]);
 
       if (mounted) {
@@ -51,12 +55,31 @@ class _HomeScreenState extends State<HomeScreen> {
           _recommendedVideos = normalVideos;
           
           final shuffledNormal = List<dynamic>.from(normalVideos)..shuffle();
-          _randomVideos = shuffledNormal.take(20).toList();
+          _randomVideos = shuffledNormal.take(40).toList();
 
           // Dữ liệu từ getShorts() đã là shorts, không cần filter isShort
           _shorts = results[1].toList();
               
           _livestreams = results[2];
+          _categories = results[3];
+          
+          if (_categories.isEmpty) {
+            // Dữ liệu dự phòng
+            _categories = [
+              {'name': 'Âm nhạc', 'icon': 'Music', 'color': 'cyanAccent'},
+              {'name': 'Game', 'icon': 'Gamepad2', 'color': 'greenAccent'},
+              {'name': 'Phim ảnh', 'icon': 'Film', 'color': 'blueAccent'},
+              {'name': 'Giáo dục', 'icon': 'GraduationCap', 'color': 'purpleAccent'},
+              {'name': 'Du lịch', 'icon': 'Plane', 'color': 'lightBlueAccent'},
+              {'name': 'Ẩm thực', 'icon': 'Utensils', 'color': 'orangeAccent'},
+              {'name': 'Thể thao', 'icon': 'Dumbbell', 'color': 'deepOrangeAccent'},
+              {'name': 'Khác', 'icon': 'LayoutGrid', 'color': 'blue'},
+            ];
+          } else {
+             // Lấy tối đa 8 danh mục
+             _categories = _categories.take(8).toList();
+          }
+          
           _isLoading = false;
         });
       }
@@ -100,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Vừa xong';
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, Color iconColor) {
+  Widget _buildSectionHeader(String title, IconData icon, Color iconColor, {VoidCallback? onSeeAll}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
@@ -110,15 +133,113 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-          const Text(
-            'Xem tất cả',
-            style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.redAccent, size: 16),
+          if (onSeeAll != null)
+            GestureDetector(
+              onTap: onSeeAll,
+              child: Row(
+                children: const [
+                  Text(
+                    'Xem tất cả',
+                    style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.redAccent, size: 16),
+                ],
+              ),
+            )
+          else
+            Row(
+              children: const [
+                Text(
+                  'Xem tất cả',
+                  style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+                Icon(Icons.chevron_right, color: Colors.redAccent, size: 16),
+              ],
+            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryGrid() {
+    IconData getIcon(String iconName) {
+      switch (iconName.toLowerCase()) {
+        case 'music': return Icons.music_note;
+        case 'gamepad2': return Icons.sports_esports;
+        case 'film': return Icons.movie;
+        case 'graduationcap': return Icons.school;
+        case 'plane': return Icons.flight;
+        case 'utensils': return Icons.restaurant;
+        case 'dumbbell': return Icons.fitness_center;
+        case 'monitor': return Icons.monitor;
+        case 'newspaper': return Icons.language;
+        case 'tv': return Icons.tv;
+        case 'heart': return Icons.favorite;
+        default: return Icons.grid_view;
+      }
+    }
+
+    Color getColor(int index) {
+      final colors = [
+        Colors.cyanAccent, Colors.greenAccent, Colors.blueAccent, 
+        Colors.purpleAccent, Colors.lightBlueAccent, Colors.orangeAccent, 
+        Colors.deepOrangeAccent, Colors.pinkAccent
+      ];
+      return colors[index % colors.length];
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 1.1,
+        ),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final cat = _categories[index];
+          final iconData = getIcon(cat['icon']?.toString() ?? '');
+          final color = getColor(index);
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CategoriesScreen(
+                    categories: _categories,
+                    initialCategory: cat['name']?.toString() ?? 'Khác',
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E212A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(iconData, color: color, size: 24),
+                  const SizedBox(height: 8),
+                  Text(
+                    cat['name']?.toString() ?? 'Khác',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -133,13 +254,13 @@ class _HomeScreenState extends State<HomeScreen> {
         return (bViews is num ? bViews.toInt() : int.tryParse(bViews.toString()) ?? 0)
             .compareTo(aViews is num ? aViews.toInt() : int.tryParse(aViews.toString()) ?? 0);
       });
-    final heroVideos = topVideos.take(8).toList();
+    final heroVideos = topVideos.take(5).toList();
 
     if (heroVideos.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(top: 20, bottom: 32),
-      height: 300,
+      margin: const EdgeInsets.only(top: 16, bottom: 24),
+      height: 220,
       child: Stack(
         children: [
           PageView.builder(
@@ -155,38 +276,14 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           
-          // Right Navigation Button
-          Positioned(
-            right: 16,
-            top: 134, // (300 / 2) - 16
-            child: GestureDetector(
-              onTap: () {
-                _heroPageController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                ),
-                child: const Icon(Icons.chevron_right, color: Colors.white, size: 20),
-              ),
-            ),
-          ),
-          
           // Pagination Dots
           Positioned(
             bottom: 16,
-            right: 20,
+            right: 32,
             child: Row(
               children: List.generate(heroVideos.length, (index) {
                 return Padding(
-                  padding: const EdgeInsets.only(left: 4),
+                  padding: const EdgeInsets.only(left: 6),
                   child: _buildDot(index == _currentHeroIndex),
                 );
               }),
@@ -199,24 +296,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeroSlide(Map<String, dynamic> video) {
     final thumbnail = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail']);
-    final rawAvatar = video['channelAvatar'] ?? video['channelAvatarUrl'] ?? video['avatar'];
-    final bool hasAvatar = rawAvatar != null && rawAvatar.toString().isNotEmpty;
-    final avatar = _getImageUrl(rawAvatar);
-    final channelName = video['channelName'] ?? 'Unknown';
-    final channelInitials = channelName.isNotEmpty ? channelName[0].toUpperCase() : 'A';
-    final bool isVerified = video['channelIsVerified'] == true || video['isVerified'] == true;
-    final views = _formatViews(video['viewCount'] ?? video['viewsCount'] ?? video['views']);
-    final time = _timeAgo(video['createdAt'] ?? video['time']);
-    
-    // Split title logic like in React
     final String title = video['title'] ?? 'Untitled';
-    final words = title.split(' ');
-    final third = math.max(1, words.length ~/ 3);
-    final part1 = words.take(third).join(' ');
-    
-    final endIndex = math.max(third * 2, words.length - 1);
-    final part2 = words.skip(third).take(endIndex - third).join(' ');
-    final part3 = words.skip(endIndex).join(' ');
+    final String description = video['description'] ?? 'Thư giãn • Tập trung • Bắt đầu ngày mới';
 
     return GestureDetector(
       onTap: () {
@@ -226,212 +307,76 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-        
-        borderRadius: BorderRadius.circular(0),
-        image: DecorationImage(
-          image: NetworkImage(thumbnail),
-          fit: BoxFit.cover,
+          borderRadius: BorderRadius.circular(12),
+          image: DecorationImage(
+            image: NetworkImage(thumbnail),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(0),
-              gradient: LinearGradient(
-                colors: [Colors.black.withValues(alpha: 0.9), Colors.black.withValues(alpha: 0.2)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Title with multiple colors
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontFamily: 'Arial'), // Fallback font
-                    children: [
-                      if (part1.isNotEmpty) TextSpan(text: '$part1 ', style: const TextStyle(color: Colors.white)),
-                      if (part2.isNotEmpty) TextSpan(
-                        text: '$part2 ',
-                        style: TextStyle(
-                          foreground: Paint()
-                            ..shader = const LinearGradient(
-                              colors: [Colors.pinkAccent, Color(0xFFFF5722), Colors.orangeAccent],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ).createShader(Rect.fromLTWH(0, 0, MediaQuery.of(context).size.width, 50)),
-                        ),
-                      ),
-                      if (part3.isNotEmpty) TextSpan(text: part3, style: const TextStyle(color: Colors.white)),
-                    ],
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                
-                // Description
-                Text(
-                  video['description'] ?? 'Tuyển chọn những ca khúc nổi bật nhất đang làm mưa làm gió trên mọi bảng xếp hạng.',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                // Meta info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Row 1: Channel Info
-                    Row(
-                      children: [
-                        // Avatar
-                        Builder(
-                          builder: (context) {
-                            final fallback = Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 2),
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFFF5722), Color(0xFF9C27B0)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                channelInitials,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                            );
-
-                            if (!hasAvatar || rawAvatar.toString().contains('placeholder.com')) {
-                              return fallback;
-                            }
-
-                            return Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 2),
-                              ),
-                              child: ClipOval(
-                                child: Image.network(
-                                  avatar,
-                                  width: 32,
-                                  height: 32,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => fallback,
-                                ),
-                              ),
-                            );
-                          }
-                        ),
-                        const SizedBox(width: 8),
-                        Text(channelName, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                        if (isVerified) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.check_circle, color: Colors.green, size: 14),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    
-                    // Row 2: Views and Time
-                    Row(
-                      children: [
-                        // Play icon in orange circle
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF5722),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFF5722).withValues(alpha: 0.3),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: const Padding(
-                            padding: EdgeInsets.only(left: 2.0),
-                            child: Icon(Icons.play_arrow, color: Colors.white, size: 10),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text('$views lượt xem', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                        const SizedBox(width: 8),
-                        const Text('•', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                        const SizedBox(width: 8),
-                        Text(time, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                
-                // Buttons
-                Row(
-                  children: [
-                    Container(
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Colors.deepOrangeAccent, Colors.pinkAccent],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.play_arrow, color: Colors.white, size: 14),
-                        label: const Text('Xem ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 32,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => VideoDetailScreen(videoId: video['id'])),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow, color: Colors.black, size: 16),
+                      label: const Text('Xem ngay', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: 36,
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.add, color: Colors.white, size: 14),
-                        label: const Text('Danh sách phát', style: TextStyle(color: Colors.white, fontSize: 12)),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.black.withValues(alpha: 0.5),
-                          side: BorderSide.none,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildDot(bool isActive) {
@@ -439,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: isActive ? 20 : 6,
       height: 6,
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFFF5722) : Colors.white54,
+        color: isActive ? Colors.white : Colors.white54,
         borderRadius: BorderRadius.circular(3),
       ),
     );
@@ -464,22 +409,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Featured Hero Banner
                     _buildHeroCarousel(),
 
-                    
-                    // Category Grid
-                    const CategoryFilter(),
-
-                    // Shorts Section
+                    // Shorts Section (Shorts nổi bật)
                     if (_shorts.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildSectionHeader('Shorts (video ngắn)', Icons.bolt, Colors.orangeAccent),
+                        child: _buildSectionHeader('Shorts nổi bật', Icons.play_circle_filled, Colors.redAccent),
                       ),
                       SizedBox(
-                        height: 320, // Taller for shorts
+                        height: 280, // Slightly shorter for shorts
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _shorts.length > 10 ? 10 : _shorts.length, // Max 10 items
+                          itemCount: _shorts.length > 10 ? 10 : _shorts.length,
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(right: 12),
@@ -504,17 +445,124 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 16),
                     ],
 
-                    // Recommended Videos (Video thường)
+                    // Recommended Videos (Video đề xuất)
+                    if (_recommendedVideos.isNotEmpty) ...[
+                      _buildSectionHeader('Video đề xuất', Icons.play_circle_filled, Colors.redAccent),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        itemCount: _recommendedVideos.length > 8 ? 8 : _recommendedVideos.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: VideoListTile(video: _recommendedVideos[index]),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Trending Videos (Đang thịnh hành)
+                    if (_randomVideos.isNotEmpty) ...[
+                      _buildSectionHeader('Đang thịnh hành', Icons.local_fire_department, Colors.redAccent),
+                      SizedBox(
+                        height: 280, // Tăng thêm height để chứa ảnh to hơn
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: math.min(5, _randomVideos.length),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: SizedBox(
+                                width: 280, // Tăng độ lớn của thẻ/ảnh
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    VideoCard(
+                                      video: _randomVideos[index],
+                                      width: 280,
+                                      hideAvatar: true,
+                                      singleRowInfo: false,
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      left: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.redAccent,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          '#${index + 1}',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Categories (Danh mục)
+                    _buildSectionHeader(
+                      'Danh mục', 
+                      Icons.grid_view_rounded, 
+                      Colors.white70,
+                      onSeeAll: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoriesScreen(categories: _categories),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryGrid(),
+                    const SizedBox(height: 32),
+
+                    // Livestreams (Playlist nổi bật)
+                    if (_livestreams.isNotEmpty) ...[
+                      _buildSectionHeader('Playlist nổi bật', Icons.queue_music, Colors.purpleAccent),
+                      SizedBox(
+                        height: 200,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _livestreams.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: VideoCard(
+                                video: _livestreams[index],
+                                width: 280,
+                                hideAvatar: true,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+
+                    // Standard Video Feed (Video thường bất kỳ)
                     if (_randomVideos.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildSectionHeader('Video thường', Icons.play_circle_filled, Colors.redAccent),
+                        child: _buildSectionHeader('Video có thể bạn sẽ thích', Icons.play_circle_filled, Colors.redAccent),
                       ),
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _randomVideos.length,
+                        itemCount: math.min(40, _randomVideos.length),
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 24),
@@ -523,29 +571,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                     ],
-
-
-
-                    // Livestreams (Playlist nổi bật)
-                    if (_livestreams.isNotEmpty) ...[
-                      _buildSectionHeader('Playlist nổi bật', Icons.queue_music, Colors.purpleAccent),
-                      SizedBox(
-                        height: 260,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _livestreams.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 16),
-                              child: VideoCard(video: _livestreams[index], width: 280),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 32),
                   ],
                 ),
               ),

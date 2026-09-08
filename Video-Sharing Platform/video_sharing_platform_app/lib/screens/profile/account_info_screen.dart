@@ -28,6 +28,7 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
   final _instagramController = TextEditingController();
   final _tiktokController = TextEditingController();
   final _emailController = TextEditingController();
+  final _countryController = TextEditingController();
 
   bool _isLoading = true;
   Map<String, dynamic>? _channel;
@@ -65,6 +66,7 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
           _channel = jsonDecode(channelRes.body);
           _channelNameController.text = _channel?['channelName'] ?? '';
           _descriptionController.text = _channel?['description'] ?? '';
+          _countryController.text = _channel?['country'] ?? '';
           
           _activeLinks.clear();
           dynamic rawLinks = _channel?['socialLinks'];
@@ -143,15 +145,251 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
     _instagramController.dispose();
     _tiktokController.dispose();
     _emailController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
-  void _saveChanges() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Đã lưu thay đổi'),
-        backgroundColor: Colors.green.shade600,
-        behavior: SnackBarBehavior.floating,
+  Future<void> _saveChanges() async {
+    if (_channel == null) return;
+    
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null) return;
+
+    try {
+      final updatedData = {
+        'channelName': _channelNameController.text.isNotEmpty ? _channelNameController.text : _channel!['channelName'],
+        'handle': _handleController.text.isNotEmpty ? _handleController.text : _channel!['handle'],
+        'description': _descriptionController.text,
+        'country': _countryController.text,
+        'contactEmail': _emailController.text,
+        'socialLinks': jsonEncode(_activeLinks),
+        'avatarUrl': _channel!['avatarUrl'],
+        'bannerUrl': _channel!['bannerUrl'],
+      };
+
+      final res = await http.put(
+        Uri.parse('${AppConstants.apiUrl}/channels/${_channel!['id']}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(updatedData),
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Đã lưu thay đổi'),
+              backgroundColor: Colors.green.shade600,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Status code: ${res.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Có lỗi xảy ra khi lưu thay đổi'),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        debugPrint('Error saving channel info: $e');
+      }
+    }
+  }
+
+  void _showEditDialog(String title, TextEditingController controller, {String? hint}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1E),
+        title: Text('Sửa $title', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white30),
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF4FC3F7))),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {});
+              Navigator.pop(context);
+            },
+            child: const Text('Lưu', style: TextStyle(color: Color(0xFF4FC3F7))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLinksEditor() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1C1C1E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16, right: 16, top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Quản lý đường liên kết', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                if (_activeLinks.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text('Chưa có liên kết nào.', style: TextStyle(color: Colors.white54)),
+                  ),
+                ..._activeLinks.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final link = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(link['platform'] ?? 'Link', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              Text(link['url'] ?? '', style: const TextStyle(color: Color(0xFF4FC3F7), fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, color: Colors.white54, size: 20),
+                              onPressed: () => _showLinkEditSheet(setModalState, index: index),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                              onPressed: () async {
+                                setModalState(() => _activeLinks.removeAt(index));
+                                setState(() {});
+                                await _saveChanges();
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                if (_activeLinks.length < 6) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _showLinkEditSheet(setModalState),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Thêm liên kết'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2C2C2E),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 44),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
+
+  void _showLinkEditSheet(StateSetter setModalState, {int? index}) {
+    final bool isEdit = index != null;
+    final platformCtrl = TextEditingController(text: isEdit ? _activeLinks[index]['platform'] : '');
+    final urlCtrl = TextEditingController(text: isEdit ? _activeLinks[index]['url'] : '');
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1C1C1E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          left: 16, right: 16, top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(isEdit ? 'Sửa liên kết' : 'Thêm liên kết', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: platformCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Tên nền tảng (VD: Facebook, YouTube)',
+                labelStyle: const TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: const Color(0xFF2C2C2E),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: urlCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'URL (VD: https://...)',
+                labelStyle: const TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: const Color(0xFF2C2C2E),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () async {
+                if (platformCtrl.text.isNotEmpty && urlCtrl.text.isNotEmpty) {
+                  setModalState(() {
+                    if (isEdit) {
+                      _activeLinks[index] = {'platform': platformCtrl.text, 'url': urlCtrl.text};
+                    } else {
+                      _activeLinks.add({'platform': platformCtrl.text, 'url': urlCtrl.text});
+                    }
+                  });
+                  setState(() {}); // Update main UI
+                  Navigator.pop(sheetContext);
+                  await _saveChanges(); // Save to backend automatically
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4FC3F7),
+                foregroundColor: Colors.black,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Lưu liên kết', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -212,7 +450,7 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
                   const SizedBox(height: 16),
                   _buildTextField('Tiểu sử cá nhân', _bioController, maxLines: 3),
                   const SizedBox(height: 16),
-                  _buildTextField('Mô tả kênh', _descriptionController, maxLines: 5),
+                  _buildTextField('Mô tả kênh', _descriptionController, minLines: 4, maxLines: null),
 
                   const SizedBox(height: 32),
                   const Divider(color: Color(0xFF1C1C1E)),
@@ -223,7 +461,14 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
                     children: [
                       _buildSectionTitle('Đường liên kết & Kết nối', Icons.link_rounded),
                       const SizedBox(width: 8),
-                      const Icon(Icons.edit, color: Colors.white54, size: 16),
+                      InkWell(
+                        onTap: _showLinksEditor,
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: Icon(Icons.edit, color: Colors.white54, size: 16),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -253,9 +498,11 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
                   // ── Thông tin khác ──
                   _buildSectionTitle('Thông tin khác', Icons.info_outline, color: Colors.white),
                   const SizedBox(height: 16),
-                  _buildOtherInfoRow(Icons.email_outlined, _emailController.text.isEmpty ? 'Chưa cập nhật email' : _emailController.text),
-                  _buildOtherInfoRow(Icons.tv_outlined, 'www.videoplatform.com/@${_handleController.text}'),
-                  _buildOtherInfoRow(Icons.language, 'Chưa cập nhật quốc gia'),
+                  _buildOtherInfoRow(Icons.email_outlined, _emailController.text.isEmpty ? 'Chưa cập nhật email' : _emailController.text, onEdit: () => _showEditDialog('Email', _emailController)),
+                  _buildOtherInfoRow(Icons.tv_outlined, 'www.videoplatform.com/@${_handleController.text}', onEdit: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng đổi Mã định danh để thay đổi đường dẫn này.')));
+                  }),
+                  _buildOtherInfoRow(Icons.language, _countryController.text.isEmpty ? 'Chưa cập nhật quốc gia' : _countryController.text, onEdit: () => _showEditDialog('Quốc gia', _countryController, hint: 'VD: Việt Nam')),
                   _buildOtherInfoRow(Icons.info_outline, 'Đã tham gia ${_formatDate(_channel?['createdAt'] ?? _currentUser?['createdAt'])}'),
                   _buildOtherInfoRow(Icons.people_outline, '${_formatCount(_channel?['subscriberCount'])} người đăng ký'),
                   _buildOtherInfoRow(Icons.video_library_outlined, '${_formatCount(_channel?['videoCount'])} video'),
@@ -325,7 +572,7 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
         children: [
           // Banner
           Container(
-            height: 140,
+            height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
               color: const Color(0xFF1C1C1E),
@@ -383,7 +630,7 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
     );
   }
 
-  Widget _buildOtherInfoRow(IconData icon, String text) {
+  Widget _buildOtherInfoRow(IconData icon, String text, {VoidCallback? onEdit}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -391,6 +638,15 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
           Icon(icon, color: Colors.white70, size: 20),
           const SizedBox(width: 16),
           Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14))),
+          if (onEdit != null)
+            InkWell(
+              onTap: onEdit,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(4.0),
+                child: Icon(Icons.edit, color: Colors.white54, size: 16),
+              ),
+            ),
         ],
       ),
     );
@@ -462,7 +718,8 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
     TextEditingController controller, {
     IconData? icon, 
     String? prefix, 
-    int maxLines = 1,
+    int? maxLines = 1,
+    int? minLines,
     TextInputType? keyboardType,
   }) {
     return Column(
@@ -473,15 +730,16 @@ class _AccountInfoScreenState extends State<AccountInfoScreen> {
         TextField(
           controller: controller,
           maxLines: maxLines,
-          keyboardType: keyboardType,
+          minLines: minLines,
+          keyboardType: keyboardType ?? (maxLines == null ? TextInputType.multiline : null),
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFF1C1C1E),
             prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF636366), size: 18) : null,
-            prefixText: prefix != null ? '\$prefix ' : null,
+            prefixText: prefix != null ? '$prefix ' : null,
             prefixStyle: const TextStyle(color: Colors.white54, fontSize: 14),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: maxLines > 1 ? 12 : 0),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: (maxLines == null || maxLines > 1 || (minLines ?? 1) > 1) ? 12 : 0),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,

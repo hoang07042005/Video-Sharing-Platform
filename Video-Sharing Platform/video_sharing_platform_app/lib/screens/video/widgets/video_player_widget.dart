@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 import 'dart:async';
 import 'dart:ui';
 import '../../../../constants.dart';
+import '../../../../main.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
@@ -25,7 +26,7 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class VideoPlayerWidgetState extends State<VideoPlayerWidget>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
   bool _hasError = false;
@@ -46,6 +47,31 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
     super.initState();
     _currentUrl = widget.videoUrl;
     _initializePlayer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void didPushNext() {
+    // A new route was pushed (e.g. going to settings), pause video
+    if (_controller?.value.isPlaying ?? false) {
+      _controller?.pause();
+    }
+  }
+
+  @override
+  void didPopNext() {
+    // We returned to this screen, resume video if autoplay is true
+    if (widget.autoPlay && !(_controller?.value.isPlaying ?? true)) {
+      _controller?.play();
+    }
   }
 
   String _getRealUrl(String url) {
@@ -195,6 +221,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _hideTimer?.cancel();
     _controller?.dispose();
     super.dispose();
@@ -266,7 +293,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -305,7 +332,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
                         border: Border.all(color: Colors.white24, width: 1),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -336,9 +363,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.black.withOpacity(0.9),
-                                    Colors.black.withOpacity(0.5),
-                                    Colors.black.withOpacity(0.0),
+                                    Colors.black.withValues(alpha: 0.9),
+                                    Colors.black.withValues(alpha: 0.5),
+                                    Colors.black.withValues(alpha: 0.0),
                                   ],
                                 ),
                               ),
@@ -353,7 +380,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
                               child: Container(
                                 padding: const EdgeInsets.all(2), // Reduced from 4
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.4),
+                                  color: Colors.black.withValues(alpha: 0.4),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.close, color: Colors.white, size: 12), // Reduced from 16
@@ -391,7 +418,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget>
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Reduced
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.85),
+                                color: Colors.black.withValues(alpha: 0.85),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(

@@ -3,6 +3,7 @@ import '../../../../constants.dart';
 import 'video_report_dialog.dart';
 import 'save_to_playlist_sheet.dart';
 import 'video_description_sheet.dart';
+import '../../channel/channel_screen.dart';
 
 class VideoInfoWidget extends StatefulWidget {
   final dynamic video;
@@ -37,15 +38,15 @@ class VideoInfoWidget extends StatefulWidget {
 }
 
 class _VideoInfoWidgetState extends State<VideoInfoWidget> {
-
   String _formatViews(dynamic v) {
     if (v == null) return "0";
     double count = v is num ? v.toDouble() : double.tryParse(v.toString()) ?? 0;
-    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
-    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
+    if (count >= 1000000)
+      return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
+    if (count >= 1000)
+      return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
     return count.toInt().toString();
   }
-
 
   String _timeAgo(String? dateStr) {
     if (dateStr == null) return "Vừa xong";
@@ -71,10 +72,11 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
     return url;
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final handle = widget.video['channelHandle'] ?? widget.video['channelName'] ?? 'Unknown';
+    final handle = widget.video['channelHandle'] ??
+        widget.video['channelName'] ??
+        'Unknown';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +96,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -113,12 +116,17 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: '$handle • ${_formatViews(widget.likesCount)} lượt thích • ${_formatViews(widget.video['viewCount'] ?? widget.video['viewsCount'] ?? widget.video['views'])} lượt xem • ${_timeAgo(widget.video['createdAt'] ?? widget.video['time'])} ',
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        text:
+                            '${_formatViews(widget.likesCount)} lượt thích • ${_formatViews(widget.video['viewCount'] ?? widget.video['viewsCount'] ?? widget.video['views'])} lượt xem • ${_timeAgo(widget.video['createdAt'] ?? widget.video['time'])} ',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                       const TextSpan(
                         text: '...xem thêm',
-                        style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -135,30 +143,63 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: [
-              // Channel Avatar
-              CircleAvatar(
-                radius: 16,
-                backgroundImage: NetworkImage(_getImageUrl(widget.video['channelAvatarUrl'])),
+              // Channel Avatar & Name
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChannelScreen(handle: handle),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundImage: NetworkImage(
+                            _getImageUrl(widget.video['channelAvatarUrl'])),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.video['channelName'] ?? handle,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               // Subscribe Button
               ElevatedButton(
                 onPressed: widget.onSubscribe,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.isSubscribed ? Colors.grey[800] : Colors.white,
-                  foregroundColor: widget.isSubscribed ? Colors.white : Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  backgroundColor:
+                      widget.isSubscribed ? Colors.grey[800] : Colors.white,
+                  foregroundColor:
+                      widget.isSubscribed ? Colors.white : Colors.black,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   minimumSize: const Size(0, 32),
                 ),
                 child: Text(
                   widget.isSubscribed ? 'Đã đăng ký' : 'Đăng ký',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                 ),
               ),
-              
-              const Spacer(),
-              
+              const SizedBox(width: 8),
               // Like / Dislike grouping
               Container(
                 height: 32,
@@ -170,18 +211,26 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                   children: [
                     InkWell(
                       onTap: widget.onLike,
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20)),
+                      borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          bottomLeft: Radius.circular(20)),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
                           children: [
                             Icon(
-                              widget.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                              widget.isLiked
+                                  ? Icons.thumb_up
+                                  : Icons.thumb_up_outlined,
                               color: Colors.white,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
-                            Text(_formatViews(widget.likesCount), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text(_formatViews(widget.likesCount),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13)),
                           ],
                         ),
                       ),
@@ -189,11 +238,15 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                     Container(width: 1, height: 16, color: Colors.white30),
                     InkWell(
                       onTap: widget.onDislike,
-                      borderRadius: const BorderRadius.only(topRight: Radius.circular(20), bottomRight: Radius.circular(20)),
+                      borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(20),
+                          bottomRight: Radius.circular(20)),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Icon(
-                          widget.isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
+                          widget.isDisliked
+                              ? Icons.thumb_down
+                              : Icons.thumb_down_outlined,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -202,20 +255,21 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(width: 8),
-              
+
               // Share Action
               _buildCircleButton(Icons.share_outlined, () {}),
-              
+
               const SizedBox(width: 4),
-              
+
               // More Actions - Dropdown popup
               Theme(
                 data: Theme.of(context).copyWith(
                   popupMenuTheme: PopupMenuThemeData(
                     color: const Color(0xFF2A2A2A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     elevation: 8,
                   ),
                 ),
@@ -227,7 +281,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       color: Colors.white12,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.more_vert, color: Colors.white, size: 18),
+                    child: const Icon(Icons.more_vert,
+                        color: Colors.white, size: 18),
                   ),
                   padding: EdgeInsets.zero,
                   offset: const Offset(0, 40),
@@ -243,12 +298,14 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       );
                     } else if (value == 'download') {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                        const SnackBar(
+                            content: Text('Tính năng đang phát triển')),
                       );
                     } else if (value == 'report') {
                       showDialog(
                         context: context,
-                        builder: (context) => VideoReportDialog(videoId: widget.video['id']),
+                        builder: (context) =>
+                            VideoReportDialog(videoId: widget.video['id']),
                       );
                     }
                   },
@@ -258,14 +315,19 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       child: Row(
                         children: [
                           Icon(
-                            widget.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            widget.isSaved
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
                             color: Colors.white,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            widget.isSaved ? 'Bỏ lưu' : 'Lưu vào danh sách phát',
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            widget.isSaved
+                                ? 'Bỏ lưu'
+                                : 'Lưu vào danh sách phát',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14),
                           ),
                         ],
                       ),
@@ -274,9 +336,12 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       value: 'download',
                       child: Row(
                         children: [
-                          Icon(Icons.download_outlined, color: Colors.white, size: 20),
+                          Icon(Icons.download_outlined,
+                              color: Colors.white, size: 20),
                           SizedBox(width: 12),
-                          Text('Tải video xuống', style: TextStyle(color: Colors.white, fontSize: 14)),
+                          Text('Tải video xuống',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -284,9 +349,12 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       value: 'report',
                       child: Row(
                         children: [
-                          Icon(Icons.flag_outlined, color: Colors.red, size: 20),
+                          Icon(Icons.flag_outlined,
+                              color: Colors.red, size: 20),
                           SizedBox(width: 12),
-                          Text('Báo cáo vi phạm', style: TextStyle(color: Colors.red, fontSize: 14)),
+                          Text('Báo cáo vi phạm',
+                              style:
+                                  TextStyle(color: Colors.red, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -301,6 +369,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
       ],
     );
   }
+
   Widget _buildCircleButton(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -324,7 +393,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
         color: Colors.white10,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      child: Text(label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12)),
     );
   }
 }

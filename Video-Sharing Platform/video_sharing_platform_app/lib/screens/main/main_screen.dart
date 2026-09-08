@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../widgets/custom_bottom_nav.dart';
 import '../../constants.dart';
+import '../../screens/upload/upload_screen.dart';
 import '../home/home_screen.dart';
 import '../video/short/shorts_feed_screen.dart';
 import '../profile/profile_screen.dart';
+import 'subscriptions_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,7 +28,7 @@ class _MainScreenState extends State<MainScreen> {
       },
     ),
     const Scaffold(backgroundColor: AppConstants.primaryColor, body: Center(child: Text('Tải lên', style: TextStyle(color: Colors.white)))),
-    const Scaffold(backgroundColor: AppConstants.primaryColor, body: Center(child: Text('Kênh đăng ký', style: TextStyle(color: Colors.white)))),
+    const SubscriptionsScreen(),
     const ProfileScreen(),
   ];
 
@@ -44,7 +46,7 @@ class _MainScreenState extends State<MainScreen> {
             currentIndex: _currentIndex,
             onTap: (index) {
               if (index == 2) {
-                // TODO: Hiển thị BottomSheet tải video lên
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadScreen()));
               } else {
                 setState(() {
                   _currentIndex = index;

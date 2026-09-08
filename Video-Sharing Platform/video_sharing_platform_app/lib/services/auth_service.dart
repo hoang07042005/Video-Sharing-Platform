@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
@@ -17,10 +18,25 @@ class AuthService {
   }
 
   static Future<Map<String, dynamic>> login(String emailOrPhone, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${AppConstants.apiUrl}/auth/login'),
-        headers: {'Content-Type': 'application/json'},
+      String userAgent = 'Unknown Device';
+      try {
+        if (Platform.isAndroid) userAgent = 'Android Device (App)';
+        else if (Platform.isIOS) userAgent = 'iPhone (App)';
+        else if (Platform.isWindows) userAgent = 'Windows PC (App)';
+        else if (Platform.isMacOS) userAgent = 'Mac OS (App)';
+        else if (Platform.isLinux) userAgent = 'Linux PC (App)';
+      } catch (e) {
+        // Fallback for Web
+        userAgent = 'Web Browser';
+      }
+
+      try {
+        final response = await http.post(
+          Uri.parse('${AppConstants.apiUrl}/auth/login'),
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': userAgent,
+          },
         body: jsonEncode({
           'emailOrPhone': emailOrPhone,
           'password': password,
@@ -106,6 +122,63 @@ class AuthService {
         'handle': prefs.getString('handle'),
         'fullName': prefs.getString('handle') ?? 'Người dùng', // Fallback
       };
+    }
+  }
+
+  static Future<List<dynamic>> getLoginHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/auth/login-history'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getLoggedInDevices() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/auth/devices'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [];
+  }
+
+  static Future<bool> logoutDevice(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('${AppConstants.apiUrl}/auth/logout-device/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 5));
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 }

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'about_app_screen.dart';
+import 'help_feedback_screen.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'policies_screen.dart';
 import 'account_info_screen.dart';
+import 'notification_settings_screen.dart';
+import 'security_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -88,7 +92,7 @@ class SettingsScreen extends StatelessWidget {
                 iconBg: const Color(0xFF4A3900),
                 title: 'Thông báo',
                 subtitle: 'Quản lý thông báo đẩy',
-                onTap: () => _showToast(context, 'Thông báo đang phát triển.'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
               ),
               _SettingsItem(
                 icon: Icons.palette_rounded,
@@ -109,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
                 iconBg: const Color(0xFF1B5E20),
                 title: 'Bảo mật',
                 subtitle: 'Mật khẩu, xác thực 2 bước',
-                onTap: () => _showToast(context, 'Bảo mật đang phát triển.'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecuritySettingsScreen())),
                 isLast: true,
               ),
             ]),
@@ -122,7 +126,7 @@ class SettingsScreen extends StatelessWidget {
                 iconBg: const Color(0xFF01579B),
                 title: 'Về ứng dụng',
                 subtitle: 'Phiên bản 1.0.0',
-                onTap: () => _showToast(context, 'Về ứng dụng đang phát triển.'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutAppScreen())),
               ),
               _SettingsItem(
                 icon: Icons.help_rounded,
@@ -130,7 +134,7 @@ class SettingsScreen extends StatelessWidget {
                 iconBg: const Color(0xFF4E1500),
                 title: 'Trợ giúp & Phản hồi',
                 subtitle: 'Báo lỗi, góp ý cải thiện',
-                onTap: () => _showToast(context, 'Trợ giúp & Phản hồi đang phát triển.'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFeedbackScreen())),
               ),
               _SettingsItem(
                 icon: Icons.policy_rounded,

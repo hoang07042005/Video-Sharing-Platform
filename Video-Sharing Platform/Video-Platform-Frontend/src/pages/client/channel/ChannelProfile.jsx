@@ -1501,7 +1501,7 @@ export default function ChannelProfile() {
           {/* Top Section: Info + Stats */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 w-full">
             {/* Left: Avatar & Info */}
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 w-full lg:w-auto">
+            <div className="flex flex-col md:flex-row items-start md:items-start gap-6 w-full lg:w-auto">
               {/* Avatar */}
               <div className="w-[100px] h-[100px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border-2 border-[#FF4E00] shadow-[0_0_15px_rgba(255,78,0,0.5)] shrink-0 bg-[#1A1A1A]">
                 <img
@@ -1861,7 +1861,7 @@ export default function ChannelProfile() {
                           ? `/shorts?id=${featuredVideo.id}`
                           : `/watch/${featuredVideo.id}`
                       }
-                      className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-4 group cursor-pointer flex flex-col md:flex-row gap-5 h-full"
+                      className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-4 group cursor-pointer flex flex-col md:flex-row gap-5 h-full min-w-0"
                     >
                       {/* Thumbnail Container */}
                       <div className="relative w-full md:w-[45%] lg:w-[50%] aspect-video bg-black rounded-[8px] overflow-hidden shrink-0">
@@ -1886,8 +1886,8 @@ export default function ChannelProfile() {
                       </div>
 
                       {/* Content Container - Đã sửa lỗi: Xếp liền mạch và căn giữa toàn bộ khối */}
-                      <div className="flex flex-col flex-1 py-2 justify-center">
-                        <h3 className="text-[18px] font-bold text-white mb-2 line-clamp-2 leading-snug">
+                      <div className="flex flex-col flex-1 min-w-0 py-2 justify-center">
+                        <h3 className="text-[18px] font-bold text-white mb-2 line-clamp-2 leading-snug break-words">
                           {featuredVideo.title}
                         </h3>
 
@@ -1901,7 +1901,7 @@ export default function ChannelProfile() {
                           <span>{getTimeAgo(featuredVideo.createdAt)}</span>
                         </div>
 
-                        <p className="text-[14px] text-gray-400 line-clamp-2 mb-5 leading-relaxed">
+                        <p className="text-[14px] text-gray-400 line-clamp-2 mb-5 leading-relaxed break-words">
                           {featuredVideo.description}
                         </p>
 
@@ -1935,7 +1935,7 @@ export default function ChannelProfile() {
                   )}
 
                   {/* Right side: Featured List */}
-                  <div className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-5 h-full flex flex-col">
+                  <div className="bg-[#121212] border border-[#2A2A2A] rounded-[8px] p-5 h-full flex flex-col min-w-0">
                     <div className="flex items-center gap-2 text-white font-bold mb-5 text-[16px]">
                       <span className="text-white font-black text-lg">
                         Nổi bật
@@ -1964,20 +1964,20 @@ export default function ChannelProfile() {
                             <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white rounded">
                               {formatDuration(v.duration)}
                             </div>
+                            {/* Badge Shorts */}
+                            {v.isShort && (
+                              <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded uppercase tracking-wider z-10">
+                                Shorts
+                              </span>
+                            )}
                           </div>
 
-                          {/* Badge Shorts */}
-                          {v.isShort && (
-                            <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded uppercase tracking-wider z-10">
-                              Shorts
-                            </span>
-                          )}
-                          <div className="flex flex-col gap-0.5">
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                             {/* Title */}
-                            <h4 className="text-[13px] font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-white transition-colors">
+                            <h4 className="text-[13px] font-semibold text-gray-200 line-clamp-2 leading-snug group-hover:text-white transition-colors break-words">
                               {v.title}
                             </h4>
-                            <span className="text-[12px] text-gray-400 line-clamp-2">
+                            <span className="text-[12px] text-gray-400 line-clamp-2 break-words">
                               {v.description}
                             </span>
 

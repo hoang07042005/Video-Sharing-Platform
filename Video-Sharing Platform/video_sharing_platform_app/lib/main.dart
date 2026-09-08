@@ -6,6 +6,8 @@ import 'screens/main/main_screen.dart';
 
 import 'api_config.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiConfig.initialize();
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F0F0F),
         useMaterial3: true,
       ),
+      navigatorObservers: [routeObserver],
       home: isLoggedIn ? const MainScreen() : const LoginScreen(),
     );
   }

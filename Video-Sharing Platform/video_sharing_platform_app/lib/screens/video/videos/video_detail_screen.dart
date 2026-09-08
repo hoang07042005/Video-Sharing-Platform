@@ -419,7 +419,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                                         gradient: LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
-                                          colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                                         ),
                                       ),
                                     ),
@@ -486,7 +486,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                                 }
                                 return ListTile(
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  tileColor: isPlaying ? Colors.white.withOpacity(0.1) : null,
+                                  tileColor: isPlaying ? Colors.white.withValues(alpha: 0.1) : null,
                                   leading: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

@@ -79,6 +79,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<LoginHistory> LoginHistories { get; set; }
+
     public virtual DbSet<Video> Videos { get; set; }
 
     public virtual DbSet<VideoCategory> VideoCategories { get; set; }

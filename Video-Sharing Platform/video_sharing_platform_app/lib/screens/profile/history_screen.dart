@@ -4,6 +4,7 @@ import '../../constants.dart';
 import '../../widgets/shorts_card.dart';
 import '../video/videos/video_detail_screen.dart';
 import '../video/short/short_detail_screen.dart';
+import '../channel/channel_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -569,7 +570,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.85),
+                        color: Colors.black.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -617,11 +618,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    channelName,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  GestureDetector(
+                    onTap: () {
+                      final channel = video['channel'] ?? video['Channel'] ?? {};
+                      final handle = video['channelHandle'] ?? channel['channelHandle'] ?? channelName;
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)));
+                    },
+                    child: Text(
+                      channelName,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(

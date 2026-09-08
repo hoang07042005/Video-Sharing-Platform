@@ -5,10 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants.dart';
 import '../video/videos/video_detail_screen.dart';
 import '../video/short/short_detail_screen.dart';
+import '../video/widgets/save_to_playlist_sheet.dart';
 import '../../widgets/shorts_card.dart';
+import '../../widgets/video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/auth_service.dart';
+import 'channel_about_screen.dart';
 import 'community_screen.dart';
 import 'membership_screen.dart';
 
@@ -32,6 +35,10 @@ class _ChannelScreenState extends State<ChannelScreen>
   Map<String, dynamic>? _currentUser;
   bool _isMember = false;
   late TabController _tabController;
+
+  bool _showMembership = true;
+  bool _showCommunity = true;
+  bool _showSubscriberCount = true;
 
   // Search state
   bool _isSearching = false;
@@ -63,6 +70,7 @@ class _ChannelScreenState extends State<ChannelScreen>
 
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/640x360.png';
+    if (url.startsWith('data:image')) return url;
     if (url.contains('localhost')) {
       return url.replaceAll('localhost', AppConstants.serverIp);
     }
@@ -75,6 +83,13 @@ class _ChannelScreenState extends State<ChannelScreen>
   Future<void> _fetchChannel() async {
     setState(() => _isLoading = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _showMembership = prefs.getBool('show_membership') ?? true;
+        _showCommunity = prefs.getBool('show_community') ?? true;
+        _showSubscriberCount = prefs.getBool('show_subscriber_count') ?? true;
+      });
+
       final user = await AuthService.getCurrentUser();
       setState(() => _currentUser = user);
 
@@ -113,19 +128,76 @@ class _ChannelScreenState extends State<ChannelScreen>
             }
           } catch (_) {}
 
-          try {
-            if (user != null && user['handle'] != channelData['handle']) {
-              final memberRes = await http.get(Uri.parse('${AppConstants.apiUrl}/channels/${channelData['id']}/membership'), headers: headers).timeout(const Duration(seconds: 5));
-              if (memberRes.statusCode == 200) {
-                final memberData = jsonDecode(memberRes.body);
-                setState(() => _isMember = memberData['isMember'] == true);
+            try {
+              if (user != null && user['handle'] != channelData['handle']) {
+                final memberRes = await http.get(Uri.parse('${AppConstants.apiUrl}/channels/${channelData['id']}/membership'), headers: headers).timeout(const Duration(seconds: 5));
+                if (memberRes.statusCode == 200) {
+                  final memberData = jsonDecode(memberRes.body);
+                  setState(() => _isMember = memberData['isMember'] == true);
+                }
+                
+                final subRes = await http.get(Uri.parse('${AppConstants.apiUrl}/channels/by-id/${channelData['id']}/check-follow'), headers: headers).timeout(const Duration(seconds: 5));
+                if (subRes.statusCode == 200) {
+                  setState(() => _isFollowing = jsonDecode(subRes.body)['isSubscribed'] == true);
+                }
               }
-            }
-          } catch (_) {}
-        }
+            } catch (_) {}
+          }
       }
     } catch (_) {}
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _toggleSubscribe() async {
+    if (_channel == null || _currentUser == null) return;
+    try {
+      final headers = await _getHeaders();
+      final res = await http.post(
+        Uri.parse('${AppConstants.apiUrl}/channels/${_channel!['id']}/follow'),
+        headers: headers,
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _isFollowing = data['isSubscribed'] == true;
+          _channel!['subscriberCount'] = data['subscriberCount'];
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['message'] ?? 'Thành công')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Có lỗi xảy ra')));
+      }
+    }
+  }
+
+  void _showUnsubscribeBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF212121),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.person_remove_outlined, color: Colors.white),
+                title: const Text('Hủy đăng ký', style: TextStyle(color: Colors.white, fontSize: 15)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleSubscribe();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   String _formatCount(dynamic n) {
@@ -171,60 +243,88 @@ class _ChannelScreenState extends State<ChannelScreen>
 
     if (activeLinks.isEmpty) return const SizedBox();
 
+    bool hasManyLinks = activeLinks.length > 4;
+    List<Map<String, String>> displayLinks = hasManyLinks ? activeLinks.take(3).toList() : activeLinks;
+    int extraCount = hasManyLinks ? activeLinks.length - 3 : 0;
+
+    List<Widget> linkWidgets = displayLinks.map((link) {
+      final platform = link['platform']!.toLowerCase();
+      final url = link['url']!;
+      IconData iconData = Icons.link;
+      Color iconColor = Colors.blue;
+
+      if (platform.contains('facebook')) {
+        iconData = FontAwesomeIcons.facebook;
+        iconColor = Colors.blueAccent;
+      } else if (platform.contains('instagram')) {
+        iconData = FontAwesomeIcons.instagram;
+        iconColor = Colors.pinkAccent;
+      } else if (platform.contains('youtube')) {
+        iconData = FontAwesomeIcons.youtube;
+        iconColor = Colors.red;
+      } else if (platform.contains('tiktok')) {
+        iconData = FontAwesomeIcons.tiktok;
+        iconColor = Colors.white;
+      } else if (platform.contains('twitter') || platform.contains('x')) {
+        iconData = FontAwesomeIcons.xTwitter;
+        iconColor = Colors.white;
+      } else if (platform.contains('discord')) {
+        iconData = FontAwesomeIcons.discord;
+        iconColor = const Color(0xFF5865F2);
+      } else if (platform.contains('github')) {
+        iconData = FontAwesomeIcons.github;
+        iconColor = Colors.white;
+      }
+
+      return InkWell(
+        onTap: () async {
+          final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(iconData, color: iconColor, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              platform.substring(0, 1).toUpperCase() + platform.substring(1),
+              style: const TextStyle(color: Color.fromARGB(255, 172, 172, 175), fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+
+    if (hasManyLinks) {
+      linkWidgets.add(
+        InkWell(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChannelAboutScreen(channel: _channel!))),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Text(
+              'và $extraCount liên kết khác',
+              style: const TextStyle(color: Color.fromARGB(255, 172, 172, 175), fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 12,
-        children: activeLinks.map((link) {
-          final platform = link['platform']!.toLowerCase();
-          final url = link['url']!;
-          IconData iconData = Icons.link;
-          Color iconColor = Colors.blue;
-
-          if (platform.contains('facebook')) {
-            iconData = FontAwesomeIcons.facebook;
-            iconColor = Colors.blueAccent;
-          } else if (platform.contains('instagram')) {
-            iconData = FontAwesomeIcons.instagram;
-            iconColor = Colors.pinkAccent;
-          } else if (platform.contains('youtube')) {
-            iconData = FontAwesomeIcons.youtube;
-            iconColor = Colors.red;
-          } else if (platform.contains('tiktok')) {
-            iconData = FontAwesomeIcons.tiktok;
-            iconColor = Colors.white;
-          } else if (platform.contains('twitter') || platform.contains('x')) {
-            iconData = FontAwesomeIcons.xTwitter;
-            iconColor = Colors.white;
-          } else if (platform.contains('discord')) {
-            iconData = FontAwesomeIcons.discord;
-            iconColor = const Color(0xFF5865F2);
-          } else if (platform.contains('github')) {
-            iconData = FontAwesomeIcons.github;
-            iconColor = Colors.white;
-          }
-
-          return InkWell(
-            onTap: () async {
-              final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(iconData, color: iconColor, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  platform.substring(0, 1).toUpperCase() + platform.substring(1),
-                  style: const TextStyle(color: Color.fromARGB(255, 172, 172, 175), fontSize: 13),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: linkWidgets.asMap().entries.map((entry) {
+            return Padding(
+              padding: EdgeInsets.only(right: entry.key == linkWidgets.length - 1 ? 0 : 16.0),
+              child: entry.value,
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -329,53 +429,121 @@ class _ChannelScreenState extends State<ChannelScreen>
                                             ]),
                                             Text(handle, style: const TextStyle(color: Colors.grey, fontSize: 13)),
                                             const SizedBox(height: 4),
-                                            Text('$subscribers người đăng ký  -  $totalViews lượt xem', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                            Text(
+                                              _showSubscriberCount 
+                                                ? '$subscribers người đăng ký  -  $totalViews lượt xem'
+                                                : '$totalViews lượt xem', 
+                                              style: const TextStyle(color: Colors.grey, fontSize: 12)
+                                            ),
                                           ])),
                                         ]
                                       ),
                                       const SizedBox(height: 8),
                                       if (description.isNotEmpty) ...[
-                                        Text(description, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+                                        GestureDetector(
+                                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChannelAboutScreen(channel: _channel!))),
+                                          child: Container(
+                                            padding: const EdgeInsets.only(right: 8),
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(description, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+                                                ),
+                                                const Icon(Icons.chevron_right, color: Colors.white70, size: 20),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                         const SizedBox(height: 16),
                                       ],
                                       _buildSocialLinks(),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
-                                        children: [
-                                          if (_currentUser != null && _currentUser!['handle'] == widget.handle) ...[
-                                            OutlinedButton(
-                                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MembershipScreen(channel: _channel!))),
-                                              style: OutlinedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                                              child: const Text('Danh sách hội viên', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                                            ),
-                                            OutlinedButton(
-                                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityScreen(channel: _channel!))),
-                                              style: OutlinedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                                              child: const Text('Cộng đồng', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                                            ),
-                                          ] else ...[
-                                            ElevatedButton(
-                                              onPressed: () => setState(() => _isFollowing = !_isFollowing),
-                                              style: ElevatedButton.styleFrom(backgroundColor: _isFollowing ? const Color(0xFF272727) : Colors.white, foregroundColor: _isFollowing ? Colors.white : Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                                              child: Text(_isFollowing ? 'Đã đăng ký' : 'Đăng ký', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            ),
-                                            if (_isFollowing)
-                                              Container(decoration: BoxDecoration(color: const Color(0xFF272727), borderRadius: BorderRadius.circular(20)), child: IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 20), onPressed: () {})),
-                                            OutlinedButton(
-                                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MembershipScreen(channel: _channel!))),
-                                              style: OutlinedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                                              child: Text(_isMember ? 'Quyền lợi hội viên' : 'Hội viên', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                                            ),
-                                            OutlinedButton(
-                                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityScreen(channel: _channel!))),
-                                              style: OutlinedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                                              child: const Text('Cộng đồng', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                                            ),
-                                            Container(decoration: BoxDecoration(color: const Color(0xFF272727), borderRadius: BorderRadius.circular(20)), child: IconButton(icon: const Icon(Icons.search, color: Colors.white, size: 20), onPressed: () {})),
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Wrap(
+                                          spacing: 8,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          children: [
+                                            if (_currentUser != null && _currentUser!['handle'] == widget.handle) ...[
+                                              if (_showMembership)
+                                                OutlinedButton(
+                                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MembershipScreen(channel: _channel!))),
+                                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 32), backgroundColor: Colors.white.withValues(alpha: 0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                  child: const Text('Danh sách hội viên', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                ),
+                                              if (_showCommunity)
+                                                OutlinedButton(
+                                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityScreen(channel: _channel!))),
+                                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 32), backgroundColor: Colors.white.withValues(alpha: 0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                  child: const Text('Cộng đồng', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                ),
+                                            ] else ...[
+                                              if (!_isFollowing)
+                                                ElevatedButton(
+                                                  onPressed: _toggleSubscribe,
+                                                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16), minimumSize: const Size(0, 32), backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                  child: const Text('Đăng ký', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                                )
+                                              else
+                                                Builder(
+                                                  builder: (btnCtx) => ElevatedButton(
+                                                    onPressed: () {
+                                                      final RenderBox renderBox = btnCtx.findRenderObject() as RenderBox;
+                                                      final offset = renderBox.localToGlobal(Offset.zero);
+                                                      showMenu(
+                                                        context: context,
+                                                        position: RelativeRect.fromLTRB(
+                                                          offset.dx,
+                                                          offset.dy + renderBox.size.height,
+                                                          MediaQuery.of(context).size.width - offset.dx - renderBox.size.width,
+                                                          0,
+                                                        ),
+                                                        color: const Color(0xFF272727),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                        items: [
+                                                          PopupMenuItem(
+                                                            value: 'unsubscribe',
+                                                            child: Row(
+                                                              children: const [
+                                                                Icon(Icons.person_remove_outlined, color: Colors.white, size: 20),
+                                                                SizedBox(width: 12),
+                                                                Text('Hủy đăng ký', style: TextStyle(color: Colors.white, fontSize: 14)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ).then((value) {
+                                                        if (value == 'unsubscribe') _toggleSubscribe();
+                                                      });
+                                                    },
+                                                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 32), backgroundColor: const Color(0xFF272727), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(Icons.notifications_active, size: 16),
+                                                        SizedBox(width: 6),
+                                                        Text('Đã đăng ký', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                                        SizedBox(width: 4),
+                                                        Icon(Icons.keyboard_arrow_down, size: 16),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (_showMembership)
+                                                OutlinedButton(
+                                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MembershipScreen(channel: _channel!))),
+                                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 32), backgroundColor: Colors.white.withValues(alpha: 0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                  child: Text(_isMember ? 'Quyền lợi hội viên' : 'Hội viên', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                ),
+                                              if (_showCommunity)
+                                                OutlinedButton(
+                                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityScreen(channel: _channel!))),
+                                                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 32), backgroundColor: Colors.white.withValues(alpha: 0.1), side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                                                  child: const Text('Cộng đồng', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                ),
+                                            ]
                                           ]
-                                        ]
+                                        ),
                                       ),
                                     ]),
                                   ),
@@ -665,8 +833,23 @@ class _ChannelScreenState extends State<ChannelScreen>
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (_shorts.isNotEmpty) ...[
+        if (_livestreams.isNotEmpty) ...[
           const Padding(padding: EdgeInsets.only(left: 16, top: 16, bottom: 12),
+            child: Text('Phát trực tiếp gần đây', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+          VideoCard(
+            width: double.infinity,
+            hideAvatar: true,
+            singleRowInfo: true,
+            video: {
+              ..._livestreams.first,
+              'channelAvatarUrl': _channel?['avatarUrl'],
+              'channelName': _channel?['channelName'] ?? _channel?['name'],
+              'channelHandle': _channel?['handle'],
+            },
+          ),
+        ],
+        if (_shorts.isNotEmpty) ...[
+          const Padding(padding: EdgeInsets.only(left: 16, top: 30, bottom: 12),
             child: Text('Shorts', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
           SizedBox(height: 240, child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -681,7 +864,7 @@ class _ChannelScreenState extends State<ChannelScreen>
           )),
         ],
         if (_videos.isNotEmpty) ...[
-          const Padding(padding: EdgeInsets.only(left: 16, top: 16, bottom: 12),
+          const Padding(padding: EdgeInsets.only(left: 16, top: 30, bottom: 12),
             child: Text('Video mới nhất', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
           ..._videos.take(5).map(_buildVideoTile).toList(),
         ],
@@ -722,6 +905,16 @@ class _ChannelScreenState extends State<ChannelScreen>
                   style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500,
                     shadows: [Shadow(blurRadius: 4)]),
                   maxLines: 2, overflow: TextOverflow.ellipsis)),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.white, size: 18),
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _showVideoOptionsSheet(v),
+                ),
+              ),
             ])),
         );
       },
@@ -770,7 +963,7 @@ class _ChannelScreenState extends State<ChannelScreen>
                     bottom: 4, right: 4,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.85), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(4)),
                       child: Row(
                         children: [
                           const Icon(Icons.playlist_play, color: Colors.white, size: 12),
@@ -800,15 +993,120 @@ class _ChannelScreenState extends State<ChannelScreen>
     );
   }
 
+  void _showVideoOptionsSheet(dynamic video) {
+    bool isOwner = _currentUser != null && _channel != null && _currentUser!['handle'] == _channel!['handle'];
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF212121),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              if (isOwner) ...[
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.white),
+                  title: const Text('Sửa video', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng sửa video đang phát triển')));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.white),
+                  title: const Text('Xóa video', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng xóa video đang phát triển')));
+                  },
+                ),
+              ],
+              ListTile(
+                leading: const Icon(Icons.bookmark_border, color: Colors.white),
+                title: const Text('Lưu vào danh sách phát', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => SaveToPlaylistSheet(
+                      videoId: (video['id'] ?? video['_id']).toString(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.download, color: Colors.white),
+                title: const Text('Tải xuống video', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng tải xuống đang phát triển')));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share, color: Colors.white),
+                title: const Text('Chia sẻ', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng chia sẻ đang phát triển')));
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _timeAgo(dynamic dateString, {bool isEndedLive = false}) {
+    if (dateString == null) return '';
+    try {
+      final date = DateTime.parse(dateString.toString());
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      
+      if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} năm trước';
+      if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} tháng trước';
+      if (diff.inDays > 0) return '${diff.inDays} ngày trước';
+      if (diff.inHours > 0) return '${isEndedLive ? "Phát trực tiếp " : ""}${diff.inHours} giờ trước';
+      if (diff.inMinutes > 0) return '${isEndedLive ? "Phát trực tiếp " : ""}${diff.inMinutes} phút trước';
+      return isEndedLive ? 'Phát trực tiếp Vừa xong' : 'Vừa xong';
+    } catch (e) {
+      return '';
+    }
+  }
+
   Widget _buildVideoTile(dynamic video) {
     // Fallback thumbnail: video thumbnail -> livestream thumbnail -> channel banner -> channel avatar
     final thumb = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail'] ?? _channel?['bannerUrl'] ?? _channel?['avatarUrl']);
     
-    // Support both videos (viewsCount/viewCount) and livestreams (totalViews/currentViewers)
-    final views = _formatCount(video['viewsCount'] ?? video['viewCount'] ?? video['totalViews'] ?? video['currentViewers'] ?? 0);
-    
     // Livestreams might use Status to indicate if they are live
     final isLive = video['status'] == 'live';
+    final isEndedLive = (video['isLivestream'] == true || video['actualStartTime'] != null) && !isLive;
+
+    // Support both videos (viewsCount/viewCount) and livestreams (totalViews/currentViewers)
+    final viewsVal = isLive 
+        ? (video['currentViewers'] ?? 0)
+        : (video['viewsCount'] ?? video['viewCount'] ?? video['views'] ?? video['totalViews'] ?? 0);
+        
+    String formatViews(dynamic v) {
+      double count = v is num ? v.toDouble() : double.tryParse(v.toString()) ?? 0;
+      if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
+      if (count >= 1000) return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
+      return count.toInt().toString();
+    }
+    
+    final views = formatViews(viewsVal);
+    final time = _timeAgo(video['createdAt'] ?? video['time'] ?? video['actualStartTime'] ?? video['scheduledStartTime'], isEndedLive: isEndedLive);
     
     return InkWell(
       onTap: () => Navigator.push(context, MaterialPageRoute(
@@ -818,8 +1116,9 @@ class _ChannelScreenState extends State<ChannelScreen>
           ClipRRect(borderRadius: BorderRadius.circular(8),
             child: Stack(children: [
               Container(width: 160, height: 90, color: Colors.grey.shade900,
-                child: Image.network(thumb, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.videocam, color: Colors.grey, size: 30)))),
+                child: thumb.startsWith('data:image')
+                  ? Image.memory(base64Decode(thumb.split(',').last), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.videocam, color: Colors.grey, size: 30)))
+                  : Image.network(thumb, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.videocam, color: Colors.grey, size: 30)))),
               
               // Duration or LIVE badge
               if (isLive || video['duration'] != null)
@@ -827,7 +1126,7 @@ class _ChannelScreenState extends State<ChannelScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isLive ? Colors.red : Colors.black.withOpacity(0.85), 
+                      color: isLive ? Colors.red : Colors.black.withValues(alpha: 0.85), 
                       borderRadius: BorderRadius.circular(4)
                     ),
                     child: Text(
@@ -843,9 +1142,14 @@ class _ChannelScreenState extends State<ChannelScreen>
               style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, height: 1.3),
               maxLines: 2, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 6),
-            Text(isLive ? '$views đang xem' : '$views lượt xem', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(isLive ? '$views đang xem' : '$views lượt xem${time.isNotEmpty ? ' • $time' : ''}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
           ])),
-          const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => _showVideoOptionsSheet(video),
+          ),
         ])),
     );
   }

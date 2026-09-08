@@ -3,6 +3,8 @@ import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/video_service.dart';
 import '../../../constants.dart';
+import '../../../../main.dart';
+import '../../channel/channel_screen.dart';
 
 class ShortDetailScreen extends StatefulWidget {
   final List<dynamic> shorts;
@@ -112,7 +114,8 @@ class ShortPlayerItem extends StatefulWidget {
   State<ShortPlayerItem> createState() => _ShortPlayerItemState();
 }
 
-class _ShortPlayerItemState extends State<ShortPlayerItem> with SingleTickerProviderStateMixin {
+class _ShortPlayerItemState extends State<ShortPlayerItem>
+    with SingleTickerProviderStateMixin, RouteAware {
   VideoPlayerController? _videoController;
   bool _isPlaying = false;
   bool _isInitialized = false;
@@ -262,7 +265,29 @@ class _ShortPlayerItemState extends State<ShortPlayerItem> with SingleTickerProv
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void didPushNext() {
+    _pauseVideo();
+  }
+
+  @override
+  void didPopNext() {
+    if (widget.isActive) {
+      _playVideo();
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _videoController?.dispose();
     _flashController.dispose();
     super.dispose();
@@ -434,37 +459,51 @@ class _ShortPlayerItemState extends State<ShortPlayerItem> with SingleTickerProv
                             // Channel Info
                             Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundImage: NetworkImage(
-                                    _formatUrl(widget.short['channelAvatarUrl'] ?? widget.short['channelAvatar'] ?? 'https://ui-avatars.com/api/?name=${widget.short['channelName']}'),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Flexible(
-                                  child: Text(
-                                    widget.short['channelHandle'] ?? widget.short['channelName'] ?? 'Unknown',
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (widget.short['channelIsVerified'] == true || widget.short['channelIsVerified'] == 'true' || widget.short['isVerified'] == true) ...[
-                                  const SizedBox(width: 4),
-                                  Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width: 20,
-                                        height: 20,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
+                              GestureDetector(
+                                onTap: () {
+                                  final handle = widget.short['channelHandle'] ?? widget.short['channelName'] ?? 'Unknown';
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)),
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundImage: NetworkImage(
+                                        _formatUrl(widget.short['channelAvatarUrl'] ?? widget.short['channelAvatar'] ?? 'https://ui-avatars.com/api/?name=${widget.short['channelName']}'),
                                       ),
-                                      const Icon(Icons.check_circle, color: Color.fromARGB(255, 73, 198, 0), size: 20),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        widget.short['channelHandle'] ?? widget.short['channelName'] ?? 'Unknown',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (widget.short['channelIsVerified'] == true || widget.short['channelIsVerified'] == 'true' || widget.short['isVerified'] == true) ...[
+                                      const SizedBox(width: 4),
+                                      Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Container(
+                                            width: 20,
+                                            height: 20,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const Icon(Icons.check_circle, color: Color.fromARGB(255, 73, 198, 0), size: 20),
+                                        ],
+                                      ),
                                     ],
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              ),
                                 const SizedBox(width: 12),
                                 if (!_isOwnChannel)
                                   GestureDetector(

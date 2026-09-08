@@ -159,6 +159,8 @@ export default function Settings() {
   // For password change
   const [isPwdLoading, setIsPwdLoading] = useState(false);
   const [pwdMsg, setPwdMsg] = useState({ type: "", text: "" });
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -1058,6 +1060,24 @@ export default function Settings() {
                       <p className="text-[11px] text-gray-500">Các tính năng giúp bảo vệ tài khoản của bạn tốt hơn</p>
                     </div>
                     <div className="bg-[#141418] border border-white/5 rounded-[5px] flex flex-col divide-y divide-white/5">
+                      <div 
+                        className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                        onClick={() => {
+                          setPwdMsg({ type: "", text: "" });
+                          setIsChangePasswordModalOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-[5px] bg-yellow-500/10 flex items-center justify-center">
+                            <Key className="w-4.5 h-4.5 text-yellow-400" />
+                          </div>
+                          <div>
+                            <p className="text-white text-[13px] font-bold mb-0.5">Đổi mật khẩu</p>
+                            <p className="text-[11px] text-gray-500">Cập nhật mật khẩu thường xuyên để bảo vệ tài khoản.</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                      </div>
                       <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors group cursor-pointer">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-[5px] bg-green-500/10 flex items-center justify-center">
@@ -1328,6 +1348,86 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {isChangePasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#141418] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <h3 className="text-xl font-bold text-white">Đổi mật khẩu</h3>
+              <button
+                onClick={() => setIsChangePasswordModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleChangePassword} className="p-6">
+              {pwdMsg.text && (
+                <div className={`p-4 rounded-xl mb-6 text-sm font-medium ${
+                  pwdMsg.type === "success" 
+                    ? "bg-green-500/10 text-green-400 border border-green-500/20" 
+                    : "bg-red-500/10 text-red-400 border border-red-500/20"
+                }`}>
+                  {pwdMsg.text}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Mật khẩu hiện tại</label>
+                  <input
+                    type="password"
+                    name="oldPassword"
+                    required
+                    className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Mật khẩu mới</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    required
+                    className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    placeholder="Nhập mật khẩu mới"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Xác nhận mật khẩu mới</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    required
+                    className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    placeholder="Xác nhận mật khẩu mới"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsChangePasswordModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-medium text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPwdLoading}
+                  className="px-5 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {isPwdLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Lưu thay đổi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

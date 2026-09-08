@@ -200,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 2),
                       Text(
                         handle,
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
                       ),
                     ],
                   ),
@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () {},
                   icon: const Icon(Icons.workspace_premium, color: Color(0xFFFFD700), size: 16),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.08),
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
@@ -230,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () {},
                   icon: const Icon(Icons.diamond, color: Color(0xFF7C4DFF), size: 16),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.08),
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
@@ -323,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           right: 4,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(color: Colors.black.withOpacity(0.8), borderRadius: BorderRadius.circular(4)),
+                            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(4)),
                             child: Text(
                               _formatDuration(video['duration']),
                               style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
@@ -343,7 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 2),
                   Text(
                     channelName,
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -392,7 +392,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: _playlists.map((pl) {
         final title = pl['title'] ?? 'Danh sách phát';
         final visibility = pl['visibility'] == 'private' ? 'Riêng tư' : 'Công khai';
-        final videoCount = pl['videoCount'] ?? 0;
         final firstThumb = pl['thumbnailUrl'];
 
         if (title == 'Xem sau') {
@@ -451,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -477,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           top: 0, left: 8, right: 8, bottom: 12,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -498,7 +497,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.8),
+              color: Colors.black.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Icon(Icons.playlist_play, color: Colors.white, size: 16),
@@ -522,7 +521,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Icon(icon, color: Colors.white, size: 16),

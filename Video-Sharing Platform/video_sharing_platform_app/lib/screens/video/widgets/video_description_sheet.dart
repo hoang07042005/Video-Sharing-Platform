@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../constants.dart';
+import '../../channel/channel_screen.dart';
 
 class VideoDescriptionSheet extends StatelessWidget {
   final dynamic video;
@@ -141,36 +142,50 @@ class VideoDescriptionSheet extends StatelessWidget {
                     const SizedBox(height: 24),
                     
                     // Channel Info
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: NetworkImage(_getImageUrl(video['channelAvatarUrl'])),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                video['channelName'] ?? 'Unknown',
-                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                '${_formatViews(subscriberCount)} người đăng ký',
-                                style: const TextStyle(color: Colors.grey, fontSize: 13),
-                              ),
-                            ],
+                    GestureDetector(
+                      onTap: () {
+                        final handle = video['channelHandle'] ?? video['channelName'] ?? 'Unknown';
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundImage: NetworkImage(_getImageUrl(video['channelAvatarUrl'])),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  video['channelName'] ?? 'Unknown',
+                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  '${_formatViews(subscriberCount)} người đăng ký',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {},
+                            onPressed: () {
+                              final handle = video['channelHandle'] ?? video['channelName'] ?? 'Unknown';
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)));
+                            },
                             icon: const Icon(Icons.play_circle_outline, color: Colors.white, size: 18),
                             label: const Text('Video', style: TextStyle(color: Colors.white)),
                             style: OutlinedButton.styleFrom(
@@ -182,7 +197,11 @@ class VideoDescriptionSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {},
+                            onPressed: () {
+                              final handle = video['channelHandle'] ?? video['channelName'] ?? 'Unknown';
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)));
+                            },
                             icon: const Icon(Icons.person_outline, color: Colors.white, size: 18),
                             label: const Text('Giới thiệu', style: TextStyle(color: Colors.white)),
                             style: OutlinedButton.styleFrom(

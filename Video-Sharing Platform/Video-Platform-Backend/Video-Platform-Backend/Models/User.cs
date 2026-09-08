@@ -43,6 +43,8 @@ public partial class User
 
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 
+    public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
+
     public virtual Channel? Channel { get; set; }
 
     public virtual ICollection<CommentLike> CommentLikes { get; set; } = new List<CommentLike>();
