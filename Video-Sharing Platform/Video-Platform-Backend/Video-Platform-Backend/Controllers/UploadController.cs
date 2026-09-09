@@ -23,7 +23,9 @@ namespace Video_Platform_Backend.Controllers
         }
 
         [HttpPost("image")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
+        [RequestSizeLimit(10 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
+        public async Task<IActionResult> UploadImage([FromForm(Name = "file")] IFormFile? file)
         {
             if (file == null || file.Length == 0)
             {
@@ -31,7 +33,9 @@ namespace Video_Platform_Backend.Controllers
             }
 
             // Chỉ cho phép ảnh
-            if (!file.ContentType.StartsWith("image/"))
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif" };
+            if (!(file.ContentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ?? false) && !allowedExtensions.Contains(extension))
             {
                 return BadRequest(new { message = "File không phải là định dạng ảnh" });
             }
@@ -44,7 +48,8 @@ namespace Video_Platform_Backend.Controllers
             }
 
             // Tạo tên file ngẫu nhiên để tránh trùng lặp
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            var safeFileName = Path.GetFileName(file.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString("N") + "_" + safeFileName;
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))

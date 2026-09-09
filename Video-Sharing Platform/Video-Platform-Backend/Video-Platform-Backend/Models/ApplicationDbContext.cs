@@ -123,8 +123,25 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Faq> Faqs { get; set; }
 
+    public virtual DbSet<SearchHistory> SearchHistories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<SearchHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Query).HasMaxLength(300).IsRequired();
+            entity.Property(e => e.SearchedAt)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.UserId, e.Query }).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.SearchedAt });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<Channel>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Channels__3214EC076E951DEC");

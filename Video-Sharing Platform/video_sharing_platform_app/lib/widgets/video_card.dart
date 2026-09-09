@@ -27,8 +27,10 @@ class VideoCard extends StatelessWidget {
     if (url.contains('api.dicebear.com') && url.contains('/svg')) {
       url = url.replaceAll('/svg', '/png');
     }
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', AppConstants.serverIp);
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      return url
+          .replaceAll('localhost', AppConstants.serverIp)
+          .replaceAll('127.0.0.1', AppConstants.serverIp);
     }
     if (!url.startsWith('http') && !url.startsWith('data:image')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
@@ -41,8 +43,13 @@ class VideoCard extends StatelessWidget {
     if (duration is String) return duration;
     if (duration is num) {
       final totalSeconds = duration.toInt();
+      final hours = totalSeconds ~/ 3600;
       final minutes = totalSeconds ~/ 60;
       final seconds = totalSeconds % 60;
+      if (hours > 0) {
+        final remainingMinutes = (totalSeconds % 3600) ~/ 60;
+        return '$hours:${remainingMinutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      }
       return '$minutes:${seconds.toString().padLeft(2, '0')}';
     }
     return duration.toString();
@@ -51,9 +58,13 @@ class VideoCard extends StatelessWidget {
   String _timeAgo(dynamic dateString, {bool isEndedLive = false}) {
     if (dateString == null) return '';
     try {
-      final date = DateTime.parse(dateString.toString());
+      final rawDate = dateString.toString().trim();
+      final hasTimezone = rawDate.endsWith('Z') || RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(rawDate);
+      final date = DateTime.parse(hasTimezone ? rawDate : '${rawDate}Z').toLocal();
       final now = DateTime.now();
       final diff = now.difference(date);
+
+      if (diff.isNegative) return 'Đã lên lịch';
       
       if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} năm trước';
       if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} tháng trước';
@@ -74,7 +85,7 @@ class VideoCard extends StatelessWidget {
     final channelName = video['channelName'] ?? 'Unknown Channel';
     final handle = video['channelHandle'] ?? video['channelName'] ?? 'Unknown';
     final bool isVerified = video['channelIsVerified'] == true || video['isVerified'] == true;
-    final bool isLive = video['status'] == 'live';
+    final bool isLive = (video['status'] ?? '').toString().toLowerCase() == 'live';
     final bool isEndedLive = (video['isLivestream'] == true || video['actualStartTime'] != null) && !isLive;
     final rawViews = isLive 
         ? (video['currentViewers'] ?? 0)
@@ -103,7 +114,14 @@ class VideoCard extends StatelessWidget {
     
     final rawDuration = calcDuration();
     final duration = _formatDuration(rawDuration);
-    final time = _timeAgo(video['createdAt'] ?? video['time'] ?? video['actualStartTime'] ?? video['scheduledStartTime'], isEndedLive: isEndedLive);
+    final time = _timeAgo(
+      video['actualStartTime'] ??
+          video['endTime'] ??
+          video['createdAt'] ??
+          video['time'] ??
+          video['scheduledStartTime'],
+      isEndedLive: isEndedLive,
+    );
     final bool isMembersOnly = video['isMembersOnly'] == true;
     
     return SizedBox(
@@ -286,7 +304,7 @@ class VideoCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         if (singleRowInfo)
                           Text(
-                            '$channelName${isVerified ? ' ✓ ' : ' '}• ${isLive ? '$views đang xem' : '$views lượt xem${time.isNotEmpty ? ' • $time' : ''}'}',
+                            '$channelName${isVerified ? ' ✓ ' : ' '}• ${isLive ? '$views đang xem' : '$views lượt xem'}${time.isNotEmpty ? ' • $time' : ''}',
                             style: const TextStyle(color: Colors.grey, fontSize: 13),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -318,9 +336,7 @@ class VideoCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            isLive 
-                              ? '$views đang xem' 
-                              : '$views lượt xem${time.isNotEmpty ? ' • $time' : ''}',
+                            '${isLive ? '$views đang xem' : '$views lượt xem'}${time.isNotEmpty ? ' • $time' : ''}',
                             style: const TextStyle(color: Colors.grey, fontSize: 13),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

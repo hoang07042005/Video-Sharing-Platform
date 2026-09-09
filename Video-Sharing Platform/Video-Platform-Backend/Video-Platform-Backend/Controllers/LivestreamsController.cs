@@ -74,7 +74,10 @@ public class LivestreamsController : ControllerBase
     [HttpGet("channel/{channelId}")]
     public async Task<IActionResult> GetByChannel(Guid channelId)
     {
-        var list = await _db.Livestreams.Where(l => l.ChannelId == channelId).OrderByDescending(l => l.ScheduledStartTime).ToListAsync();
+        var list = await _db.Livestreams
+            .Where(l => l.ChannelId == channelId)
+            .OrderByDescending(l => l.ActualStartTime ?? l.ScheduledStartTime)
+            .ToListAsync();
         return Ok(list);
     }
 

@@ -125,12 +125,12 @@ class _UploadScreenState extends State<UploadScreen>
       {'icon': Icons.wifi_tethering, 'label': 'Livestream'},
     ];
     final activeColors = [
-      Colors.white,
+      Colors.blueAccent,
       const Color(0xFFFF3B5C),
       const Color(0xFF00CC77),
     ];
     final activeBgColors = [
-      const Color(0xFF383838),
+      const Color.fromARGB(90, 32, 23, 134),
       const Color(0xFF3D1A22),
       const Color(0xFF0F2E1E),
     ];
@@ -347,7 +347,7 @@ class _VideoUploadTab extends StatelessWidget {
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const UploadVideoForm())),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: Colors.blueAccent,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -358,9 +358,9 @@ class _VideoUploadTab extends StatelessWidget {
                 children: [
                   Text('Chọn video từ thiết bị',
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
                   SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, size: 18),
+                  Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
                 ],
               ),
             ),

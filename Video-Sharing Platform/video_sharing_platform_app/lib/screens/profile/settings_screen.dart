@@ -7,9 +7,16 @@ import 'policies_screen.dart';
 import 'account_info_screen.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
+import 'data_settings_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
 
   void _logout(BuildContext context) async {
     showDialog(
@@ -71,7 +78,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFF64B5F6),
                 iconBg: const Color(0xFF0D47A1),
                 title: 'Thông tin tài khoản',
-                subtitle: 'Tên, email, ảnh đại diện',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountInfoScreen())),
               ),
               _SettingsItem(
@@ -79,7 +85,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFFCE93D8),
                 iconBg: const Color(0xFF4A148C),
                 title: 'Hiển thị kênh',
-                subtitle: 'Tên kênh, banner, mô tả',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountInfoScreen())),
               ),
             ]),
@@ -91,7 +96,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFFFFCC02),
                 iconBg: const Color(0xFF4A3900),
                 title: 'Thông báo',
-                subtitle: 'Quản lý thông báo đẩy',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
               ),
               _SettingsItem(
@@ -99,12 +103,23 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFF80CBC4),
                 iconBg: const Color(0xFF004D40),
                 title: 'Giao diện',
-                subtitle: 'Chế độ tối / sáng',
                 onTap: () => _showToast(context, 'Giao diện đang phát triển.'),
                 isLast: true,
               ),
             ]),
 
+            _SectionLabel('Dữ liệu'),
+            _SettingsGroup(items: [
+              _SettingsItem(
+                icon: Icons.storage_rounded,
+                iconColor: const Color(0xFF90CAF9),
+                iconBg: const Color(0xFF0D47A1),
+                title: 'Dữ liệu',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DataSettingsScreen())),
+                isLast: true,
+              ),
+            ]),
+            
             _SectionLabel('Bảo mật'),
             _SettingsGroup(items: [
               _SettingsItem(
@@ -112,7 +127,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFF81C784),
                 iconBg: const Color(0xFF1B5E20),
                 title: 'Bảo mật',
-                subtitle: 'Mật khẩu, xác thực 2 bước',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecuritySettingsScreen())),
                 isLast: true,
               ),
@@ -125,7 +139,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFF4FC3F7),
                 iconBg: const Color(0xFF01579B),
                 title: 'Về ứng dụng',
-                subtitle: 'Phiên bản 1.0.0',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutAppScreen())),
               ),
               _SettingsItem(
@@ -133,7 +146,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFFFFAB91),
                 iconBg: const Color(0xFF4E1500),
                 title: 'Trợ giúp & Phản hồi',
-                subtitle: 'Báo lỗi, góp ý cải thiện',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFeedbackScreen())),
               ),
               _SettingsItem(
@@ -141,7 +153,6 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFFBCAAA4),
                 iconBg: const Color(0xFF3E2723),
                 title: 'Chính sách & Điều khoản',
-                subtitle: 'Quyền riêng tư, điều khoản sử dụng',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PoliciesScreen())),
                 isLast: true,
               ),
@@ -221,7 +232,6 @@ class _SettingsItem extends StatelessWidget {
   final Color iconColor;
   final Color iconBg;
   final String title;
-  final String subtitle;
   final VoidCallback onTap;
   final bool isLast;
 
@@ -230,7 +240,6 @@ class _SettingsItem extends StatelessWidget {
     required this.iconColor,
     required this.iconBg,
     required this.title,
-    required this.subtitle,
     required this.onTap,
     this.isLast = false,
   });
@@ -258,8 +267,6 @@ class _SettingsItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
                     ],
                   ),
                 ),

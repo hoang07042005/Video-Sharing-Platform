@@ -58,6 +58,34 @@ namespace Video_Platform_Backend.Controllers
             _context = context;
         }
 
+        [HttpGet("public/latest")]
+        public async Task<IActionResult> GetLatestPublicPlaylists([FromQuery] int limit = 20)
+        {
+            var playlists = await _context.Playlists
+                .Include(p => p.Channel)
+                .Where(p => p.Visibility == "Public")
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(Math.Clamp(limit, 1, 50))
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Title,
+                    Description = p.Description ?? "",
+                    VideoCount = p.PlaylistVideos.Count,
+                    ThumbnailUrl = p.PlaylistVideos
+                        .OrderBy(pv => pv.AddedAt)
+                        .Select(pv => pv.Video.VideoThumbnails.FirstOrDefault()!.ThumbnailUrl)
+                        .FirstOrDefault() ?? "",
+                    CreatedAt = p.CreatedAt ?? DateTime.UtcNow,
+                    ChannelId = p.ChannelId,
+                    ChannelName = p.Channel != null ? p.Channel.ChannelName : "",
+                    ChannelHandle = p.Channel != null ? p.Channel.Handle : ""
+                })
+                .ToListAsync();
+
+            return Ok(playlists);
+        }
+
         [HttpGet("channel/{channelId}")]
         public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
         {

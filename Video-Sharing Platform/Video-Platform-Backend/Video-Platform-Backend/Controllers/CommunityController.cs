@@ -19,6 +19,37 @@ public class CommunityController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("/api/community/latest")]
+    public async Task<ActionResult<IEnumerable<CommunityPostDto>>> GetLatestPublicPosts([FromQuery] int limit = 10)
+    {
+        var posts = await _context.CommunityPosts
+            .Include(p => p.Channel)
+                .ThenInclude(c => c.User)
+                    .ThenInclude(u => u.Profile)
+            .Include(p => p.CommunityPostImages)
+            .Where(p => !p.IsMembersOnly)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(Math.Clamp(limit, 1, 30))
+            .ToListAsync();
+
+        return Ok(posts.Select(p => new CommunityPostDto
+        {
+            Id = p.Id,
+            ChannelId = p.ChannelId,
+            ChannelName = p.Channel.ChannelName,
+            ChannelHandle = p.Channel.Handle,
+            ChannelAvatarUrl = p.Channel.User.Profile != null ? p.Channel.User.Profile.AvatarUrl : null,
+            Content = p.Content,
+            IsMembersOnly = p.IsMembersOnly,
+            IsPinned = p.IsPinned,
+            CreatedAt = p.CreatedAt,
+            Images = p.CommunityPostImages.OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).ToList(),
+            VideoUrl = p.VideoUrl,
+            LikesCount = p.CommunityPostLikes.Count(l => l.IsLike),
+            CommentsCount = p.CommunityPostComments.Count
+        }));
+    }
+
     [HttpGet("/api/channels/{channelId}/community")]
     public async Task<ActionResult<IEnumerable<CommunityPostDto>>> GetChannelPosts(Guid channelId, [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string filter = "latest")
     {

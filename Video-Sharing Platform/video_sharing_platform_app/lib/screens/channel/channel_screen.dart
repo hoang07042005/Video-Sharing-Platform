@@ -71,8 +71,10 @@ class _ChannelScreenState extends State<ChannelScreen>
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/640x360.png';
     if (url.startsWith('data:image')) return url;
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', AppConstants.serverIp);
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      return url
+          .replaceAll('localhost', AppConstants.serverIp)
+          .replaceAll('127.0.0.1', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
@@ -930,8 +932,88 @@ class _ChannelScreenState extends State<ChannelScreen>
       itemCount: _livestreams.length,
       itemBuilder: (ctx, i) {
         final live = _livestreams[i];
-        return _buildVideoTile(live); // Reuse video tile for livestreams
+        return _buildLivestreamTile(live);
       },
+    );
+  }
+
+  Widget _buildLivestreamTile(dynamic live) {
+    final thumbnail = _getImageUrl(
+        live['thumbnailUrl'] ?? live['thumbnail'] ?? _channel?['bannerUrl']);
+    final isLive = (live['status'] ?? '').toString().toLowerCase() == 'live';
+    final viewers = live['currentViewers'] ?? 0;
+    final totalViews = live['totalViews'] ?? 0;
+    final date = live['actualStartTime'] ??
+        live['endTime'] ??
+        live['scheduledStartTime'];
+    final time = _timeAgo(date, isEndedLive: !isLive);
+
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => VideoDetailScreen(videoId: live['id'].toString()))),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(children: [
+              thumbnail.startsWith('data:image')
+                  ? Image.memory(
+                      base64Decode(thumbnail.split(',').last),
+                      width: 160,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _liveThumbnailFallback(),
+                    )
+                  : Image.network(
+                      thumbnail,
+                      width: 160,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _liveThumbnailFallback(),
+                    ),
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: isLive ? Colors.red : Colors.black87,
+                      borderRadius: BorderRadius.circular(4)),
+                  child: Text(isLive ? 'TRỰC TIẾP' : 'ĐÃ KẾT THÚC',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(live['title'] ?? 'Livestream',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 6),
+              Text(
+                    '${isLive ? '$viewers đang xem' : '$totalViews lượt xem'}${time.isNotEmpty ? ' • $time' : ''}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _liveThumbnailFallback() {
+    return Container(
+      width: 160,
+      height: 90,
+      color: Colors.grey.shade900,
+      child: const Icon(Icons.wifi_tethering, color: Colors.white38),
     );
   }
 
@@ -1070,9 +1152,13 @@ class _ChannelScreenState extends State<ChannelScreen>
   String _timeAgo(dynamic dateString, {bool isEndedLive = false}) {
     if (dateString == null) return '';
     try {
-      final date = DateTime.parse(dateString.toString());
+      final rawDate = dateString.toString().trim();
+      final hasTimezone = rawDate.endsWith('Z') || RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(rawDate);
+      final date = DateTime.parse(hasTimezone ? rawDate : '${rawDate}Z').toLocal();
       final now = DateTime.now();
       final diff = now.difference(date);
+
+      if (diff.isNegative) return 'Đã lên lịch';
       
       if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} năm trước';
       if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} tháng trước';

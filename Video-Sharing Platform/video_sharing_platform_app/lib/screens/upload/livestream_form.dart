@@ -45,9 +45,23 @@ class _LivestreamFormState extends State<LivestreamForm> {
     try {
       final data = await VideoService.getCategories();
       if (mounted) {
+        final normalizedCategories = data
+            .whereType<Map>()
+            .map((item) {
+              final rawId = item['id'] ?? item['Id'];
+              final id = rawId is int ? rawId : int.tryParse('$rawId');
+              return <String, dynamic>{
+                'id': id,
+                'name': (item['name'] ?? item['Name'] ?? '').toString(),
+              };
+            })
+            .where((item) => item['id'] != null)
+            .toList();
         setState(() {
-          _categories = data;
-          if (data.isNotEmpty) _categoryId = data.first['id'];
+          _categories = normalizedCategories;
+          if (normalizedCategories.isNotEmpty) {
+            _categoryId = normalizedCategories.first['id'] as int;
+          }
           _categoriesLoading = false;
         });
       }
@@ -74,6 +88,11 @@ class _LivestreamFormState extends State<LivestreamForm> {
         throw Exception('Bạn chưa có kênh. Vui lòng tạo kênh trước.');
       }
 
+      var thumbnailUrl = '';
+      if (_thumbnailFile != null) {
+        thumbnailUrl = await VideoService.uploadImage(_thumbnailFile!);
+      }
+
       final streamKey = _createStreamKey();
       final livestream = await VideoService.createLivestream(
         title: _titleCtrl.text.trim(),
@@ -82,6 +101,7 @@ class _LivestreamFormState extends State<LivestreamForm> {
         streamKey: streamKey,
         tags: _tagsCtrl.text.trim(),
         categoryId: _categoryId,
+        thumbnailUrl: thumbnailUrl,
       );
 
       if (mounted) {
@@ -92,6 +112,7 @@ class _LivestreamFormState extends State<LivestreamForm> {
           'description': _descCtrl.text.trim(),
           'tags': _tagsCtrl.text.trim(),
           'categoryId': _categoryId,
+          'thumbnailUrl': thumbnailUrl,
         };
         Navigator.pushReplacement(
           context,
@@ -173,11 +194,19 @@ class _LivestreamFormState extends State<LivestreamForm> {
       TextField(controller: _descCtrl, maxLines: 5, maxLength: 500, style: const TextStyle(color: Colors.white, fontSize: 12), decoration: _decoration('Nhập mô tả chi tiết về nội dung livestream...').copyWith(counterText: '')),
       const SizedBox(height: 12),
       _label('Danh mục'), const SizedBox(height: 6),
-      _categoriesLoading ? const SizedBox(height: 46, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: _accent))) : _dropdown<int>(
-        value: _categoryId,
-        items: _categories.map((item) => DropdownMenuItem<int>(value: item['id'], child: Text(item['name']?.toString() ?? ''))).toList(),
-        onChanged: (value) => setState(() => _categoryId = value),
-      ),
+        _categoriesLoading
+          ? const SizedBox(height: 46, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: _accent)))
+          : _categories.isEmpty
+            ? const Text('Không tải được danh mục', style: TextStyle(color: Colors.white54, fontSize: 11))
+            : _dropdown<int>(
+              value: _categoryId,
+              items: _categories
+                .map((item) => DropdownMenuItem<int>(
+                  value: item['id'] as int,
+                  child: Text(item['name'] as String)))
+                .toList(),
+              onChanged: (value) => setState(() => _categoryId = value),
+            ),
       const SizedBox(height: 12),
       _label('Tags (phân cách bằng dấu phẩy)', count: '${_tagsCtrl.text.length}/100'), const SizedBox(height: 6),
       TextField(controller: _tagsCtrl, maxLength: 100, style: const TextStyle(color: Colors.white, fontSize: 12), decoration: _decoration('Ví dụ: game, giải trí, hướng dẫn').copyWith(counterText: '')),

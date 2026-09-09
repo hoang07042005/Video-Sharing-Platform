@@ -34,8 +34,13 @@ class VideoListTile extends StatelessWidget {
     if (duration is String) return duration;
     if (duration is num) {
       final totalSeconds = duration.toInt();
+      final hours = totalSeconds ~/ 3600;
       final minutes = totalSeconds ~/ 60;
       final seconds = totalSeconds % 60;
+      if (hours > 0) {
+        final remainingMinutes = (totalSeconds % 3600) ~/ 60;
+        return '$hours:${remainingMinutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      }
       return '$minutes:${seconds.toString().padLeft(2, '0')}';
     }
     return duration.toString();
@@ -44,7 +49,9 @@ class VideoListTile extends StatelessWidget {
   String _timeAgo(dynamic dateString, {bool isEndedLive = false}) {
     if (dateString == null) return '';
     try {
-      final date = DateTime.parse(dateString.toString());
+      final rawDate = dateString.toString().trim();
+      final hasTimezone = rawDate.endsWith('Z') || RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(rawDate);
+      final date = DateTime.parse(hasTimezone ? rawDate : '${rawDate}Z').toLocal();
       final now = DateTime.now();
       final diff = now.difference(date);
       

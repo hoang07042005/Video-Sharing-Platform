@@ -31,6 +31,91 @@ class VideoService {
     return [];
   }
 
+  static Future<List<dynamic>> getLatestPublicPlaylists({int limit = 20}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/playlists/public/latest?limit=$limit'),
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<List<dynamic>> getLatestCommunityPosts({int limit = 10}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/community/latest?limit=$limit'),
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> search(String query, {int limit = 30}) async {
+    final headers = await _getHeaders();
+    final uri = Uri.parse('${AppConstants.apiUrl}/search').replace(
+      queryParameters: {'q': query, 'limit': '$limit'},
+    );
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) return data;
+    }
+    throw Exception('Không thể tìm kiếm (${response.statusCode}).');
+  }
+
+  static Future<void> saveSearchHistory(String query) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/search-history'),
+      headers: await _getHeaders(),
+      body: jsonEncode({'query': query}),
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể lưu lịch sử tìm kiếm.');
+    }
+  }
+
+  static Future<List<dynamic>> getSearchHistory() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.apiUrl}/search-history'),
+      headers: await _getHeaders(),
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) return data;
+    }
+    throw Exception('Không thể tải lịch sử tìm kiếm.');
+  }
+
+  static Future<void> deleteSearchHistory(String id) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.apiUrl}/search-history/$id'),
+      headers: await _getHeaders(),
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể xóa lịch sử tìm kiếm.');
+    }
+  }
+
+  static Future<void> clearSearchHistory() async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.apiUrl}/search-history'),
+      headers: await _getHeaders(),
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể xóa lịch sử tìm kiếm.');
+    }
+  }
+
   static Future<List<dynamic>> getVideosByCategory(String categoryName) async {
     try {
       final headers = await _getHeaders();
@@ -81,6 +166,21 @@ class VideoService {
     } catch (e) {
       // print('Error fetching recommended videos: $e');
     }
+    return [];
+  }
+
+  static Future<List<dynamic>> getAllVideos() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.apiUrl}/videos'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+      }
+    } catch (_) {}
     return [];
   }
 
@@ -169,6 +269,45 @@ class VideoService {
       if (data is Map<String, dynamic>) return data;
     }
     throw Exception('Không thể tạo phòng livestream (${response.statusCode}).');
+  }
+
+  static Future<String> uploadImage(File file) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${AppConstants.apiUrl}/upload/image'),
+    );
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    final detectedMime = lookupMimeType(file.path) ?? 'image/jpeg';
+    final mimeParts = detectedMime.split('/');
+    final contentType = mimeParts.length == 2
+        ? MediaType(mimeParts[0], mimeParts[1])
+        : MediaType('image', 'jpeg');
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: contentType,
+    ));
+    final response = await request.send().timeout(const Duration(seconds: 30));
+    final body = await response.stream.bytesToString();
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(body);
+      final url = data['url']?.toString();
+      if (url != null && url.isNotEmpty) {
+        return url
+        .replaceFirst('://localhost', '://${AppConstants.serverIp}')
+        .replaceFirst('://127.0.0.1', '://${AppConstants.serverIp}');
+      }
+    }
+    String message = 'Không thể tải ảnh thumbnail lên.';
+    try {
+      final data = jsonDecode(body);
+      message = data['message']?.toString() ?? message;
+    } catch (_) {}
+    throw Exception('$message (HTTP ${response.statusCode})${body.isEmpty ? '' : ': $body'}');
   }
 
   static Future<Map<String, dynamic>?> getMyChannel() async {

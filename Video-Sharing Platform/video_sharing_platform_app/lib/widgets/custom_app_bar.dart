@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../services/auth_service.dart';
+import '../screens/search/search_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Widget? title;
@@ -92,7 +93,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
         IconButton(
           icon: const Icon(Icons.search, color: Colors.white),
           onPressed: () {
-            // TODO: Navigate to search screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            );
           },
         ),
         IconButton(

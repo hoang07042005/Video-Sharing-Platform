@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_sharing_platform_app/api_config.dart';
 import 'package:video_sharing_platform_app/services/video_service.dart';
@@ -25,9 +25,9 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
   bool _isPaused = false;
   bool _isEnding = false;
   String _error = '';
-  final RTCVideoRenderer _cameraRenderer = RTCVideoRenderer();
-  MediaStream? _captureStream;
-  bool _captureReady = false;
+  bool _nativeConnected = false;
+  static const _rtmpChannel = MethodChannel('video_platform/rtmp');
+  Completer<void>? _rtmpConnectionCompleter;
 
   String get _livestreamId =>
       (widget.livestream['id'] ?? widget.livestream['Id']).toString();
@@ -40,23 +40,40 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
       (widget.livestream['streamKey'] ?? widget.livestream['StreamKey'] ?? '')
           .toString();
 
-  String get _mediaServerUrl => 'ws://${ApiConfig.serverIp}:8001/stream?key=$_streamKey';
+  String get _rtmpUrl => 'rtmp://${ApiConfig.serverIp}:1935/live/$_streamKey';
+
+  String get _mediaServerUrl => _rtmpUrl;
 
   @override
   void initState() {
     super.initState();
-    _cameraRenderer.initialize();
+    _rtmpChannel.setMethodCallHandler(_handleNativeEvent);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (final track in _captureStream?.getTracks() ?? <MediaStreamTrack>[]) {
-      track.stop();
-    }
-    _captureStream?.dispose();
-    _cameraRenderer.dispose();
+    _rtmpChannel.invokeMethod('stop');
     super.dispose();
+  }
+
+  Future<void> _handleNativeEvent(MethodCall call) async {
+    if (!mounted) return;
+    if (call.method == 'connected') {
+      setState(() => _nativeConnected = true);
+      _rtmpConnectionCompleter?.complete();
+      _rtmpConnectionCompleter = null;
+    } else if (call.method == 'disconnected') {
+      setState(() => _nativeConnected = false);
+    } else if (call.method == 'error' || call.method == 'authError') {
+      final message = 'Media Server không nhận được luồng RTMP: ${call.arguments ?? ''}';
+      setState(() {
+        _nativeConnected = false;
+        _error = message;
+      });
+      _rtmpConnectionCompleter?.completeError(Exception(message));
+      _rtmpConnectionCompleter = null;
+    }
   }
 
   void _startTimer() {
@@ -74,7 +91,12 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
       final permissionsGranted = await _requestCapturePermissions();
       if (!permissionsGranted) return;
 
-      await _openCameraAndMicrophone();
+      _rtmpConnectionCompleter = Completer<void>();
+      await _rtmpChannel.invokeMethod('start', {'url': _rtmpUrl});
+      await _rtmpConnectionCompleter!.future.timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => throw TimeoutException('Media Server không phản hồi cổng RTMP 1935.'),
+      );
 
       await VideoService.startLivestream(_livestreamId);
       if (!mounted) return;
@@ -91,22 +113,10 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
         ),
       );
     } catch (e) {
+      _rtmpConnectionCompleter = null;
+      await _rtmpChannel.invokeMethod('stop');
       if (mounted) setState(() => _error = e.toString());
     }
-  }
-
-  Future<void> _openCameraAndMicrophone() async {
-    _captureStream?.getTracks().forEach((track) => track.stop());
-    _captureStream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
-      'video': {
-        'facingMode': 'user',
-        'width': {'ideal': 1280},
-        'height': {'ideal': 720},
-      },
-    });
-    _cameraRenderer.srcObject = _captureStream;
-    if (mounted) setState(() => _captureReady = true);
   }
 
   Future<bool> _requestCapturePermissions() async {
@@ -155,7 +165,8 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
       await VideoService.endLivestream(_livestreamId);
       if (mounted) {
         _timer?.cancel();
-        _stopCapture();
+        await _rtmpChannel.invokeMethod('stop');
+        if (!mounted) return;
         Navigator.pop(context);
       }
     } catch (e) {
@@ -163,16 +174,6 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
     } finally {
       if (mounted) setState(() => _isEnding = false);
     }
-  }
-
-  void _stopCapture() {
-    for (final track in _captureStream?.getTracks() ?? <MediaStreamTrack>[]) {
-      track.stop();
-    }
-    _captureStream?.dispose();
-    _captureStream = null;
-    _cameraRenderer.srcObject = null;
-    _captureReady = false;
   }
 
   String _formatTime() {
@@ -251,15 +252,10 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
               height: 210,
               width: double.infinity,
               decoration: BoxDecoration(color: const Color(0xFF080808), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white12)),
-              child: _captureReady
-                  ? Stack(fit: StackFit.expand, children: [
-                      RTCVideoView(_cameraRenderer, mirror: true, objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover),
-                      Positioned(top: 8, left: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4), color: _isPaused ? Colors.orange : Colors.red, child: Text(_isPaused ? 'TẠM DỪNG' : 'LIVE', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)))),
-                    ])
-                  : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(_isLive ? (_isPaused ? Icons.pause_circle_outline : Icons.screen_share_outlined) : Icons.screen_share_outlined, color: _isLive ? _accent : Colors.white24, size: 48),
                       const SizedBox(height: 12),
-                      Text(_isLive ? (_isPaused ? 'Đang tạm dừng phát' : 'Đang chia sẻ camera và microphone') : 'Chưa có tín hiệu', style: TextStyle(color: _isLive ? Colors.white : Colors.white54, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(_isLive ? (_isPaused ? 'Đang tạm dừng phát' : (_nativeConnected ? 'Đang phát camera và microphone' : 'Đang kết nối Media Server')) : 'Chưa có tín hiệu', style: TextStyle(color: _isLive ? Colors.white : Colors.white54, fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 5),
                       Text(_isLive ? '$_title  •  ${_formatTime()}' : 'Bấm bắt đầu để mở camera và microphone', style: const TextStyle(color: Colors.white38, fontSize: 10)),
                     ]),
@@ -282,7 +278,7 @@ class _LivestreamStudioScreenState extends State<LivestreamStudioScreen> {
           _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [const Icon(Icons.settings_input_antenna, color: Color(0xFF69B7FF), size: 17), const SizedBox(width: 8), const Text('THÔNG TIN KẾT NỐI', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))]),
             const SizedBox(height: 12),
-            Text(_captureReady ? 'Camera và microphone đã sẵn sàng. StreamKey này được dùng làm đường dẫn media server.' : 'Camera và microphone sẽ được yêu cầu quyền trước lần phát đầu tiên.', style: const TextStyle(color: Colors.white54, fontSize: 10, height: 1.4)),
+            Text(_nativeConnected ? 'Camera và microphone đang được phát qua RTMP tới Media Server.' : 'Camera và microphone sẽ được yêu cầu quyền trước lần phát đầu tiên.', style: const TextStyle(color: Colors.white54, fontSize: 10, height: 1.4)),
             const SizedBox(height: 10),
             _connectionRow('Trạng thái', _isLive ? 'Đang phát' : 'Chờ bắt đầu'),
             _connectionRow('Mã livestream', _livestreamId),

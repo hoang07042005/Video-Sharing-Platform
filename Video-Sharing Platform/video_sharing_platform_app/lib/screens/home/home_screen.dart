@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _randomVideos = [];
   List<dynamic> _shorts = [];
   List<dynamic> _livestreams = [];
+  List<dynamic> _otherVideos = [];
   List<dynamic> _categories = [];
   int _currentHeroIndex = 0;
   final PageController _heroPageController = PageController();
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
         VideoService.getShorts(),
         VideoService.getActiveLivestreams(),
         VideoService.getCategories(),
+        VideoService.getAllVideos(),
       ]);
 
       if (mounted) {
@@ -62,6 +64,25 @@ class _HomeScreenState extends State<HomeScreen> {
               
           _livestreams = results[2];
           _categories = results[3];
+
+          final recommendedIds = _recommendedVideos
+              .map((video) => video['id']?.toString())
+              .whereType<String>()
+              .toSet();
+          final allVideos = results[4];
+          final endedAndNormalVideos = allVideos.where((video) {
+            final id = video['id']?.toString();
+            final isShort = video['isShort'] == true;
+            return id != null && !isShort && !recommendedIds.contains(id);
+          }).toList();
+          final activeLivestreams = _livestreams.map((live) => {
+            ...Map<String, dynamic>.from(live as Map),
+            'isLivestream': true,
+            'channelName': live['channel']?['channelName'] ?? live['channelName'],
+            'channelHandle': live['channel']?['handle'] ?? live['channelHandle'],
+            'channelAvatarUrl': live['channel']?['avatarUrl'] ?? live['channelAvatarUrl'],
+          }).toList();
+          _otherVideos = [...activeLivestreams, ...endedAndNormalVideos];
           
           if (_categories.isEmpty) {
             // Dữ liệu dự phòng
@@ -416,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _buildSectionHeader('Shorts nổi bật', Icons.play_circle_filled, Colors.redAccent),
                       ),
                       SizedBox(
-                        height: 280, // Slightly shorter for shorts
+                        height: 340, // Slightly shorter for shorts
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -528,45 +549,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildCategoryGrid(),
                     const SizedBox(height: 32),
 
-                    // Livestreams (Playlist nổi bật)
-                    if (_livestreams.isNotEmpty) ...[
-                      _buildSectionHeader('Playlist nổi bật', Icons.queue_music, Colors.purpleAccent),
-                      SizedBox(
-                        height: 200,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _livestreams.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: VideoCard(
-                                video: _livestreams[index],
-                                width: 280,
-                                hideAvatar: true,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-
-                    // Standard Video Feed (Video thường bất kỳ)
-                    if (_randomVideos.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildSectionHeader('Video có thể bạn sẽ thích', Icons.play_circle_filled, Colors.redAccent),
-                      ),
+                    // Video thường còn lại và livestream đang/đã phát, loại video đã xuất hiện ở trên
+                    if (_otherVideos.isNotEmpty) ...[
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: math.min(40, _randomVideos.length),
+                        itemCount: _otherVideos.length,
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 24),
-                            child: VideoCard(video: _randomVideos[index], width: double.infinity),
+                            child: VideoCard(video: _otherVideos[index], width: double.infinity),
                           );
                         },
                       ),
