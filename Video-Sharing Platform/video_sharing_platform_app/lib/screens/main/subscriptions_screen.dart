@@ -224,7 +224,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isActive ? Colors.white : Colors.white.withOpacity(0.1),
+                  color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -296,7 +296,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   // Divider
                   if (_channels.isNotEmpty)
                     SliverToBoxAdapter(
-                      child: Divider(color: Colors.white.withOpacity(0.1), height: 1),
+                      child: Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
                     ),
 
                   // Filters

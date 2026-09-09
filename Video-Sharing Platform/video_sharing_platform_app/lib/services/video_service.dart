@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 import '../constants.dart';
 
 class VideoService {
@@ -130,6 +133,99 @@ class VideoService {
       // print('Error fetching livestreams: $e');
     }
     return [];
+  }
+
+  static Future<Map<String, dynamic>> createLivestream({
+    required String title,
+    required String description,
+    required String channelId,
+    required String streamKey,
+    String tags = '',
+    int? categoryId,
+    String thumbnailUrl = '',
+  }) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/livestreams'),
+      headers: headers,
+      body: jsonEncode({
+        'title': title,
+        'channelId': channelId,
+        'streamKey': streamKey,
+        'description': description,
+        'thumbnailUrl': thumbnailUrl,
+        'hlsUrl': '',
+        'vodUrl': '',
+        'tags': tags,
+        'categoryId': categoryId,
+        'totalViews': 0,
+        'status': 'scheduled',
+        'scheduledStartTime': DateTime.now().toUtc().toIso8601String(),
+      }),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) return data;
+    }
+    throw Exception('Không thể tạo phòng livestream (${response.statusCode}).');
+  }
+
+  static Future<Map<String, dynamic>?> getMyChannel() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConstants.apiUrl}/channels/me'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic>) return data;
+    }
+    return null;
+  }
+
+  static Future<void> endLivestream(String livestreamId) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/livestreams/$livestreamId/end'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể kết thúc livestream.');
+    }
+  }
+
+  static Future<void> startLivestream(String livestreamId) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/livestreams/$livestreamId/start'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể bắt đầu livestream.');
+    }
+  }
+
+  static Future<void> pauseLivestream(String livestreamId) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/livestreams/$livestreamId/pause'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể tạm dừng livestream.');
+    }
+  }
+
+  static Future<void> resumeLivestream(String livestreamId) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiUrl}/livestreams/$livestreamId/resume'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Không thể tiếp tục livestream.');
+    }
   }
 
   static Future<void> recordView(String videoId) async {
@@ -366,5 +462,113 @@ class VideoService {
       // ignore
     }
     return null;
+  }
+
+  static Future<dynamic> uploadVideo({
+    required String title,
+    required String description,
+    required String visibility,
+    required bool isShort,
+    required File videoFile,
+    File? thumbnailFile,
+    int? categoryId,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final headers = {
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      // 1. Upload Video File
+      String uploadedVideoUrl = '';
+      final videoUri = Uri.parse('${AppConstants.apiUrl}/upload/video');
+      final videoReq = http.MultipartRequest('POST', videoUri);
+      videoReq.headers.addAll(headers);
+      
+      final videoMimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
+      final videoTypeData = videoMimeType.split('/');
+      videoReq.files.add(await http.MultipartFile.fromPath(
+        'file', 
+        videoFile.path,
+        contentType: MediaType(videoTypeData[0], videoTypeData.length > 1 ? videoTypeData[1] : ''),
+      ));
+      
+      final videoStreamRes = await videoReq.send();
+      final videoRes = await http.Response.fromStream(videoStreamRes);
+      if (videoRes.statusCode == 200 || videoRes.statusCode == 201) {
+        uploadedVideoUrl = jsonDecode(videoRes.body)['url'];
+      } else {
+        String errMsg = 'Lỗi đăng tải file video (HTTP ${videoRes.statusCode}).';
+        try {
+          errMsg = jsonDecode(videoRes.body)['message'] ?? errMsg;
+        } catch (_) {}
+        throw Exception(errMsg);
+      }
+
+      // 2. Upload Thumbnail File (if any)
+      String uploadedThumbUrl = '';
+      if (thumbnailFile != null) {
+        final thumbUri = Uri.parse('${AppConstants.apiUrl}/upload/image');
+        final thumbReq = http.MultipartRequest('POST', thumbUri);
+        thumbReq.headers.addAll(headers);
+        
+        final thumbMimeType = lookupMimeType(thumbnailFile.path) ?? 'image/jpeg';
+        final thumbTypeData = thumbMimeType.split('/');
+        thumbReq.files.add(await http.MultipartFile.fromPath(
+          'file', 
+          thumbnailFile.path,
+          contentType: MediaType(thumbTypeData[0], thumbTypeData.length > 1 ? thumbTypeData[1] : ''),
+        ));
+        
+        final thumbStreamRes = await thumbReq.send();
+        final thumbRes = await http.Response.fromStream(thumbStreamRes);
+        if (thumbRes.statusCode == 200 || thumbRes.statusCode == 201) {
+          uploadedThumbUrl = jsonDecode(thumbRes.body)['url'];
+        } else {
+          String errMsg = 'Lỗi đăng tải ảnh bìa (HTTP ${thumbRes.statusCode}).';
+          try {
+            errMsg = jsonDecode(thumbRes.body)['message'] ?? errMsg;
+          } catch (_) {}
+          throw Exception(errMsg);
+        }
+      }
+
+      // 3. Create Video Record
+      final createUri = Uri.parse('${AppConstants.apiUrl}/videos');
+      final createRes = await http.post(
+        createUri,
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: jsonEncode({
+          'title': title,
+          'description': description,
+          'visibility': visibility == 'Riêng tư' ? 'Private' : 'Public',
+          'isShort': isShort,
+          'thumbnailUrl': uploadedThumbUrl,
+          'videoUrl': uploadedVideoUrl,
+          'categoryId': categoryId,
+          'duration': 0, // Server will calculate or we ignore
+        }),
+      );
+
+      if (createRes.statusCode == 200 || createRes.statusCode == 201) {
+        if (createRes.body.isEmpty) return {'success': true};
+        return jsonDecode(createRes.body);
+      } else {
+        if (createRes.body.isEmpty) {
+          throw Exception('Lỗi tạo video (HTTP ${createRes.statusCode}).');
+        }
+        final data = jsonDecode(createRes.body);
+        throw Exception(data['message'] ?? 'Lỗi tạo video.');
+      }
+    } on Exception {
+      rethrow;
+    } catch (e) {
+      throw Exception('Lỗi kết nối hoặc đăng tải: $e');
+    }
   }
 }
