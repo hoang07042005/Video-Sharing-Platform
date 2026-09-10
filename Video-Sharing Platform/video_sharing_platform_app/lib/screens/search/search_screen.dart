@@ -5,7 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
 import '../../services/video_service.dart';
+import '../../widgets/video_card.dart';
+import '../../widgets/shorts_card.dart';
+import '../../widgets/verified_badge.dart';
 import '../channel/channel_screen.dart';
+import '../video/short/short_detail_screen.dart';
 import '../video/videos/video_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -166,13 +170,58 @@ class _SearchScreenState extends State<SearchScreen> {
       return url.replaceAll('localhost', AppConstants.serverIp).replaceAll('127.0.0.1', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
+    final parsedUrl = Uri.tryParse(url);
+    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+      return parsedUrl.replace(host: AppConstants.serverIp).toString();
+    }
     return url;
   }
 
-  void _openVideo(dynamic video) {
-    final id = video['id']?.toString();
-    if (id == null || id.isEmpty) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => VideoDetailScreen(videoId: id)));
+  String _channelAvatarUrl(dynamic channel) {
+    if (channel is! Map) return '';
+    final profile = channel['profile'] ?? channel['Profile'];
+    final user = channel['user'] ?? channel['User'];
+    final userProfile = user is Map ? (user['profile'] ?? user['Profile']) : null;
+    final candidates = [
+      channel['avatarUrl'],
+      channel['channelAvatarUrl'],
+      channel['userAvatarUrl'],
+      channel['profileAvatarUrl'],
+      profile is Map ? profile['avatarUrl'] : null,
+      user is Map ? user['avatarUrl'] : null,
+      userProfile is Map ? userProfile['avatarUrl'] : null,
+    ];
+    for (final candidate in candidates) {
+      final url = _imageUrl(candidate);
+      if (url.isNotEmpty) return url;
+    }
+    return '';
+  }
+
+  Widget _buildChannelAvatar(dynamic channel) {
+    final avatarUrl = _channelAvatarUrl(channel);
+    final name = channel is Map
+        ? (channel['channelName'] ?? channel['name'] ?? channel['handle'] ?? 'K')
+            .toString()
+        : 'K';
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'K';
+
+    return CircleAvatar(
+      backgroundColor: Colors.grey[800],
+      child: avatarUrl.isEmpty
+          ? Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))
+          : ClipOval(
+              child: Image.network(
+                avatarUrl,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Center(
+                  child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ),
+    );
   }
 
   void _openChannel(dynamic channel) {
@@ -259,39 +308,102 @@ class _SearchScreenState extends State<SearchScreen> {
         if (channels.isNotEmpty) ...[
           _sectionTitle('Kênh', channels.length),
           ...channels.map((channel) => ListTile(
-            leading: CircleAvatar(backgroundImage: _imageUrl(channel['avatarUrl']).isNotEmpty ? NetworkImage(_imageUrl(channel['avatarUrl'])) : null, child: _imageUrl(channel['avatarUrl']).isEmpty ? const Icon(Icons.person_outline) : null),
-            title: Text(channel['channelName'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text('@${channel['handle'] ?? ''}  •  ${channel['subscriberCount'] ?? 0} người đăng ký', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            leading: _buildChannelAvatar(channel),
+            title: Row(
+              children: [
+                Flexible(
+                  child: Text(channel['channelName'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+                if (channel['isVerified'] == true || channel['channelIsVerified'] == true || channel['verified'] == true) ...[
+                  const SizedBox(width: 4),
+                  const VerifiedBadge(size: 15),
+                ],
+              ],
+            ),
+            subtitle: Text('${channel['handle'] ?? ''}  •  ${channel['subscriberCount'] ?? 0} người đăng ký', style: const TextStyle(color: Colors.white54, fontSize: 12)),
             onTap: () => _openChannel(channel),
           )),
         ],
         if (playlists.isNotEmpty) ...[
           _sectionTitle('Danh sách phát', playlists.length),
-          ...playlists.map((playlist) => ListTile(
-            leading: _thumbnail(playlist['thumbnailUrl'], width: 112, height: 64),
-            title: Text(playlist['title'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text('${playlist['videoCount'] ?? 0} video', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          ...playlists.map((playlist) => InkWell(
             onTap: () => _openPlaylist(playlist),
-          )),
-        ],
-        if (videos.isNotEmpty) ...[
-          _sectionTitle('Video', videos.length),
-          ...videos.map((video) => ListTile(
-            leading: _thumbnail(video['thumbnailUrl']),
-            title: Text(video['title'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text('${video['channelName'] ?? ''}  •  ${video['viewsCount'] ?? 0} lượt xem', style: const TextStyle(color: Colors.white54, fontSize: 12)),
-            onTap: () => _openVideo(video),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _thumbnail(playlist['thumbnailUrl'], width: 180, height: 105),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          playlist['title'] ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${playlist['videoCount'] ?? 0} video',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           )),
         ],
         if (shorts.isNotEmpty) ...[
           _sectionTitle('Shorts', shorts.length),
-          ...shorts.map((video) => ListTile(
-            leading: _thumbnail(video['thumbnailUrl']),
-            title: Text(video['title'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text(video['channelName'] ?? '', style: const TextStyle(color: Colors.white54, fontSize: 12)),
-            onTap: () => _openVideo(video),
+          SizedBox(
+            height: 300,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: shorts.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ShortsCard(
+                    video: shorts[index],
+                    width: 180,
+                    titleOverlay: true,
+                    durationAtTop: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ShortDetailScreen(
+                            shorts: shorts,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (videos.isNotEmpty) ...[
+          _sectionTitle('Video', videos.length),
+          ...videos.map((video) => Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: VideoCard(
+              video: Map<String, dynamic>.from(video as Map),
+              width: double.infinity,
+            ),
           )),
         ],
+        
       ],
     );
   }

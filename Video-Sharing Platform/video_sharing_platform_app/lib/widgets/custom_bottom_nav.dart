@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_sharing_platform_app/screens/upload/upload_screen.dart';
+import 'package:video_sharing_platform_app/constants.dart';
+import 'package:video_sharing_platform_app/services/auth_service.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
 
@@ -13,7 +14,41 @@ class CustomBottomNavBar extends StatelessWidget {
   });
 
   @override
+  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
+}
+
+class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
+  Map<String, dynamic>? _currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await AuthService.getCurrentUser();
+    if (mounted) {
+      setState(() => _currentUser = user);
+    }
+  }
+
+  String? _getAvatarUrl() {
+    final rawUrl = _currentUser?['avatarUrl']?.toString();
+    if (rawUrl == null || rawUrl.isEmpty) return null;
+    if (rawUrl.contains('localhost')) {
+      return rawUrl.replaceAll('localhost', AppConstants.serverIp);
+    }
+    if (!rawUrl.startsWith('http')) {
+      return '${AppConstants.apiUrl.replaceAll('/api', '')}$rawUrl';
+    }
+    return rawUrl;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isLoggedIn = _currentUser != null;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0F1115),
@@ -39,47 +74,55 @@ class CustomBottomNavBar extends StatelessWidget {
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home_rounded,
                 label: 'Trang chủ',
-                isActive: currentIndex == 0,
+                isActive: widget.currentIndex == 0,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  onTap(0);
+                  widget.onTap(0);
                 },
               ),
               _NavItem(
                 icon: Icons.play_circle_outline_rounded,
                 activeIcon: Icons.play_circle_rounded,
                 label: 'Shorts',
-                isActive: currentIndex == 1,
+                isActive: widget.currentIndex == 1,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  onTap(1);
+                  widget.onTap(1);
                 },
               ),
               // Center Add Button
               _CenterAddButton(
                 onTap: () {
                   HapticFeedback.mediumImpact();
-                  onTap(2);
+                  widget.onTap(2);
                 },
               ),
               _NavItem(
                 icon: Icons.subscriptions_outlined,
                 activeIcon: Icons.subscriptions_rounded,
-                label: 'Đăng ký',
-                isActive: currentIndex == 3,
+                label: 'Kênh Đăng ký',
+                isActive: widget.currentIndex == 3,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  onTap(3);
+                  widget.onTap(3);
                 },
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,
                 activeIcon: Icons.person_rounded,
-                label: 'Hồ sơ',
-                isActive: currentIndex == 4,
+                label: 'Cá nhân',
+                isActive: widget.currentIndex == 4,
+                customIcon: isLoggedIn
+                    ? _ProfileAvatar(
+                        avatarUrl: _getAvatarUrl(),
+                        name: _currentUser?['fullName']?.toString() ??
+                            _currentUser?['handle']?.toString() ??
+                            'U',
+                      )
+                    : null,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  onTap(4);
+                  widget.onTap(4);
                 },
               ),
             ],
@@ -95,6 +138,7 @@ class _NavItem extends StatelessWidget {
   final IconData activeIcon;
   final String label;
   final bool isActive;
+  final Widget? customIcon;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -102,6 +146,7 @@ class _NavItem extends StatelessWidget {
     required this.activeIcon,
     required this.label,
     required this.isActive,
+    this.customIcon,
     required this.onTap,
   });
 
@@ -114,19 +159,20 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, animation) => ScaleTransition(
-                scale: animation,
-                child: child,
-              ),
-              child: Icon(
-                isActive ? activeIcon : icon,
-                key: ValueKey(isActive),
-                color: isActive ? Colors.white : Colors.grey[600],
-                size: 26,
-              ),
-            ),
+            customIcon ??
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  ),
+                  child: Icon(
+                    isActive ? activeIcon : icon,
+                    key: ValueKey(isActive),
+                    color: isActive ? Colors.white : Colors.grey[600],
+                    size: 26,
+                  ),
+                ),
             const SizedBox(height: 4),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
@@ -155,6 +201,37 @@ class _NavItem extends StatelessWidget {
   }
 }
 
+class _ProfileAvatar extends StatelessWidget {
+  final String? avatarUrl;
+  final String name;
+
+  const _ProfileAvatar({
+    required this.avatarUrl,
+    required this.name,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'U';
+
+    return CircleAvatar(
+      radius: 14,
+      backgroundColor: Colors.green.shade700,
+      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+      child: avatarUrl == null
+          ? Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
 class _CenterAddButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -173,7 +250,7 @@ class _CenterAddButton extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.redAccent.withValues(alpha: 0.5),

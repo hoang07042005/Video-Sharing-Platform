@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../screens/video/videos/video_detail_screen.dart';
+import 'verified_badge.dart';
 
 class VideoListTile extends StatelessWidget {
   final Map<String, dynamic> video;
@@ -232,7 +233,7 @@ class VideoListTile extends StatelessWidget {
                             ),
                             if (isVerified) ...[
                               const SizedBox(width: 4),
-                              const Icon(Icons.check_circle, color: Colors.white70, size: 12),
+                              const VerifiedBadge(size: 12),
                             ],
                           ],
                         ),

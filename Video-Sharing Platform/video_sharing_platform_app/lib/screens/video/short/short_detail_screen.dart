@@ -5,6 +5,7 @@ import '../../../services/video_service.dart';
 import '../../../constants.dart';
 import '../../../../main.dart';
 import '../../channel/channel_screen.dart';
+import '../../../widgets/verified_badge.dart';
 
 class ShortDetailScreen extends StatefulWidget {
   final List<dynamic> shorts;
@@ -486,20 +487,7 @@ class _ShortPlayerItemState extends State<ShortPlayerItem>
                                     ),
                                     if (widget.short['channelIsVerified'] == true || widget.short['channelIsVerified'] == 'true' || widget.short['isVerified'] == true) ...[
                                       const SizedBox(width: 4),
-                                      Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          Container(
-                                            width: 20,
-                                            height: 20,
-                                            decoration: const BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const Icon(Icons.check_circle, color: Color.fromARGB(255, 73, 198, 0), size: 20),
-                                        ],
-                                      ),
+                                      const VerifiedBadge(size: 20),
                                     ],
                                   ],
                                 ),

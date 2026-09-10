@@ -3,8 +3,10 @@ import '../../services/auth_service.dart';
 import '../../services/video_service.dart';
 import '../video/videos/video_detail_screen.dart';
 import '../video/short/short_detail_screen.dart';
+import '../search/search_screen.dart';
 import '../../constants.dart';
 import '../../widgets/shorts_card.dart';
+import '../../widgets/verified_badge.dart';
 import 'settings_screen.dart';
 import 'history_screen.dart';
 import '../channel/channel_screen.dart';
@@ -88,7 +90,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           IconButton(icon: const Icon(Icons.notifications_none, color: Colors.white), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white), 
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              );
+            }),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white), 
             onPressed: () {
@@ -146,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildProfileHeader() {
     final name = _user?['fullName'] ?? _user?['handle'] ?? 'Người dùng';
-    final handle = _user?['handle'] != null ? '@${_user!['handle']}' : '@user';
+    final handle = _user?['handle'] != null ? '${_user!['handle']}' : '@user';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     String? avatarUrl = _user?['avatarUrl'];
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
@@ -288,7 +297,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         itemBuilder: (context, index) {
           final video = _historyNormal[index];
           final channel = video['channel'] ?? video['Channel'] ?? {};
-          final channelName = channel['channelName'] ?? channel['name'] ?? '';
+            final channelName = video['channelName'] ??
+              video['channelTitle'] ??
+              channel['channelName'] ??
+              channel['name'] ??
+              '';
           
           String thumbnailUrl = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail']);
 
@@ -341,11 +354,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    channelName,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          channelName,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (video['channelIsVerified'] == true || video['isVerified'] == true) ...[
+                        const SizedBox(width: 3),
+                        const VerifiedBadge(size: 12),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -358,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildShortsHistory() {
     return SizedBox(
-      height: 200, // Smaller for profile history
+      height: 220, // Smaller for profile history
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -368,7 +391,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.only(right: 12),
             child: ShortsCard(
               video: _historyShorts[index],
-              width: 120, // Smaller width
+              width: 140, // Smaller width
+              titleOverlay: true,
+              durationAtTop: true,
               onTap: () {
                 Navigator.push(
                   context,
@@ -393,6 +418,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final title = pl['title'] ?? 'Danh sách phát';
         final visibility = pl['visibility'] == 'private' ? 'Riêng tư' : 'Công khai';
         final firstThumb = pl['thumbnailUrl'];
+        final videoCount = pl['videoCount'] is num
+            ? (pl['videoCount'] as num).toInt()
+            : int.tryParse(pl['videoCount']?.toString() ?? '') ?? 0;
 
         if (title == 'Xem sau') {
           return _buildLibraryItem(
@@ -408,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         return _buildLibraryItem(
-          thumbnail: _buildPlaylistThumbnail(firstThumb),
+          thumbnail: _buildPlaylistThumbnail(firstThumb, stacked: videoCount >= 3),
           title: title,
           subtitle: '$visibility • Danh sách phát • Cậ...',
           onTap: () {},
@@ -467,23 +495,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildPlaylistThumbnail(String? imageUrl) {
+  Widget _buildPlaylistThumbnail(String? imageUrl, {bool stacked = false}) {
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
         // Stacked card background
-        Positioned(
-          top: 0, left: 8, right: 8, bottom: 12,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
+        if (stacked)
+          Positioned(
+            top: 0, left: 8, right: 8, bottom: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-        ),
         // Main image
         Positioned(
-          top: 6, left: 0, right: 0, bottom: 0,
+          top: stacked ? 6 : 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: imageUrl != null && imageUrl.isNotEmpty

@@ -514,7 +514,9 @@ namespace Video_Platform_Backend.Controllers
                     Id = f.Channel.Id,
                     ChannelName = f.Channel.ChannelName,
                     Handle = f.Channel.Handle,
-                    AvatarUrl = f.Channel.User.Profile != null ? (f.Channel.User.Profile.AvatarUrl ?? "") : "",
+                    AvatarUrl = !string.IsNullOrEmpty(f.Channel.AvatarUrl)
+                        ? f.Channel.AvatarUrl
+                        : (f.Channel.User.Profile != null ? (f.Channel.User.Profile.AvatarUrl ?? "") : ""),
                     Description = f.Channel.Description ?? "",
                     SubscriberCount = _context.Followers.Count(x => x.ChannelId == f.ChannelId),
                     VideoCount = _context.Videos.Count(v => v.ChannelId == f.ChannelId && v.Visibility == "Public"),

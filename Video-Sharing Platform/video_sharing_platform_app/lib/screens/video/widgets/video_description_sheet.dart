@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../widgets/verified_badge.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../constants.dart';
@@ -162,9 +163,21 @@ class VideoDescriptionSheet extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  video['channelName'] ?? 'Unknown',
-                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        video['channelName'] ?? 'Unknown',
+                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (video['channelIsVerified'] == true || video['isVerified'] == true) ...[
+                                      const SizedBox(width: 4),
+                                      const VerifiedBadge(size: 16),
+                                    ],
+                                  ],
                                 ),
                                 Text(
                                   '${_formatViews(subscriberCount)} người đăng ký',

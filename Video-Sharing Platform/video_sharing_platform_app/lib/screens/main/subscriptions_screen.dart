@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../../constants.dart';
 import '../../services/channel_service.dart';
 import '../../services/video_service.dart';
@@ -92,13 +91,69 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/100x100.png';
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', AppConstants.serverIp);
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      return url
+          .replaceAll('localhost', AppConstants.serverIp)
+          .replaceAll('127.0.0.1', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
     }
+    final parsedUrl = Uri.tryParse(url);
+    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+      return parsedUrl.replace(host: AppConstants.serverIp).toString();
+    }
     return url;
+  }
+
+  String _getChannelAvatarUrl(dynamic channel) {
+    if (channel is! Map) return '';
+    final user = channel['user'] ?? channel['User'];
+    final profile = channel['profile'] ?? channel['Profile'];
+    final userProfile = user is Map ? (user['profile'] ?? user['Profile']) : null;
+    final candidates = [
+      channel['avatarUrl'],
+      channel['channelAvatarUrl'],
+      channel['userAvatarUrl'],
+      profile is Map ? profile['avatarUrl'] : null,
+      user is Map ? user['avatarUrl'] : null,
+      userProfile is Map ? userProfile['avatarUrl'] : null,
+    ];
+    for (final candidate in candidates) {
+      final rawUrl = candidate?.toString() ?? '';
+      if (rawUrl.isNotEmpty) return _getImageUrl(rawUrl);
+    }
+    return '';
+  }
+
+  Widget _buildChannelAvatar(dynamic channel, String channelName) {
+    final avatarUrl = _getChannelAvatarUrl(channel);
+    final initial = channelName.trim().isNotEmpty ? channelName.trim()[0].toUpperCase() : 'K';
+    final fallback = Center(
+      child: Text(
+        initial,
+        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
+      ),
+    );
+
+    if (avatarUrl.isEmpty) {
+      return CircleAvatar(radius: 28, backgroundColor: Colors.grey.shade800, child: fallback);
+    }
+
+    return ClipOval(
+      child: Image.network(
+        avatarUrl,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: 56,
+          height: 56,
+          color: Colors.grey.shade800,
+          child: fallback,
+        ),
+      ),
+    );
   }
 
   List<dynamic> _getFilteredVideos() {
@@ -127,7 +182,6 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   }
 
   Widget _buildChannelItem(dynamic channel) {
-    final avatarUrl = _getImageUrl(channel['avatarUrl']);
     final channelName = channel['channelName'] ?? channel['handle'] ?? '';
     final channelIdStr = channel['id'].toString();
     
@@ -169,12 +223,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: isSelected ? Colors.blue : Colors.transparent, width: 2), // Highlight selected
                   ),
-                  child: CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.grey.shade800,
-                    backgroundImage: NetworkImage(avatarUrl),
-                    onBackgroundImageError: (_, __) {},
-                  ),
+                  child: _buildChannelAvatar(channel, channelName.toString()),
                 ),
                 if (hasNewVideo)
                   Positioned(
@@ -225,7 +274,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
                   color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
                   filter,
@@ -261,31 +310,61 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   // Channels List
                   if (_channels.isNotEmpty)
                     SliverToBoxAdapter(
-                      child: Container(
-                        height: 100,
-                        padding: const EdgeInsets.only(top: 12, left: 12),
-                        child: Row(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 0, 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: ListView.builder(
+                            Row(
+                              children: [
+                                const Icon(Icons.circle, color: Colors.redAccent, size: 5),
+                                const SizedBox(width: 5),
+                                const Expanded(
+                                  child: Text(
+                                    'KÊNH ĐÃ ĐĂNG KÝ',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const AllSubscriptionsScreen()),
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                                    padding: const EdgeInsets.only(left:12, right: 10),
+                                    minimumSize: const Size(0, 24),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Tất cả',
+                                        style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
+                                      ),
+                                      SizedBox(width: 2),
+                                      Icon(Icons.chevron_right, color: Colors.white54, size: 14),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 86,
+                              child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _channels.length,
-                                itemBuilder: (context, index) {
-                                  return _buildChannelItem(_channels[index]);
-                                },
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const AllSubscriptionsScreen()));
-                              },
-                              child: Container(
-                                width: 60,
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Tất cả',
-                                  style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500, fontSize: 14),
-                                ),
+                                separatorBuilder: (_, __) => const SizedBox(width: 0),
+                                itemBuilder: (context, index) => _buildChannelItem(_channels[index]),
                               ),
                             ),
                           ],
@@ -308,28 +387,38 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   if (_selectedChannel != null)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => ChannelScreen(handle: _selectedChannel['handle'] ?? _selectedChannel['id'].toString())));
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.blue),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.only(right: 10, top: 0, bottom: 2),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChannelScreen(
+                                    handle: _selectedChannel['handle'] ?? _selectedChannel['id'].toString(),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white54,
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Truy cập vào kênh',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(Icons.open_in_new, size: 12, color: Colors.white54),
+                              ],
+                            ),
                           ),
-                          child: const Text('Truy cập vào kênh', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-
-                  // Section Title
-                  if (_activeFilter != 'Shorts')
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text(
-                          'Phù hợp nhất',
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -363,6 +452,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                                   padding: const EdgeInsets.only(right: 12),
                                   child: ShortsCard(
                                     video: shortsList[index],
+                                    titleOverlay: true,
+                                    durationAtTop: true,
                                     onTap: () {
                                       _markVideoAsWatched(shortsList[index]['id'].toString());
                                       Navigator.push(
@@ -409,6 +500,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                           (context, index) {
                             return ShortsCard(
                               video: filteredVideos[index],
+                              titleOverlay: true,
+                              durationAtTop: true,
                               onTap: () {
                                 _markVideoAsWatched(filteredVideos[index]['id'].toString());
                                 Navigator.push(

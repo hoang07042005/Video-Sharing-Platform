@@ -13,6 +13,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/auth_service.dart';
 import 'channel_about_screen.dart';
 import 'community_screen.dart';
+import '../../widgets/verified_badge.dart';
 import 'membership_screen.dart';
 
 class ChannelScreen extends StatefulWidget {
@@ -350,7 +351,7 @@ class _ChannelScreenState extends State<ChannelScreen>
     final bannerUrl = _getImageUrl(_channel?['bannerUrl']);
     final avatarUrl = _getImageUrl(_channel?['avatarUrl']);
     final channelName = _channel?['channelName'] ?? _channel?['handle'] ?? '';
-    final handle = _channel?['handle'] != null ? '@${_channel!['handle']}' : '';
+    final handle = _channel?['handle'] != null ? '${_channel!['handle']}' : '';
     final subscribers = _formatCount(_channel?['subscriberCount']);
     final totalViews = _formatCount(_channel?['totalViews']);
     final isVerified = _channel?['isVerified'] == true;
@@ -418,15 +419,7 @@ class _ChannelScreenState extends State<ChannelScreen>
                                                 maxLines: 1, overflow: TextOverflow.ellipsis)),
                                               if (isVerified) ...[
                                                 const SizedBox(width: 4),
-                                                Container(
-                                                  width: 20, height: 20,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color.fromARGB(255, 73, 198, 0),
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(color: Colors.white, width: 1.5),
-                                                  ),
-                                                  child: const Center(child: Icon(Icons.check, color: Colors.white, size: 14, weight: 700)),
-                                                ),
+                                                const VerifiedBadge(size: 20),
                                               ],
                                             ]),
                                             Text(handle, style: const TextStyle(color: Colors.grey, fontSize: 13)),
@@ -859,7 +852,11 @@ class _ChannelScreenState extends State<ChannelScreen>
             itemCount: _shorts.take(8).length,
             itemBuilder: (ctx, i) => Padding(
               padding: const EdgeInsets.only(right: 10),
-              child: ShortsCard(video: _shorts[i], width: 140,
+              child: ShortsCard(
+                video: _shorts[i],
+                width: 140,
+                titleOverlay: true,
+                durationAtTop: true,
                 onTap: () => Navigator.push(ctx, MaterialPageRoute(
                   builder: (_) => ShortDetailScreen(shorts: _shorts, initialIndex: i)))),
             ),

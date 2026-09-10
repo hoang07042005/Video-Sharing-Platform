@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../widgets/verified_badge.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants.dart';
@@ -313,7 +314,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Flexible(
+                          child: Text(authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        if (post['isVerified'] == true || post['channelIsVerified'] == true || widget.channel['isVerified'] == true) ...[
+                          const SizedBox(width: 4),
+                          const VerifiedBadge(size: 14),
+                        ],
                         const SizedBox(width: 8),
                         Text('• ${timeago.format(createdAt, locale: 'vi')}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                       ],

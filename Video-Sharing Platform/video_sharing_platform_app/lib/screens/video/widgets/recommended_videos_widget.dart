@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../widgets/verified_badge.dart';
 import '../../../../constants.dart';
 
 
@@ -110,11 +111,21 @@ class RecommendedVideosWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            channel['handle'] ?? channel['userName'] ?? 'Unknown',
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  channel['handle'] ?? channel['userName'] ?? 'Unknown',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (video['channelIsVerified'] == true || video['isVerified'] == true || channel['isVerified'] == true) ...[
+                                const SizedBox(width: 3),
+                                const VerifiedBadge(size: 12),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/channel_service.dart';
+import '../../widgets/verified_badge.dart';
 import '../channel/channel_screen.dart';
 
 class AllSubscriptionsScreen extends StatefulWidget {
@@ -13,7 +14,12 @@ class AllSubscriptionsScreen extends StatefulWidget {
 class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
   bool _isLoading = true;
   List<dynamic> _channels = [];
-  String _sortOption = 'Liên quan nhất';
+  String _sortOption = 'Sắp xếp';
+  final List<String> _sortOptions = const [
+    'Sắp xếp',
+    'A-Z',
+    'Kênh nổi bật',
+  ];
 
   @override
   void initState() {
@@ -32,15 +38,90 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
     }
   }
 
+  List<dynamic> _sortedChannels() {
+    final channels = List<dynamic>.from(_channels);
+    if (_sortOption == 'A-Z') {
+      channels.sort((a, b) => _channelName(a).toLowerCase().compareTo(_channelName(b).toLowerCase()));
+    } else if (_sortOption == 'Kênh nổi bật') {
+      channels.sort((a, b) {
+        final aVerified = _isFeaturedChannel(a);
+        final bVerified = _isFeaturedChannel(b);
+        if (aVerified != bVerified) return aVerified ? -1 : 1;
+        return _channelName(a).toLowerCase().compareTo(_channelName(b).toLowerCase());
+      });
+    }
+    return channels;
+  }
+
+  String _channelName(dynamic channel) {
+    if (channel is! Map) return '';
+    return (channel['channelName'] ?? channel['name'] ?? channel['handle'] ?? '').toString();
+  }
+
+  bool _isFeaturedChannel(dynamic channel) {
+    if (channel is! Map) return false;
+    return channel['isVerified'] == true ||
+        channel['channelIsVerified'] == true ||
+        channel['verified'] == true;
+  }
+
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/100x100.png';
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', AppConstants.serverIp);
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      return url
+          .replaceAll('localhost', AppConstants.serverIp)
+          .replaceAll('127.0.0.1', AppConstants.serverIp);
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
     }
+    final parsedUrl = Uri.tryParse(url);
+    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+      return parsedUrl.replace(host: AppConstants.serverIp).toString();
+    }
     return url;
+  }
+
+  String _getChannelAvatarUrl(dynamic channel) {
+    if (channel is! Map) return '';
+    final user = channel['user'] ?? channel['User'];
+    final profile = channel['profile'] ?? channel['Profile'];
+    final userProfile = user is Map ? (user['profile'] ?? user['Profile']) : null;
+    final candidates = [
+      channel['avatarUrl'],
+      channel['channelAvatarUrl'],
+      channel['userAvatarUrl'],
+      profile is Map ? profile['avatarUrl'] : null,
+      user is Map ? user['avatarUrl'] : null,
+      userProfile is Map ? userProfile['avatarUrl'] : null,
+    ];
+    for (final candidate in candidates) {
+      final rawUrl = candidate?.toString() ?? '';
+      if (rawUrl.isNotEmpty) return _getImageUrl(rawUrl);
+    }
+    return '';
+  }
+
+  Widget _buildChannelAvatar(dynamic channel, String name) {
+    final avatarUrl = _getChannelAvatarUrl(channel);
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'K';
+    final fallback = Container(
+      color: Colors.grey.shade800,
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+      ),
+    );
+
+    if (avatarUrl.isEmpty) return fallback;
+    return Image.network(
+      avatarUrl,
+      width: 48,
+      height: 48,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
+    );
   }
 
   void _showNotificationBottomSheet(dynamic channel) {
@@ -48,7 +129,7 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF212121),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -63,18 +144,18 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Thông báo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                    const Text('Thông báo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 4),
-                    const Text('Chọn tần suất bạn muốn nhận thông báo khi kênh này tải nội dung mới lên.', style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    const Text('Chọn tần suất bạn muốn nhận thông báo khi kênh này tải nội dung mới lên.', style: TextStyle(fontSize: 14, color: Colors.white70)),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {},
-                      child: const Text('Tìm hiểu thêm', style: TextStyle(fontSize: 14, color: Colors.blue)),
+                      child: const Text('Tìm hiểu thêm', style: TextStyle(fontSize: 14, color: Colors.lightBlueAccent)),
                     ),
                   ],
                 ),
               ),
-              const Divider(color: Colors.black12),
+              const Divider(color: Colors.white12),
               
               _buildNotificationOption(
                 context,
@@ -104,7 +185,7 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
                   Navigator.pop(context);
                 }
               ),
-              const Divider(color: Colors.black12),
+              const Divider(color: Colors.white12),
               _buildNotificationOption(
                 context,
                 icon: Icons.person_remove_outlined,
@@ -138,13 +219,13 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.black87, size: 24),
+            Icon(icon, color: Colors.white, size: 24),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(text, style: const TextStyle(fontSize: 16, color: Colors.black87)),
+              child: Text(text, style: const TextStyle(fontSize: 16, color: Colors.white)),
             ),
             if (isSelected)
-              const Icon(Icons.check, color: Colors.black87, size: 24),
+              const Icon(Icons.check, color: Colors.white, size: 24),
           ],
         ),
       ),
@@ -154,18 +235,18 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // YouTube uses white for this specific screen in the image provided
+      backgroundColor: AppConstants.primaryColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppConstants.primaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Tất cả kênh đã đăng ký', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('Tất cả kênh đã đăng ký', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.black), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert, color: Colors.black), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
         ],
       ),
       body: _isLoading
@@ -175,43 +256,78 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_sortOption, style: const TextStyle(color: Colors.black87, fontSize: 14)),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 18),
-                      ],
+                  child: PopupMenuButton<String>(
+                    initialValue: _sortOption,
+                    onSelected: (option) => setState(() => _sortOption = option),
+                    color: const Color(0xFF2A2A2A),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    itemBuilder: (context) => _sortOptions.map((option) {
+                      return PopupMenuItem<String>(
+                        value: option,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(option, style: const TextStyle(color: Colors.white)),
+                            ),
+                            if (option == _sortOption)
+                              const Icon(Icons.check, color: Colors.white, size: 18),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_sortOption, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 Expanded(
                   child: _channels.isEmpty
-                      ? const Center(child: Text('Bạn chưa đăng ký kênh nào', style: TextStyle(color: Colors.black54)))
+                      ? const Center(child: Text('Bạn chưa đăng ký kênh nào', style: TextStyle(color: Colors.white54)))
                       : ListView.builder(
-                          itemCount: _channels.length,
+                          itemCount: _sortedChannels().length,
                           itemBuilder: (context, index) {
-                            final channel = _channels[index];
-                            final avatarUrl = _getImageUrl(channel['avatarUrl']);
+                            final channel = _sortedChannels()[index];
                             final name = channel['channelName'] ?? channel['handle'] ?? '';
-                            final handle = channel['handle'] != null ? '@${channel['handle']}' : '';
-                            
+                            final handle = channel['handle'] != null ? '${channel['handle']}' : '';
+
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               leading: CircleAvatar(
                                 radius: 24,
-                                backgroundColor: Colors.grey.shade300,
-                                backgroundImage: NetworkImage(avatarUrl),
-                                onBackgroundImageError: (_, __) {},
+                                backgroundColor: Colors.grey.shade800,
+                                child: ClipOval(
+                                  child: _buildChannelAvatar(channel, name.toString()),
+                                ),
                               ),
-                              title: Text(name, style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
-                              subtitle: Text(handle, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+                              title: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                  if (_isFeaturedChannel(channel)) ...[
+                                    const SizedBox(width: 5),
+                                    const VerifiedBadge(size: 16),
+                                  ],
+                                ],
+                              ),
+                              subtitle: Text(handle, style: const TextStyle(color: Colors.white54, fontSize: 13)),
                               trailing: InkWell(
                                 onTap: () => _showNotificationBottomSheet(channel),
                                 borderRadius: BorderRadius.circular(20),
@@ -220,9 +336,9 @@ class _AllSubscriptionsScreenState extends State<AllSubscriptionsScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.notifications_none, color: Colors.black87, size: 22),
+                                      const Icon(Icons.notifications_none, color: Colors.white, size: 22),
                                       const SizedBox(width: 2),
-                                      const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 16),
+                                      const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 16),
                                     ],
                                   ),
                                 ),

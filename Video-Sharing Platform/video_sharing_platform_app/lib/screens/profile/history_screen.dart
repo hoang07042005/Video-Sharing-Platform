@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/video_service.dart';
 import '../../constants.dart';
 import '../../widgets/shorts_card.dart';
+import '../../widgets/verified_badge.dart';
 import '../video/videos/video_detail_screen.dart';
 import '../video/short/short_detail_screen.dart';
 import '../channel/channel_screen.dart';
@@ -323,6 +324,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           child: ShortsCard(
                                             video: shorts[sIdx],
                                             width: 130,
+                                            titleOverlay: true,
+                                            durationAtTop: true,
                                             onTap: () {
                                               Navigator.push(
                                                 context,
@@ -624,16 +627,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       final handle = video['channelHandle'] ?? channel['channelHandle'] ?? channelName;
                       Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)));
                     },
-                    child: Text(
-                      channelName,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            channelName,
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (video['channelIsVerified'] == true || video['isVerified'] == true) ...[
+                          const SizedBox(width: 3),
+                          const VerifiedBadge(size: 12),
+                        ],
+                      ],
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$views lượt xem',
+                    '$views',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],

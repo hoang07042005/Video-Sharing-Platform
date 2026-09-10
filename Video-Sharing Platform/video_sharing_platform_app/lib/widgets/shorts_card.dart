@@ -5,21 +5,29 @@ class ShortsCard extends StatelessWidget {
   final dynamic video;
   final VoidCallback onTap;
   final double width;
+  final bool titleOverlay;
+  final bool durationAtTop;
+  final bool viewsAtTop;
 
   const ShortsCard({
     super.key,
     required this.video,
     required this.onTap,
     this.width = 180,
+    this.titleOverlay = false,
+    this.durationAtTop = false,
+    this.viewsAtTop = false,
   });
 
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/360x640.png';
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', AppConstants.serverIp);
+    if (url.contains('localhost') || url.contains('127.0.0.1')) {
+      return url.replaceAll('localhost', AppConstants.serverIp).replaceAll('127.0.0.1', AppConstants.serverIp);
     }
-    if (!url.startsWith('http')) {
-      return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
+    if (!url.startsWith('http')) return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
+    final parsedUrl = Uri.tryParse(url);
+    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+      return parsedUrl.replace(host: AppConstants.serverIp).toString();
     }
     return url;
   }
@@ -45,29 +53,9 @@ class ShortsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final thumbnail = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail']);
     final title = video['title'] ?? 'Untitled Short';
-    String formatViews(dynamic v) {
-      double count = v is num ? v.toDouble() : double.tryParse(v.toString()) ?? 0;
-      if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
-      if (count >= 1000) return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
-      return count.toInt().toString();
-    }
-    
     final rawViews = video['viewsCount'] ?? video['viewCount'] ?? video['views'] ?? 0;
-    final views = formatViews(rawViews);
-
-    dynamic calcDuration() {
-      if (video['duration'] != null) return video['duration'];
-      if (video['actualStartTime'] != null && video['endTime'] != null) {
-        final start = DateTime.tryParse(video['actualStartTime'].toString());
-        final end = DateTime.tryParse(video['endTime'].toString());
-        if (start != null && end != null) {
-          return end.difference(start).inSeconds;
-        }
-      }
-      return null;
-    }
-    
-    final rawDuration = calcDuration();
+    final views = rawViews is num ? rawViews.toInt().toString() : (int.tryParse(rawViews.toString()) ?? 0).toString();
+    final rawDuration = video['duration'];
     final duration = _formatDuration(rawDuration);
 
     return InkWell(
@@ -78,19 +66,13 @@ class ShortsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      thumbnail,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(color: Colors.grey[900]),
-                    ),
-                    // Gradient overlay at bottom for text readability
+                    Image.network(thumbnail, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900])),
                     Positioned(
                       bottom: 0,
                       left: 0,
@@ -106,50 +88,47 @@ class ShortsCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                      // Views overlay
-                      Positioned(
-                        bottom: 8,
-                        left: 8,
+                    Positioned(
+                      top: viewsAtTop ? 8 : null,
+                      bottom: viewsAtTop ? null : 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                         child: Row(
                           children: [
                             const Icon(Icons.visibility_outlined, color: Colors.white, size: 14),
                             const SizedBox(width: 4),
-                            Text(
-                              '$views lượt xem',
-                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
+                            Text('$views lượt xem', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
-                      // Duration Badge
-                      if (rawDuration != null)
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              duration,
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500),
-                            ),
-                          ),
+                    ),
+                    if (titleOverlay)
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: 30,
+                        child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      ),
+                    if (rawDuration != null)
+                      Positioned(
+                        top: durationAtTop ? 8 : null,
+                        bottom: durationAtTop ? null : 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(4)),
+                          child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)),
                         ),
-                    ],
+                      ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            // Info
-            Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, height: 1.2),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            if (!titleOverlay) ...[
+              const SizedBox(height: 10),
+              Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
           ],
         ),
       ),

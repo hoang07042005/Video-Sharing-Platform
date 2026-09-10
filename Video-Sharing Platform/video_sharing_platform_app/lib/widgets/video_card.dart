@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../screens/video/videos/video_detail_screen.dart';
 import '../screens/channel/channel_screen.dart';
+import 'verified_badge.dart';
 
 class VideoCard extends StatelessWidget {
   final Map<String, dynamic> video;
@@ -34,6 +35,10 @@ class VideoCard extends StatelessWidget {
     }
     if (!url.startsWith('http') && !url.startsWith('data:image')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
+    }
+    final parsedUrl = Uri.tryParse(url);
+    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+      return parsedUrl.replace(host: AppConstants.serverIp).toString();
     }
     return url;
   }
@@ -329,7 +334,7 @@ class VideoCard extends StatelessWidget {
                                 ),
                                 if (isVerified) ...[
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.check_circle, color: Colors.green, size: 12),
+                                  const VerifiedBadge(size: 12),
                                 ],
                               ],
                             ),

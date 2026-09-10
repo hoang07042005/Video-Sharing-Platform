@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../widgets/verified_badge.dart';
 import '../../../../constants.dart';
 import 'video_report_dialog.dart';
 import 'save_to_playlist_sheet.dart';
@@ -38,6 +40,26 @@ class VideoInfoWidget extends StatefulWidget {
 }
 
 class _VideoInfoWidgetState extends State<VideoInfoWidget> {
+  bool _isOwnChannel = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOwnership();
+  }
+
+  Future<void> _loadOwnership() async {
+    final ownerFlag = widget.video['isOwner'] == true || widget.video['isChannelOwner'] == true;
+    final ownerUserId = (widget.video['ownerUserId'] ?? widget.video['channelUserId'])?.toString();
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getString('userId');
+    final isOwner = ownerFlag ||
+        (ownerUserId != null && currentUserId != null && ownerUserId.toLowerCase() == currentUserId.toLowerCase());
+    if (mounted && isOwner != _isOwnChannel) {
+      setState(() => _isOwnChannel = isOwner);
+    }
+  }
+
   String _formatViews(dynamic v) {
     if (v == null) return "0";
     double count = v is num ? v.toDouble() : double.tryParse(v.toString()) ?? 0;
@@ -138,68 +160,100 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
           ),
         ),
 
-        // Channel & Actions Row
+        // Channel identity row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              // Channel Avatar & Name
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChannelScreen(handle: handle),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ChannelScreen(handle: handle)),
+              );
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey[800],
+                  backgroundImage: NetworkImage(_getImageUrl(widget.video['channelAvatarUrl'])),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundImage: NetworkImage(
-                            _getImageUrl(widget.video['channelAvatarUrl'])),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.video['channelName'] ?? handle,
+                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.video['channelIsVerified'] == true || widget.video['isVerified'] == true) ...[
+                            const SizedBox(width: 4),
+                            const VerifiedBadge(size: 15),
+                          ],
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.video['channelName'] ?? handle,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${handle.startsWith('@') ? handle : '@$handle'} • ${_formatViews(widget.subscriberCount)} người đăng ký',
+                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Subscribe Button
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Subscribe/member buttons and secondary actions row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
               ElevatedButton(
-                onPressed: widget.onSubscribe,
+                onPressed: _isOwnChannel
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ChannelScreen(handle: handle)),
+                        );
+                      }
+                    : widget.onSubscribe,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      widget.isSubscribed ? Colors.grey[800] : Colors.white,
-                  foregroundColor:
-                      widget.isSubscribed ? Colors.white : Colors.black,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  minimumSize: const Size(0, 32),
+                  backgroundColor: _isOwnChannel || widget.isSubscribed ? Colors.white12 : Colors.white,
+                  foregroundColor: _isOwnChannel || widget.isSubscribed ? Colors.white : Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  minimumSize: const Size(0, 34),
                 ),
-                child: Text(
-                  widget.isSubscribed ? 'Đã đăng ký' : 'Đăng ký',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
-                ),
+                child: Text(_isOwnChannel ? 'Tùy chỉnh kênh' : (widget.isSubscribed ? 'Đã đăng ký' : 'Đăng ký'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
-              const SizedBox(width: 8),
+              if (!_isOwnChannel && widget.isSubscribed) ...[
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng hội viên đang phát triển')));
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    minimumSize: const Size(0, 34),
+                  ),
+                  child: const Text('Hội viên', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ],
+              const Spacer(),
               // Like / Dislike grouping
               Container(
                 height: 32,
@@ -256,14 +310,9 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                 ),
               ),
 
-              const SizedBox(width: 8),
-
-              // Share Action
+              const SizedBox(width: 6),
               _buildCircleButton(Icons.share_outlined, () {}),
-
               const SizedBox(width: 4),
-
-              // More Actions - Dropdown popup
               Theme(
                 data: Theme.of(context).copyWith(
                   popupMenuTheme: PopupMenuThemeData(

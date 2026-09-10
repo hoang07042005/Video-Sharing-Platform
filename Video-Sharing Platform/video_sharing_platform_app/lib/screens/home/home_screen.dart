@@ -437,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _buildSectionHeader('Shorts nổi bật', Icons.play_circle_filled, Colors.redAccent),
                       ),
                       SizedBox(
-                        height: 340, // Slightly shorter for shorts
+                        height: 300, // Slightly shorter for shorts
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -447,6 +447,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.only(right: 12),
                               child: ShortsCard(
                                 video: _shorts[index],
+                                titleOverlay: true,
+                                durationAtTop: true,
                                 onTap: () {
                                   Navigator.push(
                                     context,
