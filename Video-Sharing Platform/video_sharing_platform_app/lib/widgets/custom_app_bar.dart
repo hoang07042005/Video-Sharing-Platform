@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../screens/search/search_screen.dart';
+import '../screens/notifications/notifications_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Widget? title;
@@ -25,6 +27,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _CustomAppBarState extends State<CustomAppBar> {
   String _logoUrl = '';
   bool _isLoadingLogo = true;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
@@ -34,6 +37,14 @@ class _CustomAppBarState extends State<CustomAppBar> {
     } else {
       _isLoadingLogo = false;
     }
+    _loadUnreadNotifications();
+  }
+
+  Future<void> _loadUnreadNotifications() async {
+    try {
+      final count = await NotificationService.getUnreadCount();
+      if (mounted) setState(() => _unreadNotifications = count);
+    } catch (_) {}
   }
 
   Future<void> _fetchLogo() async {
@@ -65,20 +76,19 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
     Widget? titleWidget = widget.title;
-    
+
     if (titleWidget == null && widget.showLogo) {
       if (_isLoadingLogo) {
         titleWidget = const SizedBox(
-          height: 30, 
-          width: 30, 
-          child: CircularProgressIndicator(color: AppConstants.accentColor, strokeWidth: 2)
-        );
+            height: 30,
+            width: 30,
+            child: CircularProgressIndicator(
+                color: AppConstants.accentColor, strokeWidth: 2));
       } else if (_logoUrl.isNotEmpty) {
-        titleWidget = Image.network(
-          _logoUrl, 
-          height: 60, 
-          errorBuilder: (c, e, s) => Image.asset('assets/logo.png', height: 60)
-        );
+        titleWidget = Image.network(_logoUrl,
+            height: 60,
+            errorBuilder: (c, e, s) =>
+                Image.asset('assets/logo.png', height: 60));
       } else {
         titleWidget = Image.asset('assets/logo.png', height: 60);
       }
@@ -100,9 +110,26 @@ class _CustomAppBarState extends State<CustomAppBar> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.notifications_none, color: Colors.white),
-          onPressed: () {
-            // TODO: Navigate to notifications
+          icon: Badge(
+            isLabelVisible: _unreadNotifications > 0,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            label: Text(
+              _unreadNotifications > 99 ? '99+' : '$_unreadNotifications',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Icon(Icons.notifications_none, color: Colors.white),
+          ),
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+            _loadUnreadNotifications();
           },
         ),
         const SizedBox(width: 8),
