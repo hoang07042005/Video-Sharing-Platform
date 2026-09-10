@@ -710,4 +710,104 @@ class VideoService {
       throw Exception('Lỗi kết nối hoặc đăng tải: $e');
     }
   }
+
+  static Future<dynamic> updateVideo({
+    required String videoId,
+    required String title,
+    required String description,
+    required String visibility,
+    required bool isShort,
+    File? videoFile,
+    File? thumbnailFile,
+    int? categoryId,
+    int? duration,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final headers = {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      String? videoUrl;
+      if (videoFile != null) videoUrl = await _uploadFile(videoFile, 'video');
+      String? thumbnailUrl;
+      if (thumbnailFile != null) thumbnailUrl = await _uploadFile(thumbnailFile, 'image');
+
+      final response = await http.put(
+        Uri.parse('${AppConstants.apiUrl}/videos/$videoId'),
+        headers: headers,
+        body: jsonEncode({
+          'title': title,
+          'description': description,
+          'visibility': visibility == 'Riêng tư' ? 'Private' : 'Public',
+          'isShort': isShort,
+          'categoryId': categoryId,
+          if (duration != null) 'duration': duration,
+          if (videoUrl != null) 'videoUrl': videoUrl,
+          if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.body.isEmpty ? {'success': true} : jsonDecode(response.body);
+      }
+
+      String message = 'Lỗi cập nhật video (HTTP ${response.statusCode}).';
+      try {
+        message = jsonDecode(response.body)['message'] ?? message;
+      } catch (_) {}
+      throw Exception(message);
+    } on Exception {
+      rethrow;
+    } catch (e) {
+      throw Exception('Lỗi kết nối hoặc cập nhật: $e');
+    }
+  }
+
+  static Future<void> deleteVideo(String videoId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${AppConstants.apiUrl}/videos/$videoId'),
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) return;
+
+      String message = 'Lỗi xóa video (HTTP ${response.statusCode}).';
+      try {
+        message = jsonDecode(response.body)['message'] ?? message;
+      } catch (_) {}
+      throw Exception(message);
+    } on Exception {
+      rethrow;
+    } catch (e) {
+      throw Exception('Lỗi kết nối hoặc xóa video: $e');
+    }
+  }
+
+  static Future<String> _uploadFile(File file, String type) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${AppConstants.apiUrl}/upload/${type == 'video' ? 'video' : 'image'}'),
+    );
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+
+    final mimeType = lookupMimeType(file.path) ?? (type == 'video' ? 'video/mp4' : 'image/jpeg');
+    final typeData = mimeType.split('/');
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: MediaType(typeData[0], typeData.length > 1 ? typeData[1] : ''),
+    ));
+
+    final response = await http.Response.fromStream(await request.send());
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body)['url'];
+    }
+    throw Exception('Lỗi đăng tải file (HTTP ${response.statusCode}).');
+  }
 }

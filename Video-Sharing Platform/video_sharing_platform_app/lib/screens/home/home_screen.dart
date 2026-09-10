@@ -279,39 +279,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (heroVideos.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      margin: const EdgeInsets.only(top: 16, bottom: 24),
-      height: 220,
-      child: Stack(
-        children: [
-          PageView.builder(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = constraints.maxWidth < 400 ? 238.0 : 260.0;
+        return Container(
+          margin: const EdgeInsets.only(top: 12, bottom: 24),
+          height: height,
+          child: PageView.builder(
             controller: _heroPageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentHeroIndex = index;
-              });
-            },
+            onPageChanged: (index) => setState(() => _currentHeroIndex = index),
             itemCount: heroVideos.length,
-            itemBuilder: (context, index) {
-              return _buildHeroSlide(heroVideos[index]);
-            },
+            itemBuilder: (context, index) => _buildHeroSlide(heroVideos[index]),
           ),
-          
-          // Pagination Dots
-          Positioned(
-            bottom: 16,
-            right: 32,
-            child: Row(
-              children: List.generate(heroVideos.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: _buildDot(index == _currentHeroIndex),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -320,82 +301,134 @@ class _HomeScreenState extends State<HomeScreen> {
     final String title = video['title'] ?? 'Untitled';
     final String description = video['description'] ?? 'Thư giãn • Tập trung • Bắt đầu ngày mới';
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => VideoDetailScreen(videoId: video['id'])),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          image: DecorationImage(
-            image: NetworkImage(thumbnail),
-            fit: BoxFit.cover,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: const Color(0xFF20242D),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: .08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-        ),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                ),
+        ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            thumbnail,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: const Color(0xFF292E38),
+              child: const Icon(Icons.movie_outlined, color: Colors.white24, size: 54),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: .08),
+                  Colors.black.withValues(alpha: .18),
+                  Colors.black.withValues(alpha: .9),
+                ],
+                stops: const [0, .38, 1],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+          ),
+          Positioned(
+            top: 14,
+            left: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: .52),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 32,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => VideoDetailScreen(videoId: video['id'])),
-                        );
-                      },
-                      icon: const Icon(Icons.play_arrow, color: Colors.black, size: 16),
-                      label: const Text('Xem ngay', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  ),
+                  Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 14),
+                  SizedBox(width: 5),
+                  Text('NỔI BẬT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, height: 1.12),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => VideoDetailScreen(videoId: video['id'])),
+                            ),
+                            icon: const Icon(Icons.play_arrow_rounded, size: 17),
+                            label: const Text('Xem ngay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              elevation: 0,
+                              minimumSize: const Size(0, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 13),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_formatViews(video['viewsCount'] ?? video['viewCount'] ?? video['views'])} lượt xem',
+                            style: const TextStyle(color: Colors.white60, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    _recommendedVideos.where((v) => v['isShort'] != true).take(5).length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: _buildDot(index == _currentHeroIndex),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -3,12 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_sharing_platform_app/services/video_service.dart';
+import '../../constants.dart';
 
 // Form dùng chung cho cả Video thường và Shorts
 // Truyền initialIsShort: true khi gọi từ tab Shorts
 class UploadVideoForm extends StatefulWidget {
   final bool initialIsShort;
-  const UploadVideoForm({super.key, this.initialIsShort = false});
+  final Map<String, dynamic>? video;
+
+  const UploadVideoForm({
+    super.key,
+    this.initialIsShort = false,
+    this.video,
+  });
 
   @override
   State<UploadVideoForm> createState() => _UploadVideoFormState();
@@ -25,8 +32,7 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
   File? _thumbnailFile;
   bool _isUploading = false;
   bool _isShort = false;
-  String _error = '';
-  String _success = '';
+  bool get _isEditing => widget.video != null;
   String _videoDuration = '00:00';
   String _videoSize = '-';
   String _videoFormat = '-';
@@ -43,11 +49,86 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
   void initState() {
     super.initState();
     _isShort = widget.initialIsShort;
+    final video = widget.video;
+    if (video != null) {
+      _titleCtrl.text = video['title']?.toString() ?? '';
+      _descCtrl.text = video['description']?.toString() ?? '';
+      _visibility = _toVisibility(video['visibility']);
+      _isShort = video['isShort'] == true;
+      _categoryId = video['categoryId'] ?? video['category']?['id'];
+      _videoDuration = _formatDuration(video['duration']);
+      _videoFormat = _fileExtension(video['videoUrl']?.toString());
+    }
     _titleCtrl.addListener(() => setState(() {}));
     _descCtrl.addListener(() => setState(() {}));
     _fetchCategories();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCurrentStep());
+  }
+
+  String _toVisibility(dynamic value) =>
+      value?.toString().toLowerCase() == 'private' || value == 'Riêng tư'
+          ? 'Riêng tư'
+          : 'Công khai';
+
+  String _formatDuration(dynamic value) {
+    final seconds = value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+    return '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
+  }
+
+  String _fileExtension(String? url) {
+    if (url == null || url.isEmpty) return '-';
+    final name = url.split('?').first.split('/').last;
+    final dot = name.lastIndexOf('.');
+    return dot == -1 ? '-' : name.substring(dot + 1).toUpperCase();
+  }
+
+  String? _existingThumbnailUrl() {
+    final url = widget.video?['thumbnailUrl'] ?? widget.video?['thumbnail'];
+    if (url == null || url.toString().isEmpty) return null;
+    final value = url.toString();
+    if (value.startsWith('data:image')) return value;
+    if (value.startsWith('http')) {
+      try {
+        final parsed = Uri.parse(value);
+        final host = parsed.host;
+        final isLocalHost = host == 'localhost' || host == '127.0.0.1';
+        final isPrivateNetworkHost = host.startsWith('10.') ||
+            host.startsWith('192.168.') ||
+            RegExp(r'^172\.(1[6-9]|2[0-9]|3[0-1])\.').hasMatch(host);
+        if (isLocalHost || isPrivateNetworkHost) {
+          return parsed.replace(host: AppConstants.serverIp).toString();
+        }
+      } catch (_) {}
+      return value;
+    }
+    return '${AppConstants.apiUrl.replaceAll('/api', '')}$value';
+  }
+
+  void _showMessage(String message, {required bool isError}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(15, 0, 15, 12),
+          backgroundColor: isError
+              ? Colors.red.shade800
+              : Colors.green.shade800,
+          content: Row(
+            children: [
+              Icon(
+                isError ? Icons.error_outline : Icons.check_circle_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+      );
   }
 
   void _onScroll() {
@@ -148,7 +229,6 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
         _videoFormat = format;
         _videoSize = sizeStr;
         _videoDuration = durationStr;
-        _error = '';
       });
     }
   }
@@ -163,38 +243,53 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
 
   Future<void> _handleUpload() async {
     if (_titleCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'Vui lòng nhập tiêu đề.');
+      _showMessage('Vui lòng nhập tiêu đề.', isError: true);
       return;
     }
-    if (_videoFile == null) {
-      setState(() => _error = 'Vui lòng chọn video.');
+    if (!_isEditing && _videoFile == null) {
+      _showMessage('Vui lòng chọn video.', isError: true);
       return;
     }
-    if (_thumbnailFile == null) {
-      setState(() => _error = 'Vui lòng chọn ảnh bìa.');
+    if (!_isEditing && _thumbnailFile == null) {
+      _showMessage('Vui lòng chọn ảnh bìa.', isError: true);
       return;
     }
 
     setState(() {
       _isUploading = true;
-      _error = '';
-      _success = '';
     });
 
     try {
-      await VideoService.uploadVideo(
-        title: _titleCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
-        visibility: _isShort ? 'Công khai' : _visibility,
-        isShort: _isShort,
-        videoFile: _videoFile!,
-        thumbnailFile: _thumbnailFile,
-        categoryId: _categoryId,
-      );
+      if (_isEditing) {
+        await VideoService.updateVideo(
+          videoId: (widget.video!['id'] ?? widget.video!['_id']).toString(),
+          title: _titleCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          visibility: _isShort ? 'Công khai' : _visibility,
+          isShort: _isShort,
+          videoFile: _videoFile,
+          thumbnailFile: _thumbnailFile,
+          categoryId: _categoryId,
+          duration: widget.video!['duration'] is num
+              ? (widget.video!['duration'] as num).toInt()
+              : null,
+        );
+      } else {
+        await VideoService.uploadVideo(
+          title: _titleCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          visibility: _isShort ? 'Công khai' : _visibility,
+          isShort: _isShort,
+          videoFile: _videoFile!,
+          thumbnailFile: _thumbnailFile,
+          categoryId: _categoryId,
+        );
+      }
+      final message = _isEditing
+          ? 'Đã cập nhật video thành công!'
+          : (_isShort ? 'Đã tải Shorts lên thành công!' : 'Đã tải video lên thành công!');
+      _showMessage(message, isError: false);
       setState(() {
-        _success = _isShort
-            ? 'Đã tải Shorts lên thành công!'
-            : 'Đã tải video lên thành công!';
         _titleCtrl.clear();
         _descCtrl.clear();
         _videoFile = null;
@@ -204,7 +299,8 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
         _videoFormat = '-';
       });
     } catch (e) {
-      setState(() => _error = e.toString());
+      final message = e.toString().replaceFirst('Exception: ', '');
+      _showMessage(message, isError: true);
     } finally {
       setState(() => _isUploading = false);
     }
@@ -424,17 +520,23 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
   }
 
   Widget _previewThumbnail({required double width, required double height}) {
+    final existingThumbnail = _existingThumbnailUrl();
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         color: const Color.fromARGB(88, 42, 43, 44),
         borderRadius: BorderRadius.circular(9),
-        image: _thumbnailFile == null
+        image: _thumbnailFile == null && existingThumbnail == null
             ? null
-            : DecorationImage(image: FileImage(_thumbnailFile!), fit: BoxFit.cover),
+          : DecorationImage(
+            image: _thumbnailFile != null
+              ? FileImage(_thumbnailFile!)
+              : NetworkImage(existingThumbnail!) as ImageProvider,
+            fit: BoxFit.cover,
+            ),
       ),
-      child: _thumbnailFile == null
+        child: _thumbnailFile == null && existingThumbnail == null
           ? const Icon(Icons.play_circle_outline, color: Colors.white60, size: 34)
           : null,
     );
@@ -523,7 +625,9 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
         ),
         titleSpacing: 10,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(_isShort ? 'Tải Shorts lên' : 'Tải video lên',
+            Text(_isEditing
+              ? (_isShort ? 'Sửa Shorts' : 'Sửa video')
+              : (_isShort ? 'Tải Shorts lên' : 'Tải video lên'),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -542,11 +646,6 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
           padding: const EdgeInsets.fromLTRB(15, 14, 15, 100),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (_error.isNotEmpty)
-              _buildAlertBox(_error, Icons.error_outline, Colors.redAccent),
-            if (_success.isNotEmpty)
-              _buildAlertBox(
-                  _success, Icons.check_circle_outline, Colors.greenAccent),
             Container(key: _key1, child: _buildMediaCard()),
             const SizedBox(height: 12),
             Container(key: _key2, child: _buildPreviewPanel()),
@@ -685,7 +784,9 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
       const SizedBox(height: 18),
       _fieldLabel('Ảnh thu nhỏ', required: true),
       const SizedBox(height: 4),
-      const Text('Khuyến dùng 16:9 hoặc 9:16',
+        Text(_isEditing
+          ? 'Để trống nếu muốn giữ ảnh bìa hiện tại'
+          : 'Khuyến dùng 16:9 hoặc 9:16',
           style: TextStyle(color: Colors.white54, fontSize: 10)),
       const SizedBox(height: 8),
       GestureDetector(
@@ -718,8 +819,10 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
                               fontSize: 10,
                               fontWeight: FontWeight.w600)),
                       Text(
-                          _thumbnailFile == null
-                              ? 'JPG, PNG, WebP  •  Tải ảnh bìa'
+                            _thumbnailFile == null
+                              ? (_isEditing && _existingThumbnailUrl() != null
+                                ? 'Ảnh bìa hiện tại  •  Chọn ảnh mới để thay'
+                                : 'JPG, PNG, WebP  •  Tải ảnh bìa')
                               : _thumbName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -874,10 +977,10 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
                               height: 18,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                  Text('Đăng video',
+                                  Text(_isEditing ? 'Lưu thay đổi' : 'Đăng video',
                                       style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 11,
@@ -917,26 +1020,4 @@ class _UploadVideoFormState extends State<UploadVideoForm> {
     );
   }
 
-  Widget _buildAlertBox(String message, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message,
-                style: TextStyle(
-                    color: color, fontSize: 14, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
-  }
 }

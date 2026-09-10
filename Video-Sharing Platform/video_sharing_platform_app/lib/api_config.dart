@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -187,7 +188,16 @@ class ApiConfig {
   }
 
   static Future<bool> _isReachable(String ip, Duration timeout) async {
-    return await _checkHost(ip, timeout) != null;
+    try {
+      final response = await http
+          .get(Uri.parse('http://$ip:$_backendPort$_apiPath/videos'))
+          .timeout(timeout);
+      // Any HTTP response means the backend is listening. Authentication or
+      // an empty database must not make a valid server look unreachable.
+      return response.statusCode > 0;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Force scan lại thủ công (ví dụ: sau khi đổi WiFi)

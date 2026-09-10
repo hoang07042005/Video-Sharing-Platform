@@ -37,10 +37,16 @@ class VideoCard extends StatelessWidget {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
     }
     final parsedUrl = Uri.tryParse(url);
-    if (parsedUrl != null && parsedUrl.host.startsWith('192.168.24.')) {
+    if (parsedUrl != null && _isPrivateNetworkHost(parsedUrl.host)) {
       return parsedUrl.replace(host: AppConstants.serverIp).toString();
     }
     return url;
+  }
+
+  bool _isPrivateNetworkHost(String host) {
+    return host.startsWith('10.') ||
+        host.startsWith('192.168.') ||
+        RegExp(r'^172\.(1[6-9]|2[0-9]|3[0-1])\.').hasMatch(host);
   }
 
   String _formatDuration(dynamic duration) {

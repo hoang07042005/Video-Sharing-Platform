@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,10 +12,12 @@ import '../../widgets/video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/auth_service.dart';
+import '../../services/video_service.dart';
 import 'channel_about_screen.dart';
 import 'community_screen.dart';
 import '../../widgets/verified_badge.dart';
 import 'membership_screen.dart';
+import '../upload/upload_video_form.dart';
 
 class ChannelScreen extends StatefulWidget {
   final String handle;
@@ -72,10 +75,19 @@ class _ChannelScreenState extends State<ChannelScreen>
   String _getImageUrl(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/640x360.png';
     if (url.startsWith('data:image')) return url;
-    if (url.contains('localhost') || url.contains('127.0.0.1')) {
-      return url
-          .replaceAll('localhost', AppConstants.serverIp)
-          .replaceAll('127.0.0.1', AppConstants.serverIp);
+    if (url.startsWith('http')) {
+      try {
+        final parsed = Uri.parse(url);
+        final host = parsed.host;
+        final isLocalHost = host == 'localhost' || host == '127.0.0.1';
+        final isPrivateNetworkHost = host.startsWith('10.') ||
+            host.startsWith('192.168.') ||
+            RegExp(r'^172\.(1[6-9]|2[0-9]|3[0-1])\.').hasMatch(host);
+        if (isLocalHost || isPrivateNetworkHost) {
+          return parsed.replace(host: AppConstants.serverIp).toString();
+        }
+      } catch (_) {}
+      return url;
     }
     if (!url.startsWith('http')) {
       return '${AppConstants.apiUrl.replaceAll('/api', '')}$url';
@@ -1095,7 +1107,15 @@ class _ChannelScreenState extends State<ChannelScreen>
                   title: const Text('Sửa video', style: TextStyle(color: Colors.white)),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng sửa video đang phát triển')));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UploadVideoForm(
+                          initialIsShort: video['isShort'] == true,
+                          video: Map<String, dynamic>.from(video as Map),
+                        ),
+                      ),
+                    ).then((_) => _fetchChannel());
                   },
                 ),
                 ListTile(
@@ -1103,7 +1123,7 @@ class _ChannelScreenState extends State<ChannelScreen>
                   title: const Text('Xóa video', style: TextStyle(color: Colors.white)),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng xóa video đang phát triển')));
+                    _showDeleteVideoDialog(video);
                   },
                 ),
               ],
@@ -1144,6 +1164,143 @@ class _ChannelScreenState extends State<ChannelScreen>
         );
       },
     );
+  }
+
+  Future<void> _showDeleteVideoDialog(dynamic video) async {
+    final videoId = (video['id'] ?? video['_id']).toString();
+    final title = video['title']?.toString() ?? 'Video không có tiêu đề';
+    final thumbnail = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail']);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final contentWidth =
+            (MediaQuery.sizeOf(dialogContext).width - 80).clamp(280.0, 420.0);
+        return AlertDialog(
+          backgroundColor: const Color(0xFF212121),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Xóa video?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: SizedBox(
+            width: contentWidth,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: _buildDeleteThumbnail(thumbnail, contentWidth),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Video sẽ bị xóa vĩnh viễn. Bạn có chắc muốn tiếp tục không?',
+                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+            ),
+            IconButton(
+              tooltip: 'Xác nhận xóa',
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.check),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await VideoService.deleteVideo(videoId);
+      await _fetchChannel();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã xóa video thành công.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  Widget _deleteThumbnailFallback(double width) {
+    return Container(
+      width: width,
+      height: 150,
+      color: Colors.grey.shade900,
+      child: const Icon(Icons.videocam, color: Colors.white38, size: 42),
+    );
+  }
+
+  Widget _buildDeleteThumbnail(String thumbnail, double width) {
+    if (thumbnail.startsWith('data:image')) {
+      try {
+        return Image.memory(
+          base64Decode(thumbnail.split(',').last),
+          width: double.infinity,
+          height: 150,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _deleteThumbnailFallback(width),
+        );
+      } catch (_) {
+        return _deleteThumbnailFallback(width);
+      }
+    }
+
+    final uri = Uri.tryParse(thumbnail);
+    if (uri == null || uri.host.isEmpty) return _deleteThumbnailFallback(width);
+
+    return FutureBuilder<Uint8List?>(
+      future: _loadDeleteThumbnail(uri),
+      builder: (_, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null) return _deleteThumbnailFallback(width);
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: 150,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _deleteThumbnailFallback(width),
+        );
+      },
+    );
+  }
+
+  Future<Uint8List?> _loadDeleteThumbnail(Uri uri) async {
+    try {
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.bodyBytes;
+      }
+    } catch (_) {}
+    return null;
   }
 
   String _timeAgo(dynamic dateString, {bool isEndedLive = false}) {
