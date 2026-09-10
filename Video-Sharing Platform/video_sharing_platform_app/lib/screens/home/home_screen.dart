@@ -51,17 +51,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           // Chỉ lấy Video thường (isShort != true)
-          final normalVideos = results[0]
-              .where((v) => v['isShort'] != true)
-              .toList();
+          final normalVideos =
+              results[0].where((v) => v['isShort'] != true).toList();
           _recommendedVideos = normalVideos;
-          
+
           final shuffledNormal = List<dynamic>.from(normalVideos)..shuffle();
           _randomVideos = shuffledNormal.take(40).toList();
 
           // Dữ liệu từ getShorts() đã là shorts, không cần filter isShort
           _shorts = results[1].toList();
-              
+
           _livestreams = results[2];
           _categories = results[3];
 
@@ -75,32 +74,45 @@ class _HomeScreenState extends State<HomeScreen> {
             final isShort = video['isShort'] == true;
             return id != null && !isShort && !recommendedIds.contains(id);
           }).toList();
-          final activeLivestreams = _livestreams.map((live) => {
-            ...Map<String, dynamic>.from(live as Map),
-            'isLivestream': true,
-            'channelName': live['channel']?['channelName'] ?? live['channelName'],
-            'channelHandle': live['channel']?['handle'] ?? live['channelHandle'],
-            'channelAvatarUrl': live['channel']?['avatarUrl'] ?? live['channelAvatarUrl'],
-          }).toList();
+          final activeLivestreams = _livestreams
+              .map((live) => {
+                    ...Map<String, dynamic>.from(live as Map),
+                    'isLivestream': true,
+                    'channelName':
+                        live['channel']?['channelName'] ?? live['channelName'],
+                    'channelHandle':
+                        live['channel']?['handle'] ?? live['channelHandle'],
+                    'channelAvatarUrl': live['channel']?['avatarUrl'] ??
+                        live['channelAvatarUrl'],
+                  })
+              .toList();
           _otherVideos = [...activeLivestreams, ...endedAndNormalVideos];
-          
+
           if (_categories.isEmpty) {
             // Dữ liệu dự phòng
             _categories = [
               {'name': 'Âm nhạc', 'icon': 'Music', 'color': 'cyanAccent'},
               {'name': 'Game', 'icon': 'Gamepad2', 'color': 'greenAccent'},
               {'name': 'Phim ảnh', 'icon': 'Film', 'color': 'blueAccent'},
-              {'name': 'Giáo dục', 'icon': 'GraduationCap', 'color': 'purpleAccent'},
+              {
+                'name': 'Giáo dục',
+                'icon': 'GraduationCap',
+                'color': 'purpleAccent'
+              },
               {'name': 'Du lịch', 'icon': 'Plane', 'color': 'lightBlueAccent'},
               {'name': 'Ẩm thực', 'icon': 'Utensils', 'color': 'orangeAccent'},
-              {'name': 'Thể thao', 'icon': 'Dumbbell', 'color': 'deepOrangeAccent'},
+              {
+                'name': 'Thể thao',
+                'icon': 'Dumbbell',
+                'color': 'deepOrangeAccent'
+              },
               {'name': 'Khác', 'icon': 'LayoutGrid', 'color': 'blue'},
             ];
           } else {
-             // Lấy tối đa 8 danh mục
-             _categories = _categories.take(8).toList();
+            // Lấy tối đa 8 danh mục
+            _categories = _categories.take(8).toList();
           }
-          
+
           _isLoading = false;
         });
       }
@@ -126,8 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatViews(dynamic v) {
     if (v == null) return "0";
     double count = v is num ? v.toDouble() : double.tryParse(v.toString()) ?? 0;
-    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
-    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
+    if (count >= 1000000)
+      return '${(count / 1000000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} Tr';
+    if (count >= 1000)
+      return '${(count / 1000).toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')} N';
     return count.toInt().toString();
   }
 
@@ -144,7 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Vừa xong';
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, Color iconColor, {VoidCallback? onSeeAll}) {
+  Widget _buildSectionHeader(String title, IconData icon, Color iconColor,
+      {VoidCallback? onSeeAll}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
@@ -154,7 +169,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           if (onSeeAll != null)
@@ -164,7 +182,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: const [
                   Text(
                     'Xem tất cả',
-                    style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500),
                   ),
                   Icon(Icons.chevron_right, color: Colors.redAccent, size: 16),
                 ],
@@ -175,7 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: const [
                 Text(
                   'Xem tất cả',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500),
                 ),
                 Icon(Icons.chevron_right, color: Colors.redAccent, size: 16),
               ],
@@ -188,26 +212,43 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCategoryGrid() {
     IconData getIcon(String iconName) {
       switch (iconName.toLowerCase()) {
-        case 'music': return Icons.music_note;
-        case 'gamepad2': return Icons.sports_esports;
-        case 'film': return Icons.movie;
-        case 'graduationcap': return Icons.school;
-        case 'plane': return Icons.flight;
-        case 'utensils': return Icons.restaurant;
-        case 'dumbbell': return Icons.fitness_center;
-        case 'monitor': return Icons.monitor;
-        case 'newspaper': return Icons.language;
-        case 'tv': return Icons.tv;
-        case 'heart': return Icons.favorite;
-        default: return Icons.grid_view;
+        case 'music':
+          return Icons.music_note;
+        case 'gamepad2':
+          return Icons.sports_esports;
+        case 'film':
+          return Icons.movie;
+        case 'graduationcap':
+          return Icons.school;
+        case 'plane':
+          return Icons.flight;
+        case 'utensils':
+          return Icons.restaurant;
+        case 'dumbbell':
+          return Icons.fitness_center;
+        case 'monitor':
+          return Icons.monitor;
+        case 'newspaper':
+          return Icons.language;
+        case 'tv':
+          return Icons.tv;
+        case 'heart':
+          return Icons.favorite;
+        default:
+          return Icons.grid_view;
       }
     }
 
     Color getColor(int index) {
       final colors = [
-        Colors.cyanAccent, Colors.greenAccent, Colors.blueAccent, 
-        Colors.purpleAccent, Colors.lightBlueAccent, Colors.orangeAccent, 
-        Colors.deepOrangeAccent, Colors.pinkAccent
+        Colors.cyanAccent,
+        Colors.greenAccent,
+        Colors.blueAccent,
+        Colors.purpleAccent,
+        Colors.lightBlueAccent,
+        Colors.orangeAccent,
+        Colors.deepOrangeAccent,
+        Colors.pinkAccent
       ];
       return colors[index % colors.length];
     }
@@ -252,7 +293,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8),
                   Text(
                     cat['name']?.toString() ?? 'Khác',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -266,15 +310,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroCarousel() {
-    final topVideos = _recommendedVideos
-      .where((v) => v['isShort'] != true)
-      .toList()
-      ..sort((a, b) {
-        final aViews = a['viewCount'] ?? a['viewsCount'] ?? a['views'] ?? 0;
-        final bViews = b['viewCount'] ?? b['viewsCount'] ?? b['views'] ?? 0;
-        return (bViews is num ? bViews.toInt() : int.tryParse(bViews.toString()) ?? 0)
-            .compareTo(aViews is num ? aViews.toInt() : int.tryParse(aViews.toString()) ?? 0);
-      });
+    final topVideos =
+        _recommendedVideos.where((v) => v['isShort'] != true).toList()
+          ..sort((a, b) {
+            final aViews = a['viewCount'] ?? a['viewsCount'] ?? a['views'] ?? 0;
+            final bViews = b['viewCount'] ?? b['viewsCount'] ?? b['views'] ?? 0;
+            return (bViews is num
+                    ? bViews.toInt()
+                    : int.tryParse(bViews.toString()) ?? 0)
+                .compareTo(aViews is num
+                    ? aViews.toInt()
+                    : int.tryParse(aViews.toString()) ?? 0);
+          });
     final heroVideos = topVideos.take(5).toList();
 
     if (heroVideos.isEmpty) return const SizedBox.shrink();
@@ -299,7 +346,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeroSlide(Map<String, dynamic> video) {
     final thumbnail = _getImageUrl(video['thumbnailUrl'] ?? video['thumbnail']);
     final String title = video['title'] ?? 'Untitled';
-    final String description = video['description'] ?? 'Thư giãn • Tập trung • Bắt đầu ngày mới';
+    final String description =
+        video['description'] ?? 'Thư giãn • Tập trung • Bắt đầu ngày mới';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -307,7 +355,6 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF20242D),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: .08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .28),
@@ -324,7 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               color: const Color(0xFF292E38),
-              child: const Icon(Icons.movie_outlined, color: Colors.white24, size: 54),
+              child: const Icon(Icons.movie_outlined,
+                  color: Colors.white24, size: 54),
             ),
           ),
           DecoratedBox(
@@ -353,9 +401,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 14),
+                  Icon(Icons.local_fire_department,
+                      color: Colors.orangeAccent, size: 14),
                   SizedBox(width: 5),
-                  Text('NỔI BẬT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                  Text('NỔI BẬT',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800)),
                 ],
               ),
             ),
@@ -376,14 +429,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, height: 1.12),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            height: 1.12),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         description,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12, height: 1.3),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -391,23 +449,31 @@ class _HomeScreenState extends State<HomeScreen> {
                           ElevatedButton.icon(
                             onPressed: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => VideoDetailScreen(videoId: video['id'])),
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      VideoDetailScreen(videoId: video['id'])),
                             ),
-                            icon: const Icon(Icons.play_arrow_rounded, size: 17),
-                            label: const Text('Xem ngay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            icon:
+                                const Icon(Icons.play_arrow_rounded, size: 17),
+                            label: const Text('Xem ngay',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w700)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
                               elevation: 0,
                               minimumSize: const Size(0, 36),
-                              padding: const EdgeInsets.symmetric(horizontal: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 13),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             '${_formatViews(video['viewsCount'] ?? video['viewCount'] ?? video['views'])} lượt xem',
-                            style: const TextStyle(color: Colors.white60, fontSize: 10),
+                            style: const TextStyle(
+                                color: Colors.white60, fontSize: 10),
                           ),
                         ],
                       ),
@@ -418,7 +484,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(
-                    _recommendedVideos.where((v) => v['isShort'] != true).take(5).length,
+                    _recommendedVideos
+                        .where((v) => v['isShort'] != true)
+                        .take(5)
+                        .length,
                     (index) => Padding(
                       padding: const EdgeInsets.only(left: 5),
                       child: _buildDot(index == _currentHeroIndex),
@@ -454,7 +523,9 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.grey[900],
         onRefresh: _fetchData,
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppConstants.accentColor))
+            ? const Center(
+                child:
+                    CircularProgressIndicator(color: AppConstants.accentColor))
             : SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
@@ -467,7 +538,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (_shorts.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildSectionHeader('Shorts nổi bật', Icons.play_circle_filled, Colors.redAccent),
+                        child: _buildSectionHeader('Shorts nổi bật',
+                            Icons.play_circle_filled, Colors.redAccent),
                       ),
                       SizedBox(
                         height: 300, // Slightly shorter for shorts
@@ -503,16 +575,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Recommended Videos (Video đề xuất)
                     if (_recommendedVideos.isNotEmpty) ...[
-                      _buildSectionHeader('Video đề xuất', Icons.play_circle_filled, Colors.redAccent),
+                      _buildSectionHeader('Video đề xuất',
+                          Icons.play_circle_filled, Colors.redAccent),
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.zero,
-                        itemCount: _recommendedVideos.length > 8 ? 8 : _recommendedVideos.length,
+                        itemCount: _recommendedVideos.length > 8
+                            ? 8
+                            : _recommendedVideos.length,
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: VideoListTile(video: _recommendedVideos[index]),
+                            child:
+                                VideoListTile(video: _recommendedVideos[index]),
                           );
                         },
                       ),
@@ -521,7 +597,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Trending Videos (Đang thịnh hành)
                     if (_randomVideos.isNotEmpty) ...[
-                      _buildSectionHeader('Đang thịnh hành', Icons.local_fire_department, Colors.redAccent),
+                      _buildSectionHeader('Đang thịnh hành',
+                          Icons.local_fire_department, Colors.redAccent),
                       SizedBox(
                         height: 280, // Tăng thêm height để chứa ảnh to hơn
                         child: ListView.builder(
@@ -531,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(right: 16),
-                              child: SizedBox(
+                              child: Container(
                                 width: 280, // Tăng độ lớn của thẻ/ảnh
                                 child: Stack(
                                   clipBehavior: Clip.none,
@@ -541,19 +618,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                       width: 280,
                                       hideAvatar: true,
                                       singleRowInfo: false,
+                                      thumbnailBorderRadius:
+                                          BorderRadius.circular(12),
                                     ),
                                     Positioned(
                                       top: 8,
                                       left: 8,
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: Colors.redAccent,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                         child: Text(
                                           '#${index + 1}',
-                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ),
@@ -566,17 +650,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    
+
                     // Categories (Danh mục)
                     _buildSectionHeader(
-                      'Danh mục', 
-                      Icons.grid_view_rounded, 
+                      'Danh mục',
+                      Icons.grid_view_rounded,
                       Colors.white70,
                       onSeeAll: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CategoriesScreen(categories: _categories),
+                            builder: (context) =>
+                                CategoriesScreen(categories: _categories),
                           ),
                         );
                       },
@@ -594,7 +679,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 24),
-                            child: VideoCard(video: _otherVideos[index], width: double.infinity),
+                            child: VideoCard(
+                                video: _otherVideos[index],
+                                width: double.infinity),
                           );
                         },
                       ),
